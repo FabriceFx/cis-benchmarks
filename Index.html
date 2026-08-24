@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Palette Google Workspace (Material) — mêmes noms de variables qu'avant */
+    --encre:#202124;        /* texte principal */
+    --papier:#f8f9fa;       /* fond application */
+    --ligne:#dadce0;        /* bordures */
+    --texte:#202124;
+    --sourdine:#5f6368;     /* texte secondaire */
+    --bleu:#1a73e8;         /* action principale */
+    --bleu-fonce:#174ea6;
+    --bleu-f:#e8f0fe;
+    --conforme:#188038;  --conforme-f:#e6f4ea;
+    --echec:#d93025;     --echec-f:#fce8e6;
+    --verif:#b06000;     --verif-f:#fef7e0;
+    --manuel:#5f6368;    --manuel-f:#f1f3f4;
+    --erreur:#681da8;    --erreur-f:#f3e8fd;
+    --skip:#80868b;      --skip-f:#f1f3f4;
+    --acier:#1a73e8;     /* alias historique -> bleu Google */
+    --accepte:#1967d2;   --accepte-f:#e8f0fe;
+    --police:'Google Sans Text','Google Sans',Roboto,'Helvetica Neue',Arial,sans-serif;
+    --police-titre:'Google Sans',Roboto,'Helvetica Neue',Arial,sans-serif;
+    --ombre-1:0 1px 2px rgba(60,64,67,.30),0 1px 3px 1px rgba(60,64,67,.15);
+    --ombre-2:0 1px 3px rgba(60,64,67,.30),0 4px 8px 3px rgba(60,64,67,.15);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--papier);color:var(--texte);
+    font-family:var(--police);font-size:14px;line-height:1.5;
+    min-height:100vh;display:flex;flex-direction:column}
+  h1,h2,h3{font-family:var(--police-titre);font-weight:500;margin:0}
+  .mono{font-family:'Roboto Mono',monospace}
+  button{font-family:var(--police)}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,
+  .lien-bandeau:focus-visible{outline:2px solid var(--bleu);outline-offset:2px}
+
+  /* ---- Bandeau (barre d'application blanche, façon console d'admin) ---- */
+  header{background:#fff;color:var(--texte);padding:12px 24px;border-bottom:1px solid var(--ligne);
+    display:flex;align-items:center;gap:20px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+  header .eyebrow{font-size:11px;letter-spacing:.8px;text-transform:uppercase;
+    color:var(--sourdine);display:block;margin-bottom:1px;font-weight:500}
+  header h1{font-size:20px;color:var(--texte);display:flex;align-items:center;gap:10px}
+  .chip-version{background:#f1f3f4;border-radius:100px;padding:2px 10px;
+    font-family:'Roboto Mono',monospace;font-size:11px;font-weight:400;color:var(--sourdine)}
+  header .droite{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .profil{display:flex;border:1px solid var(--ligne);border-radius:100px;overflow:hidden;background:#fff}
+  .profil button{background:transparent;color:var(--sourdine);border:0;padding:8px 18px;cursor:pointer;
+    font-size:13px;font-weight:500}
+  .profil button + button{border-left:1px solid var(--ligne)}
+  .profil button.actif{background:var(--bleu-f);color:var(--accepte)}
+  #btnLancer{background:var(--bleu);color:#fff;border:0;border-radius:100px;
+    padding:10px 24px;font-family:var(--police-titre);font-weight:500;font-size:14px;cursor:pointer;
+    box-shadow:none;transition:background .15s,box-shadow .15s}
+  #btnLancer:hover:not(:disabled){background:var(--bleu-fonce);box-shadow:var(--ombre-1)}
+  #btnLancer:disabled{background:#f1f3f4;color:#9aa0a6;cursor:default}
+  #btnArreter{background:#fff;color:var(--echec);border:1px solid var(--ligne);border-radius:100px;
+    padding:9px 20px;font-family:var(--police-titre);font-weight:500;font-size:13px;cursor:pointer;display:none}
+  #btnArreter:hover:not(:disabled){background:var(--echec-f)}
+  #btnArreter:disabled{opacity:.6;cursor:default}
+  .opt{display:flex;align-items:center;gap:8px;color:var(--sourdine);font-size:13px;cursor:pointer;user-select:none}
+  .opt input{accent-color:var(--bleu);width:16px;height:16px;cursor:pointer}
+  .opt input:disabled{cursor:default}
+  .lien-bandeau{background:transparent;border:0;color:var(--bleu);cursor:pointer;
+    font-size:13.5px;font-weight:500;text-decoration:none;padding:8px 12px;border-radius:100px}
+  .lien-bandeau:hover{background:#f6fafe}
+
+  /* ---- Corps ---- */
+  main{display:grid;grid-template-columns:296px 1fr;gap:0;flex:1}
+  @media(max-width:900px){main{grid-template-columns:1fr}}
+
+  aside{padding:24px 20px;background:var(--papier)}
+  @media(min-width:901px){aside .colle{position:sticky;top:83px}}
+
+  /* Anneau de conformité (progress circulaire Material) */
+  .tampon{width:168px;height:168px;margin:2px auto 16px;position:relative}
+  .tampon svg{width:100%;height:100%}
+  .tampon .valeur{position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center}
+  .tampon .valeur .pct{font-family:var(--police-titre);font-weight:500;font-size:36px;color:var(--texte)}
+  .tampon .valeur .lib{font-size:10px;letter-spacing:.4px;color:var(--sourdine);max-width:112px;margin-top:2px}
+  .anneau-fond{fill:none;stroke:#e8eaed;stroke-width:8}
+  .anneau-val{fill:none;stroke:var(--conforme);stroke-width:8;stroke-linecap:round;
+    transition:stroke-dashoffset .5s ease, stroke .3s}
+  .anneau-ext{fill:none;stroke:transparent;stroke-width:0}
+
+  .barre{height:4px;background:#e8eaed;border-radius:2px;overflow:hidden;margin:6px 0 4px}
+  .barre i{display:block;height:100%;width:0;background:var(--bleu);transition:width .3s}
+  .barre.indeterminee i{width:100%!important;background:repeating-linear-gradient(
+    -45deg,var(--bleu),var(--bleu) 8px,#8ab4f8 8px,#8ab4f8 16px);
+    background-size:200% 100%;animation:defile 1.2s linear infinite}
+  @keyframes defile{to{background-position:-32px 0}}
+  .avancement{font-size:12px;color:var(--sourdine)}
+  .chrono{font-family:'Roboto Mono',monospace;font-size:11.5px;color:var(--sourdine);
+    margin-top:8px;display:none}
+  .chrono b{font-weight:500;color:var(--texte)}
+
+  .compteurs{margin:18px 0 8px;display:flex;flex-direction:column;gap:3px}
+  .compteurs button{display:flex;justify-content:space-between;align-items:center;width:100%;
+    border:0;background:transparent;border-radius:100px;padding:8px 14px;
+    cursor:pointer;font:inherit;font-size:13px;color:var(--texte)}
+  .compteurs button:hover{background:#f1f3f4}
+  .compteurs button.actif{background:var(--bleu-f);color:var(--accepte);font-weight:500}
+  .compteurs .pastille{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:10px;vertical-align:-1px}
+  .compteurs .n{font-family:'Roboto Mono',monospace;font-weight:500}
+
+  .meta{border-top:1px solid var(--ligne);margin-top:16px;padding-top:14px;
+    font-size:12.5px;color:var(--sourdine);display:flex;flex-direction:column;gap:5px}
+  .meta b{color:var(--texte);font-weight:500}
+
+  #btnExport{margin-top:16px;width:100%;background:var(--bleu);color:#fff;border:0;
+    border-radius:100px;padding:11px;font-family:var(--police-titre);font-weight:500;font-size:14px;
+    cursor:pointer;display:none;transition:background .15s,box-shadow .15s}
+  #btnExport:hover:not(:disabled){background:var(--bleu-fonce);box-shadow:var(--ombre-1)}
+  #btnExport:disabled{background:#f1f3f4;color:#9aa0a6;cursor:default}
+  #btnEmail{margin-top:8px;width:100%;background:#fff;color:var(--bleu);
+    border:1px solid var(--ligne);border-radius:100px;padding:10px;
+    font-family:var(--police-titre);font-weight:500;font-size:14px;cursor:pointer;display:none}
+  #btnEmail:hover:not(:disabled){background:#f6fafe}
+  #btnEmail:disabled{opacity:.6;cursor:default}
+  #btnReinit{margin-top:8px;width:100%;background:transparent;color:var(--sourdine);
+    border:0;border-radius:100px;padding:9px;font:inherit;font-size:13px;font-weight:500;
+    cursor:pointer;display:none}
+  #btnReinit:hover{background:#f1f3f4;color:var(--texte)}
+  #lienRapport{display:none;margin-top:10px;font-size:13px}
+  #lienRapport a{color:var(--bleu);font-weight:500;text-decoration:none}
+  #lienRapport a:hover{text-decoration:underline}
+
+  /* ---- Zone registre ---- */
+  section.registre{padding:20px 24px;overflow-x:auto}
+  .avertissements{background:var(--verif-f);border:1px solid #fde293;border-left:4px solid #f9ab00;
+    border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#3c4043;display:none}
+  .accueil{max-width:640px;margin:60px auto;text-align:center;color:var(--sourdine)}
+  .accueil h2{color:var(--texte);font-size:22px;margin-bottom:10px}
+  .accueil .etapes{display:flex;gap:14px;justify-content:center;margin-top:26px;flex-wrap:wrap}
+  .accueil .etape{border:1px solid var(--ligne);border-radius:8px;padding:14px 16px;width:186px;
+    background:#fff;text-align:left;font-size:12.5px}
+  .accueil .etape b{display:block;font-size:11px;letter-spacing:.5px;text-transform:uppercase;
+    color:var(--bleu);margin-bottom:5px;font-weight:500}
+
+  /* ---- Panneau de collecte (carte Material) ---- */
+  .collecte{background:#fff;border:1px solid var(--ligne);border-radius:8px;
+    padding:16px 20px;margin-bottom:16px;display:none;max-width:780px}
+  .collecte h3{font-size:14.5px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .collecte h3 .mono{font-size:11.5px;color:var(--sourdine);font-weight:400}
+  .etape-ligne{display:flex;align-items:baseline;gap:10px;padding:7px 0;
+    border-bottom:1px solid #f1f3f4;font-size:13px}
+  .etape-ligne:last-child{border-bottom:0}
+  .etape-ligne .icone{width:18px;text-align:center;flex:none;font-family:'Roboto Mono',monospace}
+  .etape-ligne .lib{min-width:230px}
+  .etape-ligne .info{color:var(--sourdine);font-size:12.5px;flex:1}
+  .etape-ligne.ok .icone{color:var(--conforme);font-weight:700}
+  .etape-ligne.ko .icone{color:var(--echec);font-weight:700}
+  .etape-ligne.cours .lib{color:var(--bleu);font-weight:500}
+  .etape-ligne .duree{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--sourdine)}
+  .collecte .resume{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--texte);
+    font-weight:400;display:none}
+  .collecte .bascule{margin-left:auto;background:transparent;border:0;
+    color:var(--bleu);border-radius:100px;padding:5px 14px;font-size:12.5px;font-weight:500;
+    cursor:pointer;display:none}
+  .collecte .bascule:hover{background:#f6fafe}
+  .collecte.repliee{padding:10px 20px;margin-bottom:14px}
+  .collecte.repliee #listeEtapes{display:none}
+  .collecte.repliee .resume{display:inline}
+  .collecte.repliee h3{margin-bottom:0}
+
+  /* ---- Journal (console sombre, façon Cloud Logging) ---- */
+  .journal{margin-top:16px;max-width:780px}
+  .journal summary{cursor:pointer;font-size:12px;font-weight:500;letter-spacing:.5px;
+    text-transform:uppercase;color:var(--sourdine);user-select:none;padding:4px 0}
+  .journal pre{background:#202124;color:#e8eaed;border-radius:8px;padding:12px 14px;
+    font-family:'Roboto Mono',monospace;font-size:11.5px;line-height:1.6;
+    max-height:220px;overflow:auto;white-space:pre-wrap;margin:8px 0 0}
+  .journal pre .err{color:#f28b82}
+  .journal pre .ok{color:#81c995}
+
+  /* ---- Table des contrôles ---- */
+  table{border-collapse:collapse;width:100%;background:#fff;border:1px solid var(--ligne);
+    border-radius:8px;overflow:hidden;display:none}
+  th{font-size:12px;font-weight:500;color:var(--sourdine);text-align:left;
+    padding:12px;border-bottom:1px solid var(--ligne);background:#fff}
+  tr.section td{font-size:11.5px;font-weight:500;letter-spacing:.5px;
+    background:var(--papier);border-top:1px solid var(--ligne);border-bottom:1px solid var(--ligne);
+    padding:8px 12px;text-transform:uppercase;color:var(--sourdine)}
+  td{padding:10px 12px;border-bottom:1px solid #f1f3f4;vertical-align:top}
+  tbody tr:not(.section):hover td{background:#f8f9fa}
+  td.id{font-family:'Roboto Mono',monospace;font-size:12.5px;font-weight:500;white-space:nowrap;color:var(--accepte)}
+  td.niveau{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--sourdine);white-space:nowrap}
+  td.titre{min-width:260px}
+  td.statut{white-space:nowrap;width:140px}
+  td.constat{color:#3c4043;font-size:12.5px;max-width:560px}
+  td.constat details summary{cursor:pointer;color:var(--bleu);font-size:12px;user-select:none}
+  td.constat .remede{margin-top:5px;color:var(--sourdine);font-size:12px}
+  tr.cache{display:none}
+
+  /* ---- Chips de statut (Material) ---- */
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;
+    letter-spacing:.3px;padding:3px 10px;border-radius:100px}
+  .b-attente{color:var(--sourdine);background:#f1f3f4}
+  .b-cours{color:var(--bleu);background:var(--bleu-f)}
+  .b-CONFORME{color:var(--conforme);background:var(--conforme-f)}
+  .b-NONCONFORME{color:var(--echec);background:var(--echec-f)}
+  .b-AVERIFIER{color:var(--verif);background:var(--verif-f)}
+  .b-MANUEL{color:var(--manuel);background:var(--manuel-f)}
+  .b-ERREUR{color:var(--erreur);background:var(--erreur-f)}
+  .b-HORSPROFIL{color:var(--skip);background:var(--skip-f)}
+  .b-ECARTACCEPTE{color:var(--accepte);background:var(--accepte-f)}
+
+  .spin{width:11px;height:11px;border:2px solid #aecbfa;border-top-color:var(--bleu);
+    border-radius:50%;animation:rot .8s linear infinite;display:inline-block}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  tr.encours td{background:#f6fafe}
+  tr.nouveau td{animation:pose .5s ease}
+  @keyframes pose{from{background:#fef7e0}to{background:transparent}}
+
+  /* ---- Traitement des écarts ---- */
+  .actions-ligne{margin-top:6px}
+  .btn-accepter{background:#fff;border:1px solid var(--ligne);color:var(--bleu);
+    border-radius:100px;padding:4px 14px;font-size:12px;font-weight:500;cursor:pointer}
+  .btn-accepter:hover{background:#f6fafe;border-color:#d2e3fc}
+  .derog-info{margin-top:6px;background:var(--accepte-f);border-left:3px solid var(--accepte);
+    padding:7px 12px;font-size:12px;color:#3c4043;border-radius:0 8px 8px 0}
+  .derog-info .btn-revoquer{margin-left:8px;background:transparent;border:0;color:var(--echec);
+    font-size:11.5px;font-weight:500;cursor:pointer;font-family:inherit;padding:0}
+  .derog-info .btn-revoquer:hover{text-decoration:underline}
+
+  /* ---- Boîtes de dialogue (Material) ---- */
+  dialog#modalDerog,dialog#modalEmail{border:0;border-radius:16px;padding:0;max-width:560px;width:92vw;
+    box-shadow:var(--ombre-2)}
+  dialog#modalGuide{border:0;border-radius:16px;padding:0;max-width:760px;width:94vw;
+    box-shadow:var(--ombre-2)}
+  dialog::backdrop{background:rgba(32,33,36,.5)}
+  .modal-tete{background:#fff;color:var(--texte);padding:22px 24px 6px;
+    font-family:var(--police-titre);font-weight:500;font-size:18px;border-radius:16px 16px 0 0}
+  .modal-corps{padding:14px 24px;font-size:13.5px}
+  .modal-corps .ctrl-ref{font-family:'Roboto Mono',monospace;color:var(--accepte);font-weight:500}
+  .modal-bloc{margin:14px 0}
+  .modal-bloc .etiquette{font-size:11.5px;letter-spacing:.3px;font-weight:500;
+    color:var(--sourdine);display:block;margin-bottom:5px}
+  .bloc-risque{background:var(--echec-f);border-left:3px solid var(--echec);padding:9px 14px;
+    border-radius:0 8px 8px 0;color:#5c1a15}
+  .bloc-constat{background:var(--papier);border-left:3px solid var(--ligne);padding:9px 14px;
+    border-radius:0 8px 8px 0;color:#3c4043;max-height:110px;overflow:auto}
+  #derogMotif{width:100%;min-height:84px;border:1px solid var(--ligne);border-radius:8px;
+    padding:9px 12px;font:inherit;resize:vertical}
+  #derogDuree{border:1px solid var(--ligne);border-radius:8px;padding:8px 12px;font:inherit;background:#fff}
+  .modal-pied{display:flex;justify-content:flex-end;gap:8px;padding:10px 24px 18px;align-items:center}
+  .modal-pied .secondaire{background:transparent;border:0;border-radius:100px;
+    padding:9px 18px;font:inherit;font-weight:500;color:var(--bleu);cursor:pointer}
+  .modal-pied .secondaire:hover{background:#f6fafe}
+  .modal-pied .principal{background:var(--bleu);color:#fff;border:0;border-radius:100px;
+    padding:9px 22px;font-family:var(--police-titre);font-weight:500;cursor:pointer;
+    transition:background .15s,box-shadow .15s}
+  .modal-pied .principal:hover:not(:disabled){background:var(--bleu-fonce);box-shadow:var(--ombre-1)}
+  .modal-pied .principal:disabled{background:#f1f3f4;color:#9aa0a6;cursor:default}
+  .modal-erreur{color:var(--echec);font-size:12px;margin-right:auto;display:none}
+
+  .champ-email{width:100%;border:1px solid var(--ligne);border-radius:8px;
+    padding:9px 12px;font:inherit}
+  #emailMessage{min-height:70px;resize:vertical}
+  .cases-email{display:flex;flex-direction:column;gap:8px;font-size:13px}
+  .cases-email label{display:flex;align-items:center;gap:10px;cursor:pointer}
+  .cases-email input{accent-color:var(--bleu);width:16px;height:16px}
+
+  /* ---- Guide ---- */
+  .guide-corps{padding:8px 26px 20px;font-size:13.5px;max-height:70vh;overflow:auto;line-height:1.6}
+  .guide-corps h3{font-size:14px;margin:20px 0 6px;padding-top:14px;border-top:1px solid #f1f3f4;font-weight:500}
+  .guide-corps h3:first-child{margin-top:0;border-top:0;padding-top:0}
+  .guide-corps p{margin:6px 0}
+  .guide-corps a{color:var(--bleu);font-weight:500;text-decoration:none}
+  .guide-corps a:hover{text-decoration:underline}
+  .guide-corps .badge{margin-right:6px}
+  .guide-corps table{display:table;border:0;width:auto;border-radius:0;overflow:visible}
+  .guide-corps td{border:0;padding:4px 10px 4px 0;vertical-align:middle}
+  .guide-corps code{font-family:'Roboto Mono',monospace;font-size:12px;background:#f1f3f4;
+    border-radius:4px;padding:1px 6px}
+
+  /* ---- Footer ---- */
+  footer{background:#fff;color:var(--sourdine);padding:14px 24px;font-size:12px;
+    display:flex;align-items:center;gap:22px;flex-wrap:wrap;border-top:1px solid var(--ligne)}
+  footer .bloc-version{color:var(--texte);font-weight:500}
+  footer .bloc-version .num{background:#f1f3f4;border-radius:100px;padding:2px 10px;margin-left:6px;
+    font-family:'Roboto Mono',monospace;font-size:11px;color:var(--sourdine)}
+  footer a{color:var(--bleu);text-decoration:none;font-weight:500}
+  footer a:hover{text-decoration:underline}
+  footer .mention{margin-left:auto;font-size:11px;color:#9aa0a6;max-width:460px;text-align:right}
+  footer .lien-bandeau{padding:4px 10px}
+
+  @media(prefers-reduced-motion:reduce){
+    .spin{animation:none}
+    tr.nouveau td{animation:none}
+    .anneau-val{transition:none}
+    .barre.indeterminee i{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <span class="eyebrow">CIS Benchmark v1.4 · Google Workspace Foundations</span>
+    <h1>Registre d'audit de conformité <span class="chip-version">v<?= version ?></span></h1>
+  </div>
+  <div class="droite">
+    <button type="button" class="lien-bandeau" onclick="ouvrirGuide()">Guide</button>
+    <label class="opt" title="Lecture des réglages de confidentialité de chaque groupe (Groups Settings API). Sur un gros tenant (>2000 groupes), compter ~10 min avec 4 lots en parallèle. Si décoché, les contrôles 3.1.6.x s'appuient uniquement sur la Policy API.">
+      <input type="checkbox" id="optReglages" checked> Réglages par groupe
+    </label>
+    <div class="profil" role="group" aria-label="Profil d'audit">
+      <button type="button" id="pL1" onclick="choisirProfil('L1')">Niveau 1</button>
+      <button type="button" id="pL2" class="actif" onclick="choisirProfil('L2')">Niveaux 1+2</button>
+    </div>
+    <button type="button" id="btnArreter" onclick="demanderArret()">Arrêter</button>
+    <button type="button" id="btnLancer" onclick="lancerAudit()">Lancer l'audit</button>
+  </div>
+</header>
+
+<main>
+  <aside>
+    <div class="colle">
+      <div class="tampon" aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <circle class="anneau-ext" cx="60" cy="60" r="57"/>
+          <circle class="anneau-fond" cx="60" cy="60" r="48"/>
+          <circle id="anneauVal" class="anneau-val" cx="60" cy="60" r="48"
+                  stroke-dasharray="301.6" stroke-dashoffset="301.6"
+                  transform="rotate(-90 60 60)"/>
+        </svg>
+        <div class="valeur">
+          <span class="pct" id="scorePct">—</span>
+          <span class="lib">Conformité résiduelle (écarts acceptés exclus)</span>
+        </div>
+      </div>
+
+      <div class="avancement" id="scoreBrut" style="text-align:center;margin:-10px 0 10px"></div>
+      <div class="barre" aria-hidden="true"><i id="barreAv"></i></div>
+      <div class="avancement" id="txtAv">En attente de lancement</div>
+      <div class="chrono" id="chrono">Écoulé : <b id="chronoVal">00:00</b> · dernier retour serveur il y a <b id="battement">0 s</b></div>
+
+      <div class="compteurs" id="compteurs" role="group" aria-label="Filtrer par statut"></div>
+
+      <div class="meta" id="metaTenant"></div>
+
+      <button type="button" id="btnExport" onclick="exporterSheets()">Générer le rapport Sheets</button>
+      <div id="lienRapport"></div>
+      <button type="button" id="btnEmail" onclick="ouvrirEmail()">Envoyer par e-mail…</button>
+      <button type="button" id="btnReinit" onclick="location.reload()">Réinitialiser (nouvel audit)</button>
+    </div>
+  </aside>
+
+  <section class="registre">
+    <div class="avertissements" id="avertissements"></div>
+
+    <div class="collecte" id="panneauCollecte">
+      <h3>Phase 1 — Collecte du contexte <span class="mono" id="collecteEtat">démarrage…</span>
+        <span class="resume" id="collecteResume"></span>
+        <button type="button" class="bascule" id="btnBasculeCollecte" onclick="basculerCollecte()">Détails</button>
+      </h3>
+      <div id="listeEtapes"></div>
+    </div>
+
+    <details class="journal" id="journal" style="display:none" open>
+      <summary>Journal d'exécution</summary>
+      <pre id="journalCorps"></pre>
+    </details>
+
+    <div class="accueil" id="accueil">
+      <h2>89 contrôles, exécutés et affichés un par un</h2>
+      <p>Choisissez le profil (Niveau 1 seul ou complet), puis lancez l'audit avec un compte
+        super administrateur. Chaque résultat s'inscrit au registre dès que le contrôle est terminé.</p>
+      <div class="etapes">
+        <div class="etape"><b>Phase 1</b>Collecte unique : politiques Cloud Identity, utilisateurs, domaines, groupes.</div>
+        <div class="etape"><b>Phase 2</b>Exécution des contrôles en parallèle, résultat affiché au fil de l'eau.</div>
+        <div class="etape"><b>Phase 3</b>Export facultatif du rapport complet en Google Sheets.</div>
+      </div>
+    </div>
+
+    <table id="tableau" aria-live="polite">
+      <thead><tr><th>ID</th><th>Niv.</th><th>Contrôle</th><th>Statut</th><th>Constat</th></tr></thead>
+      <tbody id="corps"></tbody>
+    </table>
+  </section>
+</main>
+
+<footer>
+  <span class="bloc-version">Registre d'audit CIS Workspace<span class="num" id="appVersion">v<?= version ?></span></span>
+  <span>Référentiel : <a href="https://www.cisecurity.org/benchmark/google_workspace" target="_blank" rel="noopener">CIS Google Workspace Foundations Benchmark v1.4</a></span>
+  <button type="button" class="lien-bandeau" onclick="ouvrirGuide()">Guide d'utilisation</button>
+  <span class="mention">Outil interne d'aide à l'évaluation, non affilié au Center for Internet Security®. Le document officiel du benchmark (PDF) est diffusé par le CIS sur son site ; il fait foi pour l'interprétation des recommandations.</span>
+</footer>
+
+<dialog id="modalGuide" aria-labelledby="guideTitre">
+  <div class="modal-tete" id="guideTitre">Guide — Audit CIS Google Workspace</div>
+  <div class="guide-corps">
+    <h3>Le référentiel</h3>
+    <p>Cet outil vérifie automatiquement le tenant Google Workspace contre les <b>86 recommandations</b> du
+      <a href="https://www.cisecurity.org/benchmark/google_workspace" target="_blank" rel="noopener">CIS Google Workspace Foundations Benchmark v1.4</a>,
+      référentiel de configuration sécurisée publié par le Center for Internet Security. Le PDF officiel se télécharge
+      gratuitement depuis cette page (inscription CIS demandée) ; les identifiants affichés ici (ex. <code>3.1.3.5.2</code>)
+      renvoient aux sections correspondantes du document, qui détaille pour chaque point la justification, l'audit et la remédiation.</p>
+
+    <h3>Profils Niveau 1 / Niveaux 1+2</h3>
+    <p><b>Niveau 1</b> : socle de sécurité essentiel, applicable à la plupart des organisations avec un impact
+      fonctionnel limité. <b>Niveau 2</b> : durcissement pour environnements exigeants (défense en profondeur),
+      pouvant restreindre certains usages (ex. Drive pour ordinateur, POP/IMAP). Le sélecteur du bandeau
+      détermine les contrôles exécutés ; les contrôles N2 hors profil sont classés « HORS PROFIL ».</p>
+
+    <h3>Déroulé d'un audit</h3>
+    <p><b>Phase 1 — Collecte</b> : lecture unique du contexte (politiques Cloud Identity, utilisateurs et 2SV, domaines,
+      groupes). Le panneau affiche chaque étape avec son avancement. L'option « Réglages par groupe » lit la
+      confidentialité de chaque groupe (plus long ; décochable, les contrôles 3.1.6.x s'appuient alors sur la seule Policy API).<br>
+      <b>Phase 2 — Contrôles</b> : les 89 vérifications s'exécutent en parallèle, chaque résultat s'inscrit au registre dès
+      qu'il est connu.<br>
+      <b>Phase 3 — Export</b> : génération du rapport Google Sheets (synthèse, détail, plan d'actions, registre des
+      dérogations, politiques brutes).</p>
+
+    <h3>Lecture des statuts</h3>
+    <table>
+      <tr><td><span class="badge b-CONFORME">CONFORME</span></td><td>la configuration relevée correspond à la recommandation.</td></tr>
+      <tr><td><span class="badge b-NONCONFORME">NON CONFORME</span></td><td>écart avéré — à corriger (plan d'actions) ou à accepter formellement.</td></tr>
+      <tr><td><span class="badge b-ECARTACCEPTE">ÉCART ACCEPTÉ</span></td><td>dérogation enregistrée au registre : motif, acceptant, échéance de révision.</td></tr>
+      <tr><td><span class="badge b-AVERIFIER">À VÉRIFIER</span></td><td>données collectées mais jugement humain requis, ou réglage non interprétable automatiquement (voir l'onglet « Politiques (brut) » du rapport).</td></tr>
+      <tr><td><span class="badge b-MANUEL">MANUEL</span></td><td>non exposé par API (revues de tableaux de bord, règles d'alertes…) — le chemin console est indiqué.</td></tr>
+      <tr><td><span class="badge b-ERREUR">ERREUR</span></td><td>échec technique (droits, API non activée, réseau) — la cause est dans le constat et le journal.</td></tr>
+    </table>
+
+    <h3>Traiter les écarts</h3>
+    <p>Chaque ligne NON CONFORME propose « Accepter l'écart… » : la fenêtre présente le <b>risque assumé</b> et le
+      constat, puis exige un motif (mesures compensatoires, contexte métier) et une échéance de révision. Les
+      dérogations sont durables et partagées entre administrateurs ; révocables en un clic. Le <b>tampon</b> affiche le
+      score <i>résiduel</i> (écarts acceptés exclus), le score <i>brut</i> reste indiqué dessous. L'export Sheets fournit le
+      plan d'actions priorisé (P1/P2) pour les écarts restants et le registre des dérogations avec alertes de révision.</p>
+
+    <h3>Bonnes pratiques d'exécution</h3>
+    <p>Exécuter avec un compte <b>super administrateur</b> (exigé par la Policy API). Garder l'onglet ouvert et le poste
+      alimenté (l'anti-veille maintient l'écran, pas le capot fermé). En cas de coupure, l'audit se suspend
+      automatiquement : « Reprendre l'audit » repart où il s'était arrêté (contexte conservé 6 h). La version affichée
+      au pied de page est celle du <b>serveur déployé</b> : après une mise à jour du code, si elle n'a pas changé,
+      le redéploiement (« Nouvelle version ») n'a pas été fait.</p>
+
+    <h3>Mentions</h3>
+    <p>CIS® et CIS Benchmarks™ sont des marques du Center for Internet Security, Inc. Cet outil interne n'est ni
+      édité ni approuvé par le CIS ; en cas de divergence, le document officiel prévaut.</p>
+  </div>
+  <div class="modal-pied">
+    <button type="button" class="principal" onclick="fermerGuide()">Fermer</button>
+  </div>
+</dialog>
+
+<dialog id="modalEmail" aria-labelledby="emailTitre">
+  <div class="modal-tete" id="emailTitre">Envoyer les résultats par e-mail</div>
+  <div class="modal-corps">
+    <div class="modal-bloc">
+      <span class="etiquette">Destinataires (séparés par des virgules)</span>
+      <input type="text" class="champ-email" id="emailDest" placeholder="prenom.nom@cooperl.com, rssi@cooperl.com">
+    </div>
+    <div class="modal-bloc">
+      <span class="etiquette">Objet</span>
+      <input type="text" class="champ-email" id="emailObjet">
+    </div>
+    <div class="modal-bloc">
+      <span class="etiquette">Message d'accompagnement (facultatif)</span>
+      <textarea class="champ-email" id="emailMessage" placeholder="Contexte, décisions attendues, échéances…"></textarea>
+    </div>
+    <div class="modal-bloc cases-email">
+      <label><input type="checkbox" id="emailLien" checked> Générer le rapport Google Sheets et joindre son lien</label>
+      <label><input type="checkbox" id="emailDetails" checked> Inclure la liste des écarts à corriger dans le corps du message</label>
+    </div>
+  </div>
+  <div class="modal-pied">
+    <span class="modal-erreur" id="emailErreur"></span>
+    <button type="button" class="secondaire" onclick="fermerEmail()">Annuler</button>
+    <button type="button" class="principal" id="emailEnvoyer" onclick="confirmerEnvoiEmail()">Envoyer</button>
+  </div>
+</dialog>
+
+<dialog id="modalDerog" aria-labelledby="modalTitre">
+  <div class="modal-tete" id="modalTitre">Accepter un écart en connaissance de cause</div>
+  <div class="modal-corps">
+    <div><span class="ctrl-ref" id="derogRef"></span> — <span id="derogTitreCtrl"></span></div>
+    <div class="modal-bloc">
+      <span class="etiquette">Risque assumé en acceptant cet écart</span>
+      <div class="bloc-risque" id="derogRisque"></div>
+    </div>
+    <div class="modal-bloc">
+      <span class="etiquette">Constat de l'audit</span>
+      <div class="bloc-constat" id="derogConstat"></div>
+    </div>
+    <div class="modal-bloc">
+      <span class="etiquette">Motif de la dérogation (obligatoire — compensations, contexte métier…)</span>
+      <textarea id="derogMotif" placeholder="Ex. : transfert automatique requis par l'outil X pour le service Y ; mesure compensatoire : règle de routage limitée au domaine partenaire, revue trimestrielle des règles."></textarea>
+    </div>
+    <div class="modal-bloc">
+      <span class="etiquette">Échéance de révision</span>
+      <select id="derogDuree">
+        <option value="3">Dans 3 mois</option>
+        <option value="6" selected>Dans 6 mois</option>
+        <option value="12">Dans 12 mois</option>
+        <option value="0">Permanente (revue à chaque audit)</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-pied">
+    <span class="modal-erreur" id="derogErreur"></span>
+    <button type="button" class="secondaire" onclick="fermerModale()">Annuler</button>
+    <button type="button" class="principal" id="derogConfirmer" onclick="confirmerAcceptation()">Accepter l'écart</button>
+  </div>
+</dialog>
+
+<script>
+  const CONCURRENCE = 3;
+  const SECTIONS = [
+    ['6.','6 — Règles d\'alertes administrateur'],
+    ['5.','5 — Revue des rapports'],
+    ['4.3','4.3 — Supervision de la sécurité'],
+    ['4.2','4.2 — Contrôles d\'accès'],
+    ['4.1','4.1 — Authentification'],
+    ['3.1.9','3.1.9 — Marketplace'],
+    ['3.1.8','3.1.8 — Services Google supplémentaires'],
+    ['3.1.7','3.1.7 — Sites'],
+    ['3.1.6','3.1.6 — Groups for Business'],
+    ['3.1.4','3.1.4 — Google Chat'],
+    ['3.1.3','3.1.3 — Gmail'],
+    ['3.1.2','3.1.2 — Drive et Docs'],
+    ['3.1.1','3.1.1 — Agenda'],
+    ['1.2','1.2 — Annuaire'],
+    ['1.1','1.1 — Comptes super administrateur']
+  ];
+  const ORDRE_STATUTS = ['CONFORME','NON CONFORME','ÉCART ACCEPTÉ','À VÉRIFIER','MANUEL','ERREUR','HORS PROFIL'];
+  const CLASSE = s => 'b-' + s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s/g,'');
+
+  let profil='L2', token=null, controles=[], etapes=[], file=[], actifs=0;
+  let resultats={}, compte={}, total=0, faits=0, enCours=false, filtre=null;
+  let reessayes = new Map();
+  let tDebut=null, tDernierRetour=null, minuteur=null, etapeEnCoursDepuis=null;
+  let stopDemande=false, interrompu=false, phase=null, posCollecte=null;
+  let cfg=null, nbGroupes=0, reglagesEtat=null, echecsConsec=0, wakeLock=null;
+  let derogations = {}, derogEnCours = null;
+  let compteCollecte = {}, compteSession = '';
+  const CONCURRENCE_REGLAGES = 4;
+
+  /** Message d'erreur lisible : google.script.run renvoie "undefined" quand la
+      connexion est coupée (veille du poste, réseau) ou la session interrompue. */
+  function msgErreur(e){
+    const m = e && e.message;
+    return (m && m !== 'undefined') ? m : 'erreur réseau ou session interrompue (mise en veille du poste ?)';
+  }
+
+  // ---------- Anti-veille (Screen Wake Lock) ----------
+  async function demanderWakeLock(){
+    try{
+      if ('wakeLock' in navigator && !wakeLock){
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+        journal('Anti-veille activé : l\'écran restera allumé pendant l\'audit (ne pas fermer le capot).');
+      }
+    }catch(e){
+      journal('Anti-veille indisponible (' + msgErreur(e) + ') — désactiver la mise en veille du poste pendant l\'audit.');
+    }
+  }
+  function relacherWakeLock(){
+    try{ if (wakeLock){ wakeLock.release(); wakeLock = null; } }catch(e){}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && enCours && !wakeLock) demanderWakeLock();
+  });
+
+  // ---------- Journal & vitalité ----------
+  function journal(msg, classe){
+    const z = document.getElementById('journal');
+    z.style.display = 'block';
+    const corps = document.getElementById('journalCorps');
+    const h = new Date().toTimeString().slice(0,8);
+    const ligne = document.createElement('span');
+    if (classe) ligne.className = classe;
+    ligne.textContent = h + '  ' + msg + '\n';
+    corps.appendChild(ligne);
+    corps.scrollTop = corps.scrollHeight;
+  }
+  function battementRecu(){ tDernierRetour = Date.now(); }
+  function demarrerChrono(){
+    tDebut = Date.now(); tDernierRetour = Date.now();
+    document.getElementById('chrono').style.display = 'block';
+    minuteur = setInterval(() => {
+      const s = Math.floor((Date.now()-tDebut)/1000);
+      document.getElementById('chronoVal').textContent =
+        String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+      const b = Math.floor((Date.now()-tDernierRetour)/1000);
+      document.getElementById('battement').textContent = b + ' s';
+      if (b > 0 && b % 45 === 0) journal('Appel serveur toujours en cours (' + b + ' s sans retour) — normal si le tenant est volumineux.');
+    }, 1000);
+  }
+  function arreterChrono(){ if (minuteur){ clearInterval(minuteur); minuteur=null; } }
+
+  /** Attente programmée (quota API) : compte à rebours visible puis rappel. */
+  function attenteProgrammee(ligne, secondes, message, rappel){
+    let restant = secondes;
+    const maj = () => {
+      if (ligne) ligne.querySelector('.info').textContent = message + ' — reprise dans ' + restant + ' s';
+    };
+    maj();
+    const iv = setInterval(() => { restant--; if (restant > 0) maj(); else clearInterval(iv); }, 1000);
+    setTimeout(() => { clearInterval(iv); rappel(); }, secondes * 1000);
+  }
+
+  function ouvrirGuide(){ document.getElementById('modalGuide').showModal(); }
+  function fermerGuide(){ document.getElementById('modalGuide').close(); }
+  const VERSION_PAGE = (document.getElementById('appVersion').textContent || '').replace(/^v/,'');
+
+  function choisirProfil(p){
+    if (enCours || interrompu) return; // le profil est figé tant qu'une reprise est possible
+    profil = p;
+    document.getElementById('pL1').classList.toggle('actif', p==='L1');
+    document.getElementById('pL2').classList.toggle('actif', p==='L2');
+  }
+  function sectionDe(id){
+    for (const [pre, lib] of SECTIONS) if (id.startsWith(pre)) return lib;
+    return 'Autres';
+  }
+
+  // ---------- Lancement ----------
+  function lancerAudit(){
+    if (enCours) return;
+    if (interrompu && token){ reprendre(); return; }
+    enCours = true;
+    stopDemande = false; interrompu = false; phase = null; posCollecte = null;
+    document.getElementById('btnArreter').style.display = 'inline-block';
+    document.getElementById('btnArreter').disabled = false;
+    document.getElementById('btnArreter').textContent = 'Arrêter';
+    document.getElementById('btnReinit').style.display = 'none';
+    reessayes = new Map(); resultats = {}; compte = {}; faits = 0; filtre = null;
+    cfg = null; nbGroupes = 0; reglagesEtat = null; echecsConsec = 0;
+    document.getElementById('btnLancer').disabled = true;
+    document.getElementById('accueil').style.display = 'none';
+    document.getElementById('corps').innerHTML = '';
+    document.getElementById('tableau').style.display = 'none';
+    document.getElementById('btnExport').style.display = 'none';
+    document.getElementById('btnEmail').style.display = 'none';
+    document.getElementById('lienRapport').style.display = 'none';
+    demarrerChrono();
+    demanderWakeLock();
+    journal('Ouverture de la session d\'audit (profil ' + profil + ')…');
+    const barre = document.getElementById('barreAv');
+    barre.parentElement.classList.add('indeterminee');
+    document.getElementById('txtAv').textContent = 'Ouverture de la session…';
+    google.script.run
+      .withSuccessHandler(preparerCollecte)
+      .withFailureHandler(e => echecFatal('Ouverture de session impossible : ' + e.message +
+        ' — vérifier le déploiement de la WebApp et les autorisations.'))
+      .demarrerSession(profil);
+  }
+
+  function echecFatal(msg){
+    enCours = false; arreterChrono();
+    relacherWakeLock();
+    document.getElementById('optReglages').disabled = false;
+    document.getElementById('btnArreter').style.display = 'none';
+    document.getElementById('btnLancer').disabled = false;
+    document.getElementById('barreAv').parentElement.classList.remove('indeterminee');
+    document.getElementById('txtAv').textContent = 'Interrompu';
+    afficherAvert(msg);
+    journal('ÉCHEC : ' + msg, 'err');
+  }
+
+  // ---------- Phase 1 : collecte pilotée étape par étape ----------
+  function preparerCollecte(session){
+    battementRecu();
+    token = session.token;
+    controles = session.controles;
+    etapes = session.etapes;
+    cfg = session.config || { maxUtilisateurs: 12000, maxGroupes: 3000, groupesParAppel: 40 };
+    derogations = session.derogations || {};
+    compteSession = session.compte || '';
+    compteCollecte = {};
+    const nDerog = Object.keys(derogations).length;
+    if (nDerog) journal(nDerog + ' dérogation(s) au registre — les écarts couverts seront affichés « ÉCART ACCEPTÉ ».');
+    document.getElementById('optReglages').disabled = true;
+    total = controles.length;
+    journal('Session ouverte (' + session.compte + ') — outil v' + (session.version || '?') + ' — ' + total + ' contrôles au registre.', 'ok');
+    if (session.version && VERSION_PAGE && session.version !== VERSION_PAGE){
+      afficherAvert('La page a été chargée en v' + VERSION_PAGE + ' mais le serveur exécute la v' + session.version + ' — recharger la page (F5) pour aligner l\'interface.');
+      journal('Version de page (' + VERSION_PAGE + ') différente du serveur (' + session.version + ') — recharger la page.', 'err');
+    }
+    document.getElementById('metaTenant').innerHTML =
+      '<span><b>Profil</b> : ' + (session.niveau==='L1'?'Niveau 1':'Niveaux 1+2') + '</span>' +
+      '<span><b>Compte</b> : ' + echapper(session.compte) + '</span>';
+
+    const liste = document.getElementById('listeEtapes');
+    liste.innerHTML = '';
+    etapes.forEach(et => {
+      const d = document.createElement('div');
+      d.className = 'etape-ligne';
+      d.id = 'etape-' + et.cle;
+      d.innerHTML = '<span class="icone">·</span><span class="lib">' + echapper(et.libelle) + '</span>' +
+                    '<span class="info">en attente</span><span class="duree"></span>';
+      liste.appendChild(d);
+    });
+    document.getElementById('panneauCollecte').style.display = 'block';
+    document.getElementById('panneauCollecte').classList.remove('repliee');
+    document.getElementById('btnBasculeCollecte').style.display = 'none';
+    document.getElementById('collecteResume').textContent = '';
+    document.getElementById('journal').setAttribute('open', '');
+    document.getElementById('collecteEtat').textContent = 'en cours';
+    document.getElementById('txtAv').textContent = 'Phase 1 — collecte du contexte…';
+    executerEtape(0, null);
+  }
+
+  function executerEtape(idx, curseur, tentative){
+    phase = 'collecte';
+    tentative = tentative || 0;
+    if (stopDemande){
+      posCollecte = { idx: idx, curseur: curseur }; // position exacte pour la reprise
+      stopEffectif();
+      return;
+    }
+    if (idx >= etapes.length){ finCollecte(); return; }
+    const et = etapes[idx];
+    const ligne = document.getElementById('etape-' + et.cle);
+    if (et.cle === 'reglages'){ etapeReglages(idx, ligne); return; } // étape parallélisée dédiée
+    if (!curseur && tentative === 0){
+      etapeEnCoursDepuis = Date.now();
+      ligne.className = 'etape-ligne cours';
+      ligne.querySelector('.icone').innerHTML = '<span class="spin"></span>';
+      ligne.querySelector('.info').textContent = 'démarrage…';
+      journal('Collecte : ' + et.libelle + '…');
+    }
+    google.script.run
+      .withSuccessHandler(r => {
+        battementRecu(); echecsConsec = 0;
+        if (r.attente){
+          // Quota API : l'acquis est sauvegardé côté serveur, on attend puis
+          // on rappelle exactement la même position — aucun abandon d'étape.
+          journal('Quota API sur "' + et.libelle + '" : ' + (r.info || 'limite atteinte') +
+            ' — reprise automatique dans ' + r.attente + ' s. (Si récurrent : augmenter les quotas de l\'API dans la console GCP du projet.)', 'err');
+          attenteProgrammee(ligne, r.attente, r.info || 'quota API atteint',
+            () => executerEtape(idx, r.curseur));
+          return;
+        }
+        const duree = Math.round((Date.now()-etapeEnCoursDepuis)/1000);
+        ligne.querySelector('.info').textContent = r.info || '';
+        ligne.querySelector('.duree').textContent = duree + ' s';
+        if (et.cle === 'groupes' && r.fait) nbGroupes = r.fait;
+        if (r.fait !== undefined) compteCollecte[et.cle] = r.fait;
+        if (r.erreur){
+          ligne.className = 'etape-ligne ko';
+          ligne.querySelector('.icone').textContent = '✕';
+          journal('Collecte "' + et.libelle + '" en échec : ' + r.erreur, 'err');
+          afficherAvert('Collecte partielle — ' + r.info);
+          executerEtape(idx + 1, null);
+        } else if (r.termine){
+          ligne.className = 'etape-ligne ok';
+          ligne.querySelector('.icone').textContent = '✓';
+          journal('OK — ' + r.info + ' (' + duree + ' s)', 'ok');
+          executerEtape(idx + 1, null);
+        } else {
+          journal('… ' + r.info);
+          executerEtape(idx, r.curseur); // tranche suivante de la même étape
+        }
+      })
+      .withFailureHandler(e => {
+        battementRecu();
+        if (tentative < 2 && !stopDemande){
+          const delai = tentative === 0 ? 3000 : 10000;
+          journal('Collecte "' + et.libelle + '" — échec (' + msgErreur(e) + '), nouvelle tentative dans ' + (delai/1000) + ' s.', 'err');
+          setTimeout(() => executerEtape(idx, curseur, tentative + 1), delai);
+          return;
+        }
+        ligne.className = 'etape-ligne ko';
+        ligne.querySelector('.icone').textContent = '✕';
+        ligne.querySelector('.info').textContent = 'échec : ' + msgErreur(e);
+        journal('Collecte "' + et.libelle + '" — abandon après 3 tentatives : ' + msgErreur(e), 'err');
+        afficherAvert('Étape "' + et.libelle + '" en échec : ' + msgErreur(e) + ' — l\'audit continue, les contrôles dépendants seront en ERREUR.');
+        executerEtape(idx + 1, null);
+      })
+      .collecterEtape(token, et.cle, curseur);
+  }
+
+  // ---------- Étape "réglages par groupe" : lots parallèles + reprise ----------
+  function etapeReglages(idx, ligne){
+    if (!document.getElementById('optReglages').checked){
+      ligne.className = 'etape-ligne ok';
+      ligne.querySelector('.icone').textContent = '–';
+      ligne.querySelector('.info').textContent = 'ignorée (option décochée) — contrôles 3.1.6.x via Policy API uniquement';
+      journal('Réglages par groupe : étape ignorée (option décochée).');
+      executerEtape(idx + 1, null);
+      return;
+    }
+    const E = reglagesEtat || (reglagesEtat = {
+      prochain: 0,
+      borne: Math.min(nbGroupes || 0, cfg.maxGroupes),
+      faits: 0,
+      actifs: 0
+    });
+    if (E.borne === 0){
+      ligne.className = 'etape-ligne ok';
+      ligne.querySelector('.icone').textContent = '✓';
+      ligne.querySelector('.info').textContent = 'aucun groupe à analyser';
+      reglagesEtat = null;
+      executerEtape(idx + 1, null);
+      return;
+    }
+    etapeEnCoursDepuis = Date.now();
+    ligne.className = 'etape-ligne cours';
+    ligne.querySelector('.icone').innerHTML = '<span class="spin"></span>';
+    const estMin = Math.ceil((E.borne - E.faits) / cfg.groupesParAppel / CONCURRENCE_REGLAGES * 40 / 60);
+    journal('Réglages de groupes : ' + (E.borne - E.faits) + ' à lire, ' + CONCURRENCE_REGLAGES +
+      ' lots en parallèle (durée estimée ~' + estMin + ' min).');
+
+    function majInfo(){
+      ligne.querySelector('.info').textContent = E.faits + ' / ' + E.borne + ' réglages de groupes lus';
+    }
+    function finirSiVide(){
+      if (E.actifs > 0) return;
+      if (stopDemande){
+        posCollecte = { idx: idx, curseur: null }; // reglagesEtat conserve la position réelle
+        stopEffectif();
+        return;
+      }
+      const duree = Math.round((Date.now()-etapeEnCoursDepuis)/1000);
+      ligne.className = 'etape-ligne ok';
+      ligne.querySelector('.icone').textContent = '✓';
+      ligne.querySelector('.duree').textContent = duree + ' s';
+      majInfo();
+      journal('OK — ' + E.faits + ' / ' + E.borne + ' réglages de groupes lus (' + duree + ' s)', 'ok');
+      compteCollecte.reglages = E.faits + '/' + E.borne;
+      reglagesEtat = null;
+      executerEtape(idx + 1, null);
+    }
+    function lancerLot(){
+      if (stopDemande || E.prochain >= E.borne){ finirSiVide(); return; }
+      const debut = E.prochain;
+      E.prochain += cfg.groupesParAppel;
+      E.actifs++;
+      appelerLot(debut, 0);
+    }
+    function appelerLot(debut, tentative){
+      google.script.run
+        .withSuccessHandler(r => {
+          battementRecu(); echecsConsec = 0;
+          if (r && r.attente){
+            journal('Quota Groups Settings : lot ' + debut + ' reporté — reprise dans ' + r.attente + ' s.', 'err');
+            attenteProgrammee(ligne, r.attente, E.faits + ' / ' + E.borne + ' lus, quota API atteint',
+              () => appelerLot(debut, tentative));
+            return; // le worker reste occupé pendant l'attente, sans marteler l'API
+          }
+          if (r && r.borne && r.borne !== E.borne) E.borne = r.borne;
+          if (r && r.erreur){
+            journal('Lot ' + debut + ' : ' + r.erreur, 'err');
+          }
+          E.faits = Math.min(E.faits + cfg.groupesParAppel, E.borne);
+          majInfo();
+          E.actifs--;
+          lancerLot();
+        })
+        .withFailureHandler(e => {
+          battementRecu();
+          if (stopDemande){
+            E.prochain = Math.min(E.prochain, debut); // le lot sera rejoué à la reprise
+            E.actifs--;
+            finirSiVide();
+            return;
+          }
+          if (tentative < 2){
+            const delai = tentative === 0 ? 3000 : 10000;
+            journal('Lot de réglages ' + debut + ' en échec (' + msgErreur(e) + ') — nouvelle tentative dans ' + (delai/1000) + ' s.', 'err');
+            setTimeout(() => appelerLot(debut, tentative + 1), delai);
+            return;
+          }
+          journal('Lot de réglages ' + debut + ' abandonné après 3 tentatives : ' + msgErreur(e), 'err');
+          E.faits = Math.min(E.faits + cfg.groupesParAppel, E.borne);
+          majInfo();
+          E.actifs--;
+          lancerLot();
+        })
+        .collecterReglagesTranche(token, debut);
+    }
+    for (let i = 0; i < CONCURRENCE_REGLAGES; i++) lancerLot();
+  }
+
+  function finCollecte(){
+    document.getElementById('collecteEtat').textContent = 'terminée';
+    // Repli : place aux résultats — un résumé d'une ligne remplace le détail,
+    // le bouton « Détails » et le journal restent accessibles à la demande.
+    const fr = n => (typeof n === 'number') ? n.toLocaleString('fr-FR') : (n || '?');
+    const morceaux = [];
+    if (compteCollecte.domaines !== undefined) morceaux.push(fr(compteCollecte.domaines) + ' domaines');
+    if (compteCollecte.politiques !== undefined) morceaux.push(fr(compteCollecte.politiques) + ' politiques');
+    if (compteCollecte.utilisateurs !== undefined) morceaux.push(fr(compteCollecte.utilisateurs) + ' utilisateurs');
+    if (compteCollecte.groupes !== undefined) morceaux.push(fr(compteCollecte.groupes) + ' groupes');
+    if (compteCollecte.reglages !== undefined) morceaux.push('réglages ' + compteCollecte.reglages);
+    document.getElementById('collecteResume').textContent = morceaux.join(' · ');
+    document.getElementById('panneauCollecte').classList.add('repliee');
+    document.getElementById('btnBasculeCollecte').style.display = 'inline-block';
+    document.getElementById('journal').removeAttribute('open');
+    journal('Phase 1 terminée — passage à l\'exécution des contrôles.', 'ok');
+    construireRegistre();
+  }
+
+  function basculerCollecte(){
+    const p = document.getElementById('panneauCollecte');
+    p.classList.toggle('repliee');
+    document.getElementById('btnBasculeCollecte').textContent =
+      p.classList.contains('repliee') ? 'Détails' : 'Replier';
+  }
+
+  // ---------- Phase 2 : contrôles ----------
+  function construireRegistre(){
+    phase = 'controles';
+    const corps = document.getElementById('corps');
+    let derniereSection = null;
+    controles.forEach(c => {
+      const sec = sectionDe(c.id);
+      if (sec !== derniereSection){
+        derniereSection = sec;
+        const tr = document.createElement('tr');
+        tr.className = 'section';
+        tr.innerHTML = '<td colspan="5">' + sec + '</td>';
+        corps.appendChild(tr);
+      }
+      const tr = document.createElement('tr');
+      tr.id = 'ctrl-' + c.id.replace(/\./g,'-');
+      tr.dataset.statut = '';
+      tr.innerHTML =
+        '<td class="id">' + c.id + '</td>' +
+        '<td class="niveau">' + c.level + '</td>' +
+        '<td class="titre">' + echapper(c.titre) + '</td>' +
+        '<td class="statut"><span class="badge b-attente">EN ATTENTE</span></td>' +
+        '<td class="constat"></td>';
+      corps.appendChild(tr);
+    });
+    document.getElementById('tableau').style.display = 'table';
+    const barre = document.getElementById('barreAv');
+    barre.parentElement.classList.remove('indeterminee');
+    barre.style.width = '0%';
+    majCompteurs();
+
+    file = [];
+    controles.forEach(c => {
+      if (profil === 'L1' && c.level === 'L2'){
+        poserResultat({ id:c.id, level:c.level, titre:c.titre, statut:'HORS PROFIL',
+          detail:'Contrôle de niveau 2 exclu du profil Niveau 1.', remediation:'' });
+      } else {
+        file.push(c.id);
+      }
+    });
+    document.getElementById('txtAv').textContent = 'Phase 2 — exécution des contrôles…';
+    journal('Phase 2 — ' + file.length + ' contrôles à exécuter (' + CONCURRENCE + ' en parallèle).');
+    for (let i = 0; i < CONCURRENCE; i++) suivant();
+  }
+
+  function suivant(){
+    if (stopDemande){
+      if (actifs === 0) stopEffectif(); // les appels en vol se sont terminés proprement
+      return;
+    }
+    if (!file.length){
+      if (actifs === 0) terminer();
+      return;
+    }
+    const id = file.shift();
+    actifs++;
+    const tr = ligne(id);
+    tr.classList.add('encours');
+    tr.querySelector('.statut').innerHTML = '<span class="badge b-cours"><span class="spin"></span>EN COURS</span>';
+    google.script.run
+      .withSuccessHandler(rs => { battementRecu(); echecsConsec = 0; poserResultat(rs[0]); actifs--; suivant(); })
+      .withFailureHandler(e => {
+        battementRecu();
+        echecsConsec++;
+        // Disjoncteur : une rafale d'échecs identiques = connexion perdue
+        // (mise en veille, réseau). On suspend proprement au lieu de marquer
+        // toute la file en ERREUR ; la reprise rejouera les contrôles.
+        if (echecsConsec >= 6){
+          file.unshift(id);
+          if (!stopDemande){
+            stopDemande = true;
+            journal('Connexion au serveur perdue (' + msgErreur(e) + ') — suspension automatique de l\'audit. Cliquer « Reprendre l\'audit » une fois la connexion rétablie.', 'err');
+            afficherAvert('Audit suspendu automatiquement : connexion au serveur perdue. Reprendre une fois le poste/réseau rétabli.');
+            const b = document.getElementById('btnArreter');
+            b.disabled = true; b.textContent = 'Suspension…';
+          }
+          actifs--;
+          if (actifs === 0) stopEffectif();
+          return;
+        }
+        const n = reessayes.get(id) || 0;
+        if (n < 2){
+          reessayes.set(id, n + 1);
+          const delai = n === 0 ? 3000 : 10000;
+          journal('Contrôle ' + id + ' en échec (' + msgErreur(e) + ') — tentative ' + (n + 2) + '/3 dans ' + (delai/1000) + ' s.', 'err');
+          setTimeout(() => { file.unshift(id); actifs--; suivant(); }, delai);
+          return;
+        }
+        journal('Contrôle ' + id + ' en échec après 3 tentatives : ' + msgErreur(e), 'err');
+        poserResultat({ id:id, statut:'ERREUR', detail:'Appel serveur en échec (3 tentatives) : ' + msgErreur(e), titre:'', level:'', remediation:'' });
+        actifs--; suivant();
+      })
+      .executerControles(token, [id], profil);
+  }
+
+  function statutEffectif(r){
+    return (r.statut === 'NON CONFORME' && derogations[r.id]) ? 'ÉCART ACCEPTÉ' : r.statut;
+  }
+
+  function afficherLigne(r){
+    const tr = ligne(r.id);
+    const eff = statutEffectif(r);
+    tr.dataset.statut = eff;
+    tr.querySelector('.statut').innerHTML = '<span class="badge ' + CLASSE(eff) + '">' + eff + '</span>';
+    const cellule = tr.querySelector('.constat');
+    const court = echapper((r.detail || '').split(' | ')[0]).slice(0, 220);
+    let html = court + ((r.detail||'').length > court.length ? '…' : '');
+    if ((r.detail && r.detail.length > 220) || r.remediation || r.risque){
+      html = '<details><summary>' + (court || 'Détail') + '</summary>' +
+             '<div>' + echapper(r.detail || '') + '</div>' +
+             (r.risque ? '<div class="remede">Risque couvert : ' + echapper(r.risque) + '</div>' : '') +
+             (r.remediation ? '<div class="remede">Remédiation : ' + echapper(r.remediation) + '</div>' : '') +
+             '</details>';
+    }
+    if (eff === 'ÉCART ACCEPTÉ'){
+      const d = derogations[r.id];
+      html += '<div class="derog-info">Écart accepté par ' + echapper(d.par) + ' le ' + echapper(d.date) +
+              (d.revision ? ' — à réviser le ' + echapper(d.revision) : ' — permanente') +
+              '.<br>Motif : ' + echapper(d.motif) +
+              '<button type="button" class="btn-revoquer" onclick="revoquerEcart(\'' + r.id + '\')">Révoquer</button></div>';
+    } else if (r.statut === 'NON CONFORME'){
+      html += '<div class="actions-ligne"><button type="button" class="btn-accepter" ' +
+              'onclick="ouvrirAcceptation(\'' + r.id + '\')">Accepter l\'écart…</button></div>';
+    }
+    cellule.innerHTML = html;
+    tr.classList.toggle('cache', !!filtre && eff !== filtre);
+  }
+
+  function poserResultat(r){
+    resultats[r.id] = r;
+    faits++;
+    const tr = ligne(r.id);
+    tr.classList.remove('encours');
+    tr.classList.add('nouveau');
+    const eff = statutEffectif(r);
+    if (r.statut === 'NON CONFORME' || r.statut === 'ERREUR')
+      journal(r.id + ' — ' + r.statut + (eff === 'ÉCART ACCEPTÉ' ? ' (dérogation au registre → ÉCART ACCEPTÉ)' : '') +
+        (r.titre ? ' — ' + r.titre : ''), eff === 'ÉCART ACCEPTÉ' ? undefined : 'err');
+    afficherLigne(r);
+    compte[eff] = (compte[eff] || 0) + 1;
+    majCompteurs();
+    majScore();
+    document.getElementById('barreAv').style.width = Math.round(100 * faits / total) + '%';
+    document.getElementById('txtAv').textContent = 'Phase 2 — ' + faits + ' / ' + total + ' contrôles terminés';
+  }
+
+  // ---------- Acceptation / révocation d'écarts ----------
+  function ouvrirAcceptation(id){
+    const r = resultats[id];
+    if (!r) return;
+    derogEnCours = id;
+    document.getElementById('derogRef').textContent = r.id;
+    document.getElementById('derogTitreCtrl').textContent = r.titre || '';
+    document.getElementById('derogRisque').textContent = r.risque || 'Écart au benchmark CIS.';
+    document.getElementById('derogConstat').textContent = r.detail || '';
+    document.getElementById('derogMotif').value = '';
+    document.getElementById('derogDuree').value = '6';
+    document.getElementById('derogErreur').style.display = 'none';
+    document.getElementById('derogConfirmer').disabled = false;
+    document.getElementById('modalDerog').showModal();
+  }
+  function fermerModale(){
+    derogEnCours = null;
+    document.getElementById('modalDerog').close();
+  }
+  function confirmerAcceptation(){
+    const id = derogEnCours;
+    if (!id) return;
+    const motif = document.getElementById('derogMotif').value.trim();
+    const err = document.getElementById('derogErreur');
+    if (!motif){
+      err.textContent = 'Le motif est obligatoire.';
+      err.style.display = 'inline';
+      return;
+    }
+    const btn = document.getElementById('derogConfirmer');
+    btn.disabled = true;
+    google.script.run
+      .withSuccessHandler(entree => {
+        derogations[id] = entree;
+        fermerModale();
+        compte['NON CONFORME'] = Math.max(0, (compte['NON CONFORME'] || 0) - 1);
+        compte['ÉCART ACCEPTÉ'] = (compte['ÉCART ACCEPTÉ'] || 0) + 1;
+        afficherLigne(resultats[id]);
+        majCompteurs(); majScore();
+        journal('Dérogation enregistrée pour ' + id + ' par ' + entree.par +
+          (entree.revision ? ' (révision : ' + entree.revision + ')' : ' (permanente)') + '.', 'ok');
+      })
+      .withFailureHandler(e => {
+        btn.disabled = false;
+        err.textContent = msgErreur(e);
+        err.style.display = 'inline';
+      })
+      .enregistrerDerogation(id, motif, Number(document.getElementById('derogDuree').value));
+  }
+  function revoquerEcart(id){
+    google.script.run
+      .withSuccessHandler(() => {
+        delete derogations[id];
+        compte['ÉCART ACCEPTÉ'] = Math.max(0, (compte['ÉCART ACCEPTÉ'] || 0) - 1);
+        compte['NON CONFORME'] = (compte['NON CONFORME'] || 0) + 1;
+        afficherLigne(resultats[id]);
+        majCompteurs(); majScore();
+        journal('Dérogation révoquée pour ' + id + ' — l\'écart redevient à corriger.', 'ok');
+      })
+      .withFailureHandler(e => afficherAvert('Révocation impossible : ' + msgErreur(e)))
+      .revoquerDerogation(id);
+  }
+
+  function majScore(){
+    const p = compte['CONFORME'] || 0, f = compte['NON CONFORME'] || 0, a = compte['ÉCART ACCEPTÉ'] || 0;
+    const anneau = document.getElementById('anneauVal');
+    const brutEl = document.getElementById('scoreBrut');
+    if (p + f + a === 0){
+      document.getElementById('scorePct').textContent = '—';
+      anneau.style.strokeDashoffset = 301.6;
+      brutEl.textContent = '';
+      return;
+    }
+    // Score résiduel : les écarts formellement acceptés sortent du dénominateur
+    const pct = (p + f) > 0 ? Math.round(100 * p / (p + f)) : 100;
+    document.getElementById('scorePct').textContent = pct + '%';
+    anneau.style.strokeDashoffset = String(301.6 * (1 - pct / 100));
+    anneau.style.stroke = pct >= 80 ? 'var(--conforme)' : (pct >= 50 ? '#f9ab00' : 'var(--echec)');
+    brutEl.textContent = a > 0
+      ? 'brut : ' + Math.round(100 * p / (p + f + a)) + ' % · ' + a + ' écart(s) accepté(s)'
+      : '';
+  }
+
+  function majCompteurs(){
+    const zone = document.getElementById('compteurs');
+    zone.innerHTML = '';
+    ORDRE_STATUTS.forEach(s => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = (filtre === s) ? 'actif' : '';
+      b.innerHTML = '<span><span class="pastille" style="background:var(' + couleurVar(s) + ')"></span>' + s + '</span>' +
+                    '<span class="n">' + (compte[s] || 0) + '</span>';
+      b.onclick = () => basculerFiltre(s);
+      zone.appendChild(b);
+    });
+  }
+  function couleurVar(s){
+    return { 'CONFORME':'--conforme','NON CONFORME':'--echec','ÉCART ACCEPTÉ':'--accepte',
+             'À VÉRIFIER':'--verif','MANUEL':'--manuel','ERREUR':'--erreur','HORS PROFIL':'--skip' }[s];
+  }
+
+  function basculerFiltre(s){
+    filtre = (filtre === s) ? null : s;
+    document.querySelectorAll('#corps tr:not(.section)').forEach(tr => {
+      tr.classList.toggle('cache', !!filtre && tr.dataset.statut !== filtre);
+    });
+    document.querySelectorAll('#corps tr.section').forEach(tr => {
+      let sib = tr.nextElementSibling, visible = false;
+      while (sib && !sib.classList.contains('section')){
+        if (!sib.classList.contains('cache')) { visible = true; break; }
+        sib = sib.nextElementSibling;
+      }
+      tr.classList.toggle('cache', !!filtre && !visible);
+    });
+    majCompteurs();
+  }
+
+  // ---------- Arrêt propre & reprise ----------
+  function demanderArret(){
+    if (!enCours || stopDemande) return;
+    stopDemande = true;
+    const b = document.getElementById('btnArreter');
+    b.disabled = true;
+    b.textContent = 'Arrêt en cours…';
+    journal('Arrêt demandé — les appels serveur en cours se terminent, aucun nouveau ne sera lancé.');
+    document.getElementById('txtAv').textContent = 'Arrêt en cours — attente des appels en vol…';
+  }
+
+  function stopEffectif(){
+    enCours = false;
+    interrompu = true;
+    stopDemande = false;
+    arreterChrono();
+    document.getElementById('barreAv').parentElement.classList.remove('indeterminee');
+    document.getElementById('btnArreter').style.display = 'none';
+    relacherWakeLock();
+    const btn = document.getElementById('btnLancer');
+    btn.disabled = false;
+    btn.textContent = 'Reprendre l\'audit';
+    document.getElementById('btnReinit').style.display = 'block';
+    const restants = (phase === 'controles') ? file.length : (total - faits);
+    document.getElementById('txtAv').textContent = 'Interrompu — ' + faits + ' / ' + total +
+      ' contrôles réalisés' + (phase === 'collecte' ? ' (arrêt pendant la collecte)' : '');
+    journal('Audit interrompu proprement. ' + faits + ' résultat(s) posé(s), ' + restants +
+      ' contrôle(s) restant(s). Reprise possible pendant 6 h (durée de vie du contexte en cache).', 'ok');
+    if (Object.keys(resultats).length > 0){
+      document.getElementById('btnExport').style.display = 'block'; // export partiel possible
+      document.getElementById('btnEmail').style.display = 'block';
+    }
+    if (phase === 'collecte'){
+      document.getElementById('collecteEtat').textContent = 'interrompue';
+    }
+  }
+
+  function reprendre(){
+    enCours = true;
+    interrompu = false;
+    stopDemande = false;
+    echecsConsec = 0;
+    document.getElementById('btnLancer').disabled = true;
+    document.getElementById('btnReinit').style.display = 'none';
+    const b = document.getElementById('btnArreter');
+    b.style.display = 'inline-block'; b.disabled = false; b.textContent = 'Arrêter';
+    demarrerChrono();
+    demanderWakeLock();
+    if (phase === 'collecte' && posCollecte){
+      journal('Reprise de la collecte à l\'étape ' + (posCollecte.idx + 1) + '/' + etapes.length + '…', 'ok');
+      document.getElementById('collecteEtat').textContent = 'en cours';
+      document.getElementById('txtAv').textContent = 'Phase 1 — reprise de la collecte…';
+      document.getElementById('barreAv').parentElement.classList.add('indeterminee');
+      etapeEnCoursDepuis = Date.now();
+      const p = posCollecte; posCollecte = null;
+      executerEtape(p.idx, p.curseur);
+    } else {
+      journal('Reprise de l\'exécution — ' + file.length + ' contrôle(s) restant(s).', 'ok');
+      document.getElementById('txtAv').textContent = 'Phase 2 — reprise des contrôles…';
+      for (let i = 0; i < CONCURRENCE; i++) suivant();
+    }
+  }
+
+  function terminer(){
+    enCours = false;
+    interrompu = false;
+    document.getElementById('optReglages').disabled = false;
+    document.getElementById('btnArreter').style.display = 'none';
+    document.getElementById('btnReinit').style.display = 'block';
+    arreterChrono();
+    const s = Math.floor((Date.now()-tDebut)/1000);
+    document.getElementById('txtAv').textContent = 'Audit terminé — ' + total + ' contrôles en ' +
+      Math.floor(s/60) + ' min ' + (s%60) + ' s';
+    journal('Audit terminé (' + Math.floor(s/60) + ' min ' + (s%60) + ' s). CONFORME : ' + (compte['CONFORME']||0) +
+      ' · NON CONFORME : ' + (compte['NON CONFORME']||0) + ' · ÉCART ACCEPTÉ : ' + (compte['ÉCART ACCEPTÉ']||0) +
+      ' · À VÉRIFIER : ' + (compte['À VÉRIFIER']||0) +
+      ' · MANUEL : ' + (compte['MANUEL']||0) + ' · ERREUR : ' + (compte['ERREUR']||0), 'ok');
+    if ((compte['NON CONFORME']||0) > 0){
+      journal('Traitement des écarts : bouton « Accepter l\'écart… » sur chaque ligne NON CONFORME, ou plan d\'actions détaillé dans l\'export Sheets.');
+    }
+    document.getElementById('btnExport').style.display = 'block';
+    document.getElementById('btnEmail').style.display = 'block';
+    document.getElementById('btnLancer').disabled = false;
+    document.getElementById('btnLancer').textContent = 'Relancer l\'audit';
+  }
+
+  function exporterSheets(){
+    const btn = document.getElementById('btnExport');
+    btn.disabled = true; btn.textContent = 'Génération du rapport…';
+    journal('Génération du rapport Google Sheets…');
+    const liste = controles.map(c => resultats[c.id]).filter(Boolean);
+    google.script.run
+      .withSuccessHandler(url => {
+        btn.disabled = false; btn.textContent = 'Générer le rapport Sheets';
+        journal('Rapport créé : ' + url, 'ok');
+        const z = document.getElementById('lienRapport');
+        z.style.display = 'block';
+        z.innerHTML = 'Rapport créé : <a href="' + url + '" target="_blank" rel="noopener">ouvrir le Google Sheets</a>';
+      })
+      .withFailureHandler(e => {
+        btn.disabled = false; btn.textContent = 'Générer le rapport Sheets';
+        journal('Échec de la génération du rapport : ' + e.message, 'err');
+        afficherAvert('Échec de la génération du rapport : ' + e.message);
+      })
+      .genererRapportSheets(token, liste);
+  }
+
+  // ---------- Envoi par e-mail ----------
+  function ouvrirEmail(){
+    const p = compte['CONFORME'] || 0, f = compte['NON CONFORME'] || 0;
+    const res = (p + f) > 0 ? Math.round(100 * p / (p + f)) : 100;
+    const d = new Date();
+    document.getElementById('emailDest').value = compteSession || '';
+    document.getElementById('emailObjet').value = 'Audit CIS Google Workspace — ' +
+      String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear() +
+      ' — conformité résiduelle ' + res + ' %';
+    document.getElementById('emailMessage').value = '';
+    document.getElementById('emailLien').checked = true;
+    document.getElementById('emailDetails').checked = true;
+    document.getElementById('emailErreur').style.display = 'none';
+    document.getElementById('emailEnvoyer').disabled = false;
+    document.getElementById('emailEnvoyer').textContent = 'Envoyer';
+    document.getElementById('modalEmail').showModal();
+  }
+  function fermerEmail(){ document.getElementById('modalEmail').close(); }
+  function confirmerEnvoiEmail(){
+    const err = document.getElementById('emailErreur');
+    const dest = document.getElementById('emailDest').value.trim();
+    if (!dest){
+      err.textContent = 'Au moins un destinataire est requis.';
+      err.style.display = 'inline';
+      return;
+    }
+    const btn = document.getElementById('emailEnvoyer');
+    btn.disabled = true;
+    btn.textContent = document.getElementById('emailLien').checked
+      ? 'Génération du rapport et envoi…' : 'Envoi…';
+    const liste = controles.map(c => resultats[c.id]).filter(Boolean);
+    google.script.run
+      .withSuccessHandler(r => {
+        fermerEmail();
+        journal('Rapport envoyé à ' + r.destinataires + (r.url ? ' (lien Sheets joint).' : '.'), 'ok');
+        if (r.url){
+          const z = document.getElementById('lienRapport');
+          z.style.display = 'block';
+          z.innerHTML = 'Rapport créé : <a href="' + r.url + '" target="_blank" rel="noopener">ouvrir le Google Sheets</a>';
+        }
+      })
+      .withFailureHandler(e => {
+        btn.disabled = false;
+        btn.textContent = 'Envoyer';
+        err.textContent = msgErreur(e);
+        err.style.display = 'inline';
+      })
+      .envoyerRapportEmail(token, liste, {
+        destinataires: dest,
+        objet: document.getElementById('emailObjet').value.trim(),
+        message: document.getElementById('emailMessage').value,
+        joindreLien: document.getElementById('emailLien').checked,
+        inclureDetails: document.getElementById('emailDetails').checked
+      });
+  }
+
+  function afficherAvert(msg){
+    const z = document.getElementById('avertissements');
+    z.style.display = 'block';
+    z.textContent = msg;
+  }
+  function ligne(id){ return document.getElementById('ctrl-' + id.replace(/\./g,'-')); }
+  function echapper(t){ const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+</script>
+</body>
+</html>

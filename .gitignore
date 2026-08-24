@@ -1,0 +1,16 @@
+# Fichiers de configuration et d'authentification clasp (ne jamais committer)
+.clasp.json
+.clasprc.json
+
+# Fichiers système & éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Logs et temporaires
+*.log
+scratch/
+node_modules/
