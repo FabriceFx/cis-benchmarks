@@ -11,10 +11,18 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 > *Fini le doute sur la conformité de votre tenant face aux dernières exigences du CIS : bénéficiez d'une sérénité totale avec un audit aligné à 100 % sur la version 1.4 du référentiel officiel.*
 
 ### Ajouté / Added
+- **Support bilingue complet Français / Anglais (FR/EN)** :
+  - Sélecteur de langue dynamique `[FR | EN]` dans l'en-tête de la WebApp avec persistance dans le `localStorage`.
+  - Dictionnaire centralisé `I18N` côté client traduisant dynamiquement tous les libellés, boutons, compteurs et infobulles.
+  - Bilinguisation intégrale des 87 contrôles (`titreEn`, `remediationEn`) avec les libellés officiels du CIS v1.4.
+  - Dictionnaire bilingue des risques opérationnels et de sécurité (`RISQUES` et `RISQUES_EN`).
+  - Génération des rapports Google Sheets et des synthèses e-mail dans la langue sélectionnée par l'utilisateur.
+  - Guide d'utilisation intégré et formulaires modaux (E-mail, Dérogations) traduits en français et en anglais.
+  - Nouvelle modale dédiée « À propos / About » mentionnant l'outil et le développeur (Fabrice Faucheux, https://faucheux.bzh).
 - **Alignement sur le benchmark CIS Google Workspace Foundations v1.4** :
   - Intégration de la nouvelle section dédiée `3.1.2.3` (Google Drive for desktop).
   - Contrôle `3.1.2.3.1` : *Ensure desktop access to Drive is disabled*.
-  - Mise à jour du total de contrôles audités (87 contrôles : 86 recommandations CIS v1.4 + 1 bonus `1.1.3`).
+  - Total de 87 contrôles audités (86 recommandations CIS v1.4 + 1 bonus `1.1.3`).
 - **Documentation et conformité** :
   - `README.md` bilingue complet (Français / Anglais).
   - `CHANGELOG.md` exhaustif retraçant l'historique complet.
@@ -22,7 +30,7 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 ### Modifié / Changed
 - Renumérotation du contrôle Drive for desktop : `3.1.2.2.2` → `3.1.2.3.1` conformément à la nomenclature CIS v1.4.
 - Actualisation des libellés, synthèses Google Sheets, e-mails de rapport et métadonnées WebApp pour pointer vers le CIS v1.4.
-- Mise à jour des clés de dictionnaire dans `EXPLICATIONS_RISQUE`.
+- Prise en charge du paramètre de langue (`lang`) dans `genererRapportSheets` et `envoyerRapportEmail`.
 
 ### Supprimé / Removed
 - Contrôle `3.1.2.2.3` (*Add-Ons / Modules complémentaires Drive*) supprimé du benchmark CIS v1.4 (Ticket 25810 — paramètre retiré de l'interface Google).

@@ -217,6 +217,97 @@ const RISQUES = {
   '6.8': 'L\'usurpation d\'employé dans Gmail précède typiquement une tentative de fraude interne.'
 };
 
+const RISQUES_EN = {
+  "1.1.1": "A single super admin creates a critical single point of failure if the administrator is unavailable or compromised.",
+  "1.1.2": "Too many super admins unnecessarily expands the attack surface: privilege escalation and rogue actions become harder to contain.",
+  "1.1.3": "Using super admin accounts for daily tasks (email, web browsing) drastically increases exposure to phishing and credential theft.",
+  "1.2.1.1": "Exposing directory data externally enables attacker reconnaissance, social engineering, and targeted phishing against employees.",
+  "3.1.1.1.1": "Public calendar sharing exposes internal schedules, confidential meetings, and employee availability to external reconnaissance.",
+  "3.1.1.1.2": "Excessive internal calendar permissions allow unintended internal access to confidential meeting subjects and sensitive agendas.",
+  "3.1.1.1.3": "Without external invitation warnings, users may inadvertently accept rogue meeting invites or share sensitive data with external attendees.",
+  "3.1.1.2.1": "Secondary calendars (e.g. project or team schedules) without external restrictions can leak sensitive project milestones.",
+  "3.1.1.2.2": "Default edit access on secondary calendars risks unauthorized schedule alterations or deletion of shared team events.",
+  "3.1.1.3.1": "Offline calendar data cached in the browser remains accessible on unmanaged or lost endpoints without centralized revocation.",
+  "3.1.2.1.1.1": "Without external sharing warnings, users easily misdirect files containing confidential data to external parties by mistake.",
+  "3.1.2.1.1.2": "Publishing files to the web makes corporate assets publicly indexable by search engines with no access control.",
+  "3.1.2.1.1.3": "Without domain allowlists, file sharing is uncontrolled and data can be shared with arbitrary personal or competitor domains.",
+  "3.1.2.1.1.4": "Even towards trusted domains, sharing without explicit confirmation leads to accidental recipient errors.",
+  "3.1.2.1.1.5": "A permissive Access Checker turns a simple link share into wide unauthorized access expansion, up to public visibility.",
+  "3.1.2.1.1.6": "Allowing external users to distribute internal content creates untracked outbound data exfiltration paths.",
+  "3.1.2.1.2.1": "Without shared drives, documents remain tied to individual accounts: data is lost or orphaned when employees depart.",
+  "3.1.2.1.2.2": "If managers can override shared drive settings, security baselines and sharing guardrails can be bypassed locally.",
+  "3.1.2.1.2.3": "Non-member file access bypasses the membership boundary that secures shared drive contents.",
+  "3.1.2.1.2.4": "Allowing viewers and commenters to download, print, or copy makes any read access a full data exfiltration channel.",
+  "3.1.2.2.1": "Documents stored offline persist on local devices beyond centralized access control and rapid revocation.",
+  "3.1.2.3.1": "Drive for desktop syncs massive volume of files locally: lost, stolen, or compromised endpoints result in major data breaches.",
+  "3.1.3.1.1": "Mailbox delegation provides full, long-term access to another user's private emails, which is difficult to audit.",
+  "3.1.3.1.2": "Offline Gmail caches corporate email locally on the disk outside of centralized session revocation.",
+  "3.1.3.2.1": "Without DKIM, outgoing emails lack cryptographic signing: domain spoofing is easy and email deliverability is degraded.",
+  "3.1.3.2.2": "Without SPF, any rogue server can send email impersonating your domain without being flagged by recipient servers.",
+  "3.1.3.2.3": "Without DMARC, recipient mail servers receive no policy on how to handle spoofed emails, and you receive no forensic reports.",
+  "3.1.3.3.1": "Without admin quarantine notifications, trapped security threats (malware, data loss incidents) are never reviewed.",
+  "3.1.3.4.1.1": "Encrypted attachments bypass standard malware scanning: a classic ransomware delivery vector.",
+  "3.1.3.4.1.2": "Script attachments from untrusted senders present an immediate arbitrary code execution risk.",
+  "3.1.3.4.1.3": "Anomalous attachment extensions for your domain typically signal targeted malware or zero-day campaigns.",
+  "3.1.3.4.2.1": "Shortened URLs conceal the true destination of malicious phishing links.",
+  "3.1.3.4.2.2": "Linked external images can load malicious payloads or track email opens and user IP addresses.",
+  "3.1.3.4.2.3": "Without warning prompts on link clicks, users navigate to suspicious or phishing domains without friction.",
+  "3.1.3.4.3.1": "Lookalike domains (typosquatting) deceive employees into trusting external phishing senders.",
+  "3.1.3.4.3.2": "Executive or employee name spoofing is the cornerstone of business email compromise (BEC) and wire fraud.",
+  "3.1.3.4.3.3": "Inbound emails pretending to come from your own domain exploit internal employee trust.",
+  "3.1.3.4.3.4": "Unauthenticated emails (failing both SPF and DKIM) carry a very high probability of phishing or scam.",
+  "3.1.3.4.3.5": "Mailing groups amplify spoofing attacks by broadcasting malicious emails to multiple employees at once.",
+  "3.1.3.5.1": "Legacy POP and IMAP protocols lack MFA support, modern security alerts, and centralized session control.",
+  "3.1.3.5.2": "Automatic email forwarding is the preferred method for stealthy exfiltration following account compromise.",
+  "3.1.3.5.3": "Per-user outbound SMTP gateways bypass centralized compliance rules, audit logs, and DLP inspection.",
+  "3.1.3.5.4": "Without external recipient warnings, users risk replying with internal sensitive information inadvertently.",
+  "3.1.3.6.1": "Without enhanced pre-delivery message scanning, advanced threats may land in inboxes before detection.",
+  "3.1.3.6.2": "Bypassing spam filters for internal senders allows spoofed internal emails to reach victims unchecked.",
+  "3.1.3.7.1": "Without comprehensive storage, routed messages bypass Gmail archives, Google Vault, and forensic audits.",
+  "3.1.3.7.2": "Without mandatory TLS encryption for sensitive partners, communications travel in cleartext over the internet.",
+  "3.1.4.1.1": "External file sharing in Google Chat acts as an exfiltration vector outside of standard Drive DLP controls.",
+  "3.1.4.1.2": "Uncontrolled file sharing in Chat scatters documents across informal rooms outside information governance.",
+  "3.1.4.2.1": "Unrestricted external chat exposes staff to social engineering, conversation phishing, and data leakage.",
+  "3.1.4.3.1": "Spaces open to external guests mix internal discussions with uncontrolled outside participants.",
+  "3.1.4.4.1": "Third-party Chat apps can read and exfiltrate conversation data under their own external privacy policies.",
+  "3.1.4.4.2": "Incoming webhooks represent an unauthenticated write gateway into internal communication channels.",
+  "3.1.6.1": "Publicly accessible Google Groups expose message archives (often full of internal details) to the internet.",
+  "3.1.6.2": "Unrestricted group creation leads to ungoverned distribution lists with accidental permissive sharing settings.",
+  "3.1.6.3": "Group conversations visible to non-members by default risk leaking confidential internal deliberations.",
+  "3.1.7.1": "Google Sites allows users to publish public web pages without security review: risk of data leak or defacement.",
+  "3.1.8.1": "Access to external consumer Google Groups exposes employees to community phishing and accidental leaks.",
+  "3.1.9.1.1": "Without Marketplace app allowlists, users can install arbitrary third-party apps granting OAuth access to their data.",
+  "4.1.1.1": "Privileged admin accounts without MFA can be compromised with a single leaked password, risking the whole tenant.",
+  "4.1.1.2": "SMS and push OTPs remain vulnerable to adversary-in-the-middle phishing; hardware security keys are required for admins.",
+  "4.1.1.3": "Without organization-wide 2SV, any stolen user password immediately results in a full account takeover.",
+  "4.1.2.1": "Super admin self-recovery via personal email/phone is a known vector for total tenant takeover by attackers.",
+  "4.1.2.2": "Without self-service recovery for regular users, lockouts overwhelm IT support and encourage insecure workarounds.",
+  "4.1.3.1": "High-risk targets (executives, admins) left on standard protections lack defense against sophisticated targeted attacks.",
+  "4.1.4.1": "Without login challenges, suspicious sign-ins from unusual locations or devices proceed without barrier.",
+  "4.1.5.1": "Short or weak passwords leave user accounts vulnerable to credential stuffing, password spraying, and offline cracking.",
+  "4.2.1.1": "Unvetted third-party apps obtain persistent OAuth tokens on Gmail/Drive, retaining access even after password changes.",
+  "4.2.1.2": "Without periodic OAuth review, abandoned or compromised third-party apps maintain access to company data forever.",
+  "4.2.1.3": "If internal business apps cannot access Google APIs, employees resort to insecure shadow IT workarounds.",
+  "4.2.1.4": "Compromised domain-wide delegation grants an attacker unrestricted programmatic access to ALL user mailboxes and Drives.",
+  "4.2.2.1": "Without geo-blocking, logins from high-risk countries with no legitimate business activity trigger no automated barrier.",
+  "4.2.3.1": "Without Data Loss Prevention (DLP) rules, confidential data (PII, payment info, credentials) leaves Drive undetected.",
+  "4.2.4.1": "Infinite or long web sessions leave access open on shared, lost, or stolen workstations.",
+  "4.2.5.1": "Google Cloud consoles control cloud infrastructure: without forced re-authentication, stolen sessions grant full control.",
+  "4.3.1": "Without regular security dashboard reviews, emerging attack patterns (phishing waves, mass sharing) go unnoticed.",
+  "4.3.2": "Ignoring Security Health recommendations leaves well-documented, actionable vulnerabilities open to exploitation.",
+  "5.1.1.1": "Without app usage reviews, anomalous behaviors (dormant account activity, unusual data volumes) are missed.",
+  "5.1.1.2": "Security reports aggregate critical compliance KPIs (2SV adoption, external shares): without review, drift is invisible.",
+  "6.1": "An unsolicited password change alert is often the earliest indicator of active account compromise.",
+  "6.2": "Government-backed attack alerts must immediately reach the security team to initiate incident response.",
+  "6.3": "Suspensions due to suspicious activity require prompt investigation to determine breach scope and remediate.",
+  "6.4": "Unexpected admin privilege grants indicate unauthorized privilege escalation attempts by attackers.",
+  "6.5": "Suspicious programmatic login alerts indicate stolen OAuth tokens or malicious API scripts.",
+  "6.6": "Unnotified suspicious logins give attackers an uninterrupted window to exfiltrate data.",
+  "6.7": "A leaked password detected in public breaches requires immediate forced password reset to prevent takeover.",
+  "6.8": "Gmail employee spoofing detection alerts on BEC fraud attempts before employees execute fraudulent requests."
+};
+
+
 function risquePour_(id) {
   return RISQUES[id] || 'Écart au benchmark CIS : la protection visée par ce contrôle n\'est pas assurée.';
 }
@@ -580,7 +671,7 @@ function envoyerRapportEmail(token, resultats, options) {
 
   const dateFr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm');
   const objet = options.objet ||
-    ('Audit CIS Google Workspace — ' + dateFr + ' — conformité résiduelle ' + scoreRes + ' %');
+    (lang === 'en' ? ('CIS Google Workspace Audit — ' + dateFr + ' — residual score ' + scoreRes + ' %') : ('Audit CIS Google Workspace — ' + dateFr + ' — conformité résiduelle ' + scoreRes + ' %'));
 
   MailApp.sendEmail({
     to: dests.join(','),
@@ -589,7 +680,7 @@ function envoyerRapportEmail(token, resultats, options) {
       scoreRes: scoreRes, scoreBrut: scoreBrut, compte: compte,
       nbDerog: a, url: url, dateFr: dateFr,
       message: options.message || '', inclureDetails: options.inclureDetails !== false
-    }),
+    }, lang),
     name: 'Audit CIS Google Workspace'
   });
   return { destinataires: dests.join(', '), url: url };
@@ -600,7 +691,9 @@ function echapHtml_(t) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function construireEmailHtml_(resultats, ctx) {
+function construireEmailHtml_(resultats, ctx, lang) {
+  lang = (lang === 'en') ? 'en' : (CONFIG.LANGUE || 'fr');
+  const t = TRADUCTIONS_SERVEUR[lang] || TRADUCTIONS_SERVEUR.fr;
   const S = STATUT;
   const teintes = {};
   teintes[S.PASS] = ['#0f6b3f', '#e2f2e8'];
@@ -612,17 +705,18 @@ function construireEmailHtml_(resultats, ctx) {
   teintes[S.SKIP] = ['#6b7280', '#f1f2f3'];
 
   const puce = function (statut, n) {
-    const t = teintes[statut] || ['#333', '#eee'];
+    const couleur = teintes[statut] || ['#333', '#eee'];
+    const libelle = t.statuts[statut] || statut;
     return '<td style="padding:6px 10px"><span style="font-family:monospace;font-size:12px;' +
-      'color:' + t[0] + ';background:' + t[1] + ';border-radius:4px;padding:3px 9px;white-space:nowrap">' +
-      statut + '&nbsp;: ' + n + '</span></td>';
+      'color:' + couleur[0] + ';background:' + couleur[1] + ';border-radius:4px;padding:3px 9px;white-space:nowrap">' +
+      libelle + '&nbsp;: ' + n + '</span></td>';
   };
   const ordre = [S.PASS, S.FAIL, S.ACCEPTED, S.REVIEW, S.MANUAL, S.ERROR, S.SKIP];
 
   let html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#20242b;max-width:680px">';
   html += '<div style="background:#1a73e8;color:#ffffff;padding:16px 22px;border-radius:8px 8px 0 0">' +
-          '<div style="font-family:monospace;font-size:11px;letter-spacing:2px;color:#d2e3fc">CIS BENCHMARK V1.4 · GOOGLE WORKSPACE</div>' +
-          '<div style="font-size:18px;font-weight:bold;margin-top:2px">Rapport d\'audit de conformité — ' + ctx.dateFr + '</div></div>';
+          '<div style="font-family:monospace;font-size:11px;letter-spacing:2px;color:#d2e3fc">' + t.email.banniere + '</div>' +
+          '<div style="font-size:18px;font-weight:bold;margin-top:2px">' + t.email.rapportTitre + ' — ' + ctx.dateFr + '</div></div>';
   html += '<div style="border:1px solid #dcd9d0;border-top:0;padding:18px 22px;border-radius:0 0 8px 8px">';
 
   if (ctx.message) {
@@ -633,9 +727,9 @@ function construireEmailHtml_(resultats, ctx) {
   html += '<table cellspacing="0" cellpadding="0" style="margin-bottom:6px"><tr>' +
           '<td style="padding-right:26px"><div style="font-size:34px;font-weight:bold;color:' +
           (ctx.scoreRes >= 80 ? '#0f6b3f' : ctx.scoreRes >= 50 ? '#9a5b00' : '#b3261e') + '">' + ctx.scoreRes + '&nbsp;%</div>' +
-          '<div style="font-size:11px;color:#6b7280">conformité résiduelle<br>(écarts acceptés exclus)</div></td>' +
+          '<div style="font-size:11px;color:#6b7280">' + t.email.confResiduelle + '</div></td>' +
           '<td><div style="font-size:22px;font-weight:bold;color:#4b5563">' + ctx.scoreBrut + '&nbsp;%</div>' +
-          '<div style="font-size:11px;color:#6b7280">conformité brute</div></td></tr></table>';
+          '<div style="font-size:11px;color:#6b7280">' + t.email.confBrute + '</div></td></tr></table>';
 
   html += '<table cellspacing="0" cellpadding="0"><tr>';
   ordre.forEach(function (s) { if (ctx.compte[s]) html += puce(s, ctx.compte[s]); });
@@ -645,36 +739,36 @@ function construireEmailHtml_(resultats, ctx) {
     const nc = resultats.filter(function (r) { return r.statutEffectif === S.FAIL; })
       .sort(function (x, y) { return x.level === y.level ? x.id.localeCompare(y.id) : x.level.localeCompare(y.level); });
     if (nc.length) {
-      html += '<h3 style="font-size:14px;margin:18px 0 6px">Écarts à corriger (' + nc.length + ')</h3>' +
+      html += '<h3 style="font-size:14px;margin:18px 0 6px">' + t.email.ecartsCorriger + ' (' + nc.length + ')</h3>' +
               '<table cellspacing="0" cellpadding="0" style="font-size:12.5px;border-collapse:collapse;width:100%">';
       nc.forEach(function (r) {
+        const titreAffiche = (lang === 'en' && r.titreEn) ? r.titreEn : r.titre;
         html += '<tr><td style="font-family:monospace;color:#2b5f8a;padding:4px 10px 4px 0;border-bottom:1px solid #edebe3;white-space:nowrap;vertical-align:top">' +
                 r.id + '</td><td style="color:#6b7280;padding:4px 8px 4px 0;border-bottom:1px solid #edebe3;vertical-align:top">' + r.level +
-                '</td><td style="padding:4px 0;border-bottom:1px solid #edebe3">' + echapHtml_(r.titre) + '</td></tr>';
+                '</td><td style="padding:4px 0;border-bottom:1px solid #edebe3">' + echapHtml_(titreAffiche) + '</td></tr>';
       });
       html += '</table>';
     } else {
-      html += '<p style="color:#0f6b3f;font-weight:bold;margin-top:16px">Aucun écart à corriger (hors dérogations).</p>';
+      html += '<p style="color:#0f6b3f;font-weight:bold;margin-top:16px">' + t.email.aucunEcart + '</p>';
     }
     if (ctx.nbDerog) {
-      html += '<p style="font-size:12px;color:#2b5f8a;margin-top:10px">' + ctx.nbDerog +
-              ' écart(s) couvert(s) par une dérogation formelle — détail au registre du rapport.</p>';
+      html += '<p style="font-size:12px;color:#2b5f8a;margin-top:12px">ℹ ' + ctx.nbDerog + ' ' + t.email.derogEnVigueur + '</p>';
     }
   }
 
   if (ctx.url) {
-    html += '<p style="margin:20px 0 8px"><a href="' + ctx.url + '" style="background:#1a73e8;color:#ffffff;' +
-            'text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:bold">Ouvrir le rapport complet (Google Sheets)</a></p>' +
-            '<p style="font-size:11px;color:#6b7280">Synthèse · Détail des 89 contrôles · Plan d\'actions · Registre des dérogations · Politiques (brut)</p>';
+    html += '<p style="margin-top:20px;padding:12px 16px;background:#f3f7fb;border-radius:6px;font-size:13px">' +
+            '<b>' + t.email.rapportGenere + '</b><br>' +
+            '<a href="' + ctx.url + '" style="color:#1a73e8;font-weight:bold;text-decoration:none">' +
+            t.email.ouvrirRapport + '</a></p>';
   }
 
   html += '<p style="font-size:11px;color:#9aa0a8;border-top:1px dashed #dcd9d0;margin-top:18px;padding-top:10px">' +
-          'Généré par le Registre d\'audit CIS Workspace v' + CONFIG.VERSION + ' — exécuté par ' +
-          echapHtml_(Session.getActiveUser().getEmail()) + '. Référentiel : CIS Google Workspace Foundations Benchmark v1.4.</p>';
+          t.email.piedGenere + ' v' + CONFIG.VERSION + t.email.piedExec +
+          echapHtml_(Session.getActiveUser().getEmail()) + t.email.piedRef + '</p>';
   html += '</div></div>';
   return html;
 }
-
 // --- Relevé de politiques réutilisable entre audits (cache utilisateur) -----
 function sauvegarderSnapshotPolitiques_(politiques) {
   try {
@@ -1045,8 +1139,8 @@ const DEFINITION_CONTROLES = [
   // ===== SECTION 1 — COMPTES ================================================
   {
     id: '1.1.1', level: 'L1',
-    titre: 'Plus d\'un compte Super Admin existe',
-    remediation: 'Admin > Annuaire > Utilisateurs — attribuer le rôle Super Admin à un second compte dédié.',
+    titre: 'Plus d\'un compte Super Admin existe', titreEn: 'Ensure that between two and four global admins are designated',
+    remediation: 'Admin > Annuaire > Utilisateurs — attribuer le rôle Super Admin à un second compte dédié.', remediationEn: 'Create at least one additional account with a Super Admin role if there is only 1 Super Admin account. If more that 4 accounts with Super Admin access, reduce the number of accounts with a Super Admin role. NOTE: A new account should be created vs adding this role to an existing account since Administration tasks should be done through separate Admin accounts.',
     check: function (ctx) {
       if (!ctx.superAdmins) return { statut: STATUT.ERROR, detail: 'Directory API indisponible.' };
       const n = ctx.superAdmins.length;
@@ -1058,8 +1152,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '1.1.2', level: 'L1',
-    titre: 'Au maximum 4 comptes Super Admin',
-    remediation: 'Réduire le nombre de super admins à 4 maximum (2 à 4 recommandé).',
+    titre: 'Au maximum 4 comptes Super Admin', titreEn: 'Ensure super admin accounts are used only for super admin activities',
+    remediation: 'Réduire le nombre de super admins à 4 maximum (2 à 4 recommandé).', remediationEn: 'For every Super admin that is also a Delegated admin account, either create a Delegated admin account for the user of elevate or their existing non-admin account to a Delegated admin account.',
     check: function (ctx) {
       if (!ctx.superAdmins) return { statut: STATUT.ERROR, detail: 'Directory API indisponible.' };
       const n = ctx.superAdmins.length;
@@ -1071,8 +1165,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '1.1.3', level: 'L1',
-    titre: 'Comptes super admin dédiés aux seules tâches d\'administration',
-    remediation: 'Chaque admin doit posséder un compte nominatif standard distinct pour l\'usage quotidien.',
+    titre: 'Comptes super admin dédiés aux seules tâches d\'administration', titreEn: 'Ensure super admin accounts are dedicated exclusively to administration tasks',
+    remediation: 'Chaque admin doit posséder un compte nominatif standard distinct pour l\'usage quotidien.', remediationEn: 'Each admin should have a separate regular account for daily activities.',
     check: function (ctx) {
       if (!ctx.superAdmins) return { statut: STATUT.ERROR, detail: 'Directory API indisponible.' };
       const suspects = ctx.superAdmins.filter(function (u) {
@@ -1088,8 +1182,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '1.2.1.1', level: 'L1',
-    titre: 'Accès externe aux données de l\'annuaire restreint',
-    remediation: 'Admin > Annuaire > Paramètres de l\'annuaire > Paramètres de partage > Contacts externes.',
+    titre: 'Accès externe aux données de l\'annuaire restreint', titreEn: 'Ensure directory data access is externally restricted',
+    remediation: 'Admin > Annuaire > Paramètres de l\'annuaire > Paramètres de partage > Contacts externes.', remediationEn: 'To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Open the collapsed menu via "hamburger button \ 3 horizontal lines" 3. Under Directory, select Directory settings 4. Under Sharing settings, select External Directory sharing 5. Select Authenticated user basic profile fields',
     check: controlePolitique_('directory.external_directory_access',
       function (v) {
         const s = champ_(v, ['externalDirectoryAccess', 'sharingSetting', 'state']);
@@ -1102,8 +1196,8 @@ const DEFINITION_CONTROLES = [
   // ===== SECTION 3.1.1 — AGENDA =============================================
   {
     id: '3.1.1.1.1', level: 'L1',
-    titre: 'Partage externe des agendas principaux limité (disponibilités uniquement)',
-    remediation: 'Admin > Applications > Google Workspace > Agenda > Paramètres de partage.',
+    titre: 'Partage externe des agendas principaux limité (disponibilités uniquement)', titreEn: 'Ensure external sharing options for primary calendars are configured',
+    remediation: 'Admin > Applications > Google Workspace > Agenda > Paramètres de partage.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Sharing settings, select External sharing options for primary',
     check: controlePolitique_('calendar.primary_calendar_max_allowed_external_sharing',
       function (v) {
         const s = champ_(v, ['maxAllowedExternalSharing', 'externalSharingOptions']);
@@ -1114,8 +1208,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.1.1.2', level: 'L2',
-    titre: 'Partage interne des agendas principaux configuré',
-    remediation: 'Agenda > Paramètres de partage > Partage interne — limiter aux disponibilités si politique stricte.',
+    titre: 'Partage interne des agendas principaux configuré', titreEn: 'Ensure internal sharing options for primary calendars are configured',
+    remediation: 'Agenda > Paramètres de partage > Partage interne — limiter aux disponibilités si politique stricte.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Sharing settings, select Internal sharing options for primary',
     check: controlePolitique_('calendar.primary_calendar_internal_sharing',
       function (v) {
         const s = champ_(v, ['internalSharing', 'defaultInternalSharing', 'sharingOption']);
@@ -1126,8 +1220,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.1.1.3', level: 'L1',
-    titre: 'Avertissement pour les invitations externes activé',
-    remediation: 'Agenda > Paramètres de partage > Invitations externes : avertir les utilisateurs.',
+    titre: 'Avertissement pour les invitations externes activé', titreEn: 'Ensure external invitation warnings for Google Calendar are configured',
+    remediation: 'Agenda > Paramètres de partage > Invitations externes : avertir les utilisateurs.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Sharing settings, select External Invitations',
     check: controlePolitique_('calendar.external_invitations',
       function (v) {
         const s = champ_(v, ['warnOnInvite', 'externalInvitationWarning', 'warnOnExternalGuests']);
@@ -1137,8 +1231,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.1.2.1', level: 'L1',
-    titre: 'Partage externe des agendas secondaires limité',
-    remediation: 'Agenda > Paramètres généraux > Agendas secondaires.',
+    titre: 'Partage externe des agendas secondaires limité', titreEn: 'Ensure external sharing options for secondary calendars are configured',
+    remediation: 'Agenda > Paramètres généraux > Agendas secondaires.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under General settings, select External sharing options for',
     check: controlePolitique_('calendar.secondary_calendar_max_allowed_external_sharing',
       function (v) {
         const s = champ_(v, ['maxAllowedExternalSharing', 'externalSharingOptions']);
@@ -1149,8 +1243,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.1.2.2', level: 'L2',
-    titre: 'Partage interne des agendas secondaires configuré',
-    remediation: 'Agenda > Paramètres généraux > Agendas secondaires (partage interne).',
+    titre: 'Partage interne des agendas secondaires configuré', titreEn: 'Ensure internal sharing options for secondary calendars are configured',
+    remediation: 'Agenda > Paramètres généraux > Agendas secondaires (partage interne).', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under General settings, select Internal sharing options for',
     check: controlePolitique_('calendar.secondary_calendar_internal_sharing',
       function (v) {
         const s = champ_(v, ['internalSharing', 'defaultInternalSharing']);
@@ -1161,8 +1255,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.1.3.1', level: 'L2',
-    titre: 'Mode hors connexion d\'Agenda web désactivé',
-    remediation: 'Agenda > Paramètres avancés > Hors connexion.',
+    titre: 'Mode hors connexion d\'Agenda web désactivé', titreEn: 'Ensure calendar web offline is disabled',
+    remediation: 'Agenda > Paramètres avancés > Hors connexion.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Advanced settings, select Calendar web offline',
     check: controlePolitique_('calendar.web_offline',
       function (v) { return estDesactive_(champ_(v, ['enableOutOfOffice', 'webOfflineEnabled', 'enabled', 'state'])); },
       'accès hors connexion à Agenda désactivé')
@@ -1171,8 +1265,8 @@ const DEFINITION_CONTROLES = [
   // ===== SECTION 3.1.2 — DRIVE ET DOCS ======================================
   {
     id: '3.1.2.1.1.1', level: 'L1',
-    titre: 'Avertissement lors du partage de fichiers hors du domaine',
-    remediation: 'Admin > Applications > Drive et Docs > Paramètres de partage.',
+    titre: 'Avertissement lors du partage de fichiers hors du domaine', titreEn: 'Ensure users are warned when they share a file outside their domain',
+    remediation: 'Admin > Applications > Drive et Docs > Paramètres de partage.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Drive and Docs 4. Select Sharing Settings 5. Select Sharing Options',
     check: controlePolitique_('drive_and_docs.external_sharing',
       function (v) {
         const w = champ_(v, ['warnForExternalSharing', 'warnForSharingOutsideAllowlistedDomains']);
@@ -1184,8 +1278,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.2.1.1.2', level: 'L1',
-    titre: 'Publication de fichiers sur le web / visibilité mondiale interdite',
-    remediation: 'Drive et Docs > Paramètres de partage : décocher publication sur le web.',
+    titre: 'Publication de fichiers sur le web / visibilité mondiale interdite', titreEn: 'Ensure users cannot publish files to the web or make visible to the world as public or unlisted',
+    remediation: 'Drive et Docs > Paramètres de partage : décocher publication sur le web.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Under Sharing settings, select Sharing options',
     check: controlePolitique_('drive_and_docs.external_sharing',
       function (v) {
         const p = champ_(v, ['allowPublishingFiles', 'allowFilesPublishedOnWeb', 'allowNonGoogleInvites']);
@@ -1196,8 +1290,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.2.1.1.3', level: 'L2',
-    titre: 'Partage de documents contrôlé par listes de domaines autorisés',
-    remediation: 'Drive et Docs > Paramètres de partage : limiter aux domaines de la liste blanche.',
+    titre: 'Partage de documents contrôlé par listes de domaines autorisés', titreEn: 'Ensure document sharing is being controlled by domain with allowlists',
+    remediation: 'Drive et Docs > Paramètres de partage : limiter aux domaines de la liste blanche.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Under Sharing settings, select Sharing options',
     check: controlePolitique_('drive_and_docs.external_sharing',
       function (v) {
         const niveau = champ_(v, ['externalSharingMode', 'sharingOutsideDomain']);
@@ -1208,8 +1302,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.2.1.1.4', level: 'L2',
-    titre: 'Avertissement lors du partage vers un domaine en liste blanche',
-    remediation: 'Drive et Docs > Paramètres de partage (option d\'avertissement liste blanche).',
+    titre: 'Avertissement lors du partage vers un domaine en liste blanche', titreEn: 'Ensure users are warned when they share a file with users in an allowlisted domain',
+    remediation: 'Drive et Docs > Paramètres de partage (option d\'avertissement liste blanche).', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Drive and Docs 4. Select Sharing Settings 5. Select Sharing Options',
     check: controlePolitique_('drive_and_docs.external_sharing',
       function (v) {
         return estActive_(champ_(v, ['warnForSharingOutsideAllowlistedDomains', 'warnForAllowlistedDomainSharing']));
@@ -1218,8 +1312,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.2.1.1.5', level: 'L1',
-    titre: 'Access Checker limité (destinataires uniquement / domaine)',
-    remediation: 'Drive et Docs > Paramètres de partage > Access Checker.',
+    titre: 'Access Checker limité (destinataires uniquement / domaine)', titreEn: 'Ensure Access Checker is configured to limit file access',
+    remediation: 'Drive et Docs > Paramètres de partage > Access Checker.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Drive and Docs 4. Select Sharing Settings 5. Select Sharing Options',
     check: controlePolitique_('drive_and_docs.external_sharing',
       function (v) {
         const a = champ_(v, ['accessCheckerSuggestions', 'accessChecker']);
@@ -1230,8 +1324,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.2.1.1.6', level: 'L1',
-    titre: 'Diffusion de contenu en externe réservée aux membres de l\'organisation',
-    remediation: 'Drive et Docs > Paramètres de partage > Distribution de contenu externe.',
+    titre: 'Diffusion de contenu en externe réservée aux membres de l\'organisation', titreEn: 'Ensure only users inside your organization can distribute content externally',
+    remediation: 'Drive et Docs > Paramètres de partage > Distribution de contenu externe.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Under Sharing settings, select Sharing options',
     check: controlePolitique_('drive_and_docs.external_sharing',
       function (v) {
         const s = champ_(v, ['allowNonDomainUsersContentDistribution', 'externalContentDistribution', 'allowReceivingExternalFiles']);
@@ -1243,8 +1337,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.2.1.2.1', level: 'L1',
-    titre: 'Création de Drive partagés par les utilisateurs (selon politique interne)',
-    remediation: 'Drive et Docs > Paramètres de partage > Création de Drive partagés.',
+    titre: 'Création de Drive partagés par les utilisateurs (selon politique interne)', titreEn: 'Audit users ability to create new shared drives',
+    remediation: 'Drive et Docs > Paramètres de partage > Création de Drive partagés.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Under Sharing settings, select Shared drive creation',
     check: controlePolitique_('drive_and_docs.shared_drive_creation',
       function (v) {
         const s = champ_(v, ['allowSharedDriveCreation', 'allowContentManagersToShareFolders', 'sharedDriveCreationAllowed']);
@@ -1255,8 +1349,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.2.1.2.2', level: 'L1',
-    titre: 'Les gestionnaires ne peuvent pas outrepasser les réglages des Drive partagés',
-    remediation: 'Drive et Docs > Drive partagés : interdire la modification des réglages par les gestionnaires.',
+    titre: 'Les gestionnaires ne peuvent pas outrepasser les réglages des Drive partagés', titreEn: 'Ensure manager access members cannot modify shared drive settings',
+    remediation: 'Drive et Docs > Drive partagés : interdire la modification des réglages par les gestionnaires.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Sharing settings',
     check: controlePolitique_('drive_and_docs.shared_drive_creation',
       function (v) {
         const s = champ_(v, ['allowManagersToOverrideSettings', 'orgUnitAllowsManagersToOverrideSettings']);
@@ -1266,8 +1360,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.2.1.2.3', level: 'L1',
-    titre: 'Accès aux fichiers des Drive partagés réservé aux membres',
-    remediation: 'Drive et Docs > Drive partagés : accès restreint aux membres.',
+    titre: 'Accès aux fichiers des Drive partagés réservé aux membres', titreEn: 'Ensure shared drive file access is restricted to members only',
+    remediation: 'Drive et Docs > Drive partagés : accès restreint aux membres.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Sharing settings',
     check: controlePolitique_('drive_and_docs.shared_drive_creation',
       function (v) {
         const s = champ_(v, ['allowNonMemberAccess', 'orgUnitAllowsNonMemberAccess']);
@@ -1277,8 +1371,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.2.1.2.4', level: 'L2',
-    titre: 'Téléchargement / impression / copie interdits aux lecteurs et commentateurs',
-    remediation: 'Drive et Docs > Drive partagés : bloquer téléchargement pour lecteurs/commentateurs.',
+    titre: 'Téléchargement / impression / copie interdits aux lecteurs et commentateurs', titreEn: 'Ensure \'Download, print, and copy is enabled for\' is not set to \'Everyone (Managers, content managers, contributors, commenters and viewers)\'',
+    remediation: 'Drive et Docs > Drive partagés : bloquer téléchargement pour lecteurs/commentateurs.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Sharing settings',
     check: controlePolitique_('drive_and_docs.shared_drive_creation',
       function (v) {
         const s = champ_(v, ['allowViewersAndCommentersToDownload', 'allowedPartiesToDownloadCopyPrint']);
@@ -1288,8 +1382,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.2.2.1', level: 'L1',
-    titre: 'Accès hors connexion aux documents désactivé',
-    remediation: 'Drive et Docs > Fonctionnalités et applications > Hors connexion.',
+    titre: 'Accès hors connexion aux documents désactivé', titreEn: 'Ensure offline access to documents is disabled',
+    remediation: 'Drive et Docs > Fonctionnalités et applications > Hors connexion.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Features and Applications',
     check: controlePolitique_('drive_and_docs.docs_offline',
       function (v) { return estDesactive_(champ_(v, ['enableDocsOffline', 'docsOfflineEnabled', 'enabled', 'state'])); },
       'mode hors connexion Docs désactivé')
@@ -1297,8 +1391,8 @@ const DEFINITION_CONTROLES = [
   // ===== SECTION 3.1.2.3 — GOOGLE DRIVE FOR DESKTOP (CIS v1.4) ===============
   {
     id: '3.1.2.3.1', level: 'L1',
-    titre: 'Accès à Drive pour ordinateur (desktop) désactivé',
-    remediation: 'Drive et Docs > Google Drive for desktop > Désactiver « Allow Google Drive for desktop in your organization ».',
+    titre: 'Accès à Drive pour ordinateur (desktop) désactivé', titreEn: 'Ensure desktop access to Drive is disabled',
+    remediation: 'Drive et Docs > Google Drive for desktop > Désactiver « Allow Google Drive for desktop in your organization ».', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Google Drive for desktop',
     check: controlePolitique_('drive_and_docs.drive_for_desktop',
       function (v) { return estDesactive_(champ_(v, ['allowDriveForDesktop', 'enabled', 'state'])); },
       'Drive pour ordinateur désactivé')
@@ -1309,24 +1403,24 @@ const DEFINITION_CONTROLES = [
   // ===== SECTION 3.1.3 — GMAIL ==============================================
   {
     id: '3.1.3.1.1', level: 'L1',
-    titre: 'Délégation de boîte mail interdite',
-    remediation: 'Admin > Applications > Gmail > Paramètres utilisateur > Délégation.',
+    titre: 'Délégation de boîte mail interdite', titreEn: 'Ensure users cannot delegate access to their mailbox',
+    remediation: 'Admin > Applications > Gmail > Paramètres utilisateur > Délégation.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under User Settings - Mail delegation, set Let users delegate access',
     check: controlePolitique_('gmail.mail_delegation',
       function (v) { return estDesactive_(champ_(v, ['enableMailDelegation', 'enabled', 'state'])); },
       'délégation de messagerie désactivée')
   },
   {
     id: '3.1.3.1.2', level: 'L1',
-    titre: 'Gmail hors connexion désactivé',
-    remediation: 'Gmail > Paramètres utilisateur > Hors connexion.',
+    titre: 'Gmail hors connexion désactivé', titreEn: 'Ensure offline access to Gmail is disabled',
+    remediation: 'Gmail > Paramètres utilisateur > Hors connexion.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Gmail 4. Select User Settings 5. SelectGmail web offline',
     check: controlePolitique_('gmail.offline_access',
       function (v) { return estDesactive_(champ_(v, ['enableOfflineAccess', 'enabled', 'state'])); },
       'Gmail hors connexion désactivé')
   },
   {
     id: '3.1.3.2.1', level: 'L1',
-    titre: 'DKIM activé pour tous les domaines de messagerie',
-    remediation: 'Gmail > Authentification des e-mails : générer et publier la clé DKIM, puis activer la signature.',
+    titre: 'DKIM activé pour tous les domaines de messagerie', titreEn: 'Ensure that DKIM is enabled for all mail enabled domains',
+    remediation: 'Gmail > Authentification des e-mails : générer et publier la clé DKIM, puis activer la signature.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Authenticate email, select - Generate new record',
     check: function (ctx) {
       return verifierDnsParDomaine_(ctx, function (d) {
         for (let i = 0; i < CONFIG.SELECTEURS_DKIM.length; i++) {
@@ -1340,8 +1434,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.3.2.2', level: 'L1',
-    titre: 'Enregistrement SPF configuré pour tous les domaines',
-    remediation: 'Publier un TXT "v=spf1 include:_spf.google.com ~all" (adapter aux émetteurs légitimes).',
+    titre: 'Enregistrement SPF configuré pour tous les domaines', titreEn: 'Ensure the SPF record is configured for all mail enabled domains',
+    remediation: 'Publier un TXT "v=spf1 include:_spf.google.com ~all" (adapter aux émetteurs légitimes).', remediationEn: 'Configure the DNS record for each domain. • If all email in your domain is sent from and received by Google Gmail, add the following TXT record for each domain: v=spf1 include:_spf.google.com ~all NOTE: This will likely need to be configured at your domain registrar (Godaddy, etc.).',
     check: function (ctx) {
       return verifierDnsParDomaine_(ctx, function (d) {
         const rr = requeteTXT_(d);
@@ -1352,8 +1446,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.3.2.3', level: 'L1',
-    titre: 'Enregistrement DMARC configuré pour tous les domaines',
-    remediation: 'Publier un TXT _dmarc.<domaine> "v=DMARC1; p=quarantine|reject; rua=..." (p=none insuffisant à terme).',
+    titre: 'Enregistrement DMARC configuré pour tous les domaines', titreEn: 'Ensure the DMARC record is configured for all mail enabled domains',
+    remediation: 'Publier un TXT _dmarc.<domaine> "v=DMARC1; p=quarantine|reject; rua=..." (p=none insuffisant à terme).', remediationEn: 'Configure the DNS record for each domain. 1. If all email in your domain is sent from and received by Google Gmail, add the following TXT record for the domain: v=DMARC1; p=none; rua=mailto:<report@domain1.com> NOTE: This will likely need to be configured at your domain registrar (Godaddy, etc.).',
     check: function (ctx) {
       return verifierDnsParDomaine_(ctx, function (d) {
         const rr = requeteTXT_('_dmarc.' + d);
@@ -1366,143 +1460,143 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.3.3.1', level: 'L1',
-    titre: 'Notifications admin des quarantaines Gmail activées',
-    remediation: 'Gmail > Gérer les quarantaines : activer la notification périodique aux admins.',
+    titre: 'Notifications admin des quarantaines Gmail activées', titreEn: 'Enable quarantine admin notifications for Gmail',
+    remediation: 'Gmail > Gérer les quarantaines : activer la notification périodique aux admins.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Manage quarantines, set Notify periodically when messages are',
     check: manuel_('Applications > Gmail > Gérer les quarantaines',
       'Vérifier que chaque quarantaine a l\'option de notification admin cochée.')
   },
   {
     id: '3.1.3.4.1.1', level: 'L1',
-    titre: 'Protection contre pièces jointes chiffrées d\'expéditeurs non fiables',
-    remediation: 'Gmail > Sécurité (Safety) > Pièces jointes.',
+    titre: 'Protection contre pièces jointes chiffrées d\'expéditeurs non fiables', titreEn: 'Ensure protection against encrypted attachments from untrusted senders is enabled',
+    remediation: 'Gmail > Sécurité (Safety) > Pièces jointes.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Attachments, set Protect against encrypted attachments',
     check: controlePolitique_('gmail.email_attachment_safety',
       function (v) { return estActive_(champ_(v, ['enableEncryptedAttachmentProtection', 'encryptedAttachmentProtectionEnabled'])); },
       'protection pièces jointes chiffrées activée')
   },
   {
     id: '3.1.3.4.1.2', level: 'L1',
-    titre: 'Protection contre pièces jointes avec scripts d\'expéditeurs non fiables',
-    remediation: 'Gmail > Sécurité > Pièces jointes.',
+    titre: 'Protection contre pièces jointes avec scripts d\'expéditeurs non fiables', titreEn: 'Ensure protection against attachments with scripts from untrusted senders is enabled',
+    remediation: 'Gmail > Sécurité > Pièces jointes.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Attachments, set Protect against attachments with',
     check: controlePolitique_('gmail.email_attachment_safety',
       function (v) { return estActive_(champ_(v, ['enableAttachmentWithScriptsProtection', 'attachmentWithScriptsProtectionEnabled'])); },
       'protection scripts dans pièces jointes activée')
   },
   {
     id: '3.1.3.4.1.3', level: 'L1',
-    titre: 'Protection contre types de pièces jointes anormaux',
-    remediation: 'Gmail > Sécurité > Pièces jointes.',
+    titre: 'Protection contre types de pièces jointes anormaux', titreEn: 'Ensure protection against anomalous attachment types in emails is enabled',
+    remediation: 'Gmail > Sécurité > Pièces jointes.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Attachments, set Protect against anomalous attachment',
     check: controlePolitique_('gmail.email_attachment_safety',
       function (v) { return estActive_(champ_(v, ['enableAnomalousAttachmentProtection', 'anomalousAttachmentProtectionEnabled'])); },
       'protection types de pièces jointes anormaux activée')
   },
   {
     id: '3.1.3.4.2.1', level: 'L1',
-    titre: 'Identification des liens derrière URL raccourcies activée',
-    remediation: 'Gmail > Sécurité > Liens et images externes.',
+    titre: 'Identification des liens derrière URL raccourcies activée', titreEn: 'Ensure link identification behind shortened URLs is enabled',
+    remediation: 'Gmail > Sécurité > Liens et images externes.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Links and external images, set Identify links behind',
     check: controlePolitique_('gmail.links_and_external_images',
       function (v) { return estActive_(champ_(v, ['enableShortenerScanning', 'shortenerScanningEnabled'])); },
       'analyse des URL raccourcies activée')
   },
   {
     id: '3.1.3.4.2.2', level: 'L1',
-    titre: 'Analyse des images liées pour contenu malveillant activée',
-    remediation: 'Gmail > Sécurité > Liens et images externes.',
+    titre: 'Analyse des images liées pour contenu malveillant activée', titreEn: 'Ensure scan linked images for malicious content is enabled',
+    remediation: 'Gmail > Sécurité > Liens et images externes.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Links and external images, set Scan linked images to',
     check: controlePolitique_('gmail.links_and_external_images',
       function (v) { return estActive_(champ_(v, ['enableExternalImageScanning', 'externalImageScanningEnabled'])); },
       'analyse des images liées activée')
   },
   {
     id: '3.1.3.4.2.3', level: 'L1',
-    titre: 'Avertissement au clic sur liens vers domaines non fiables activé',
-    remediation: 'Gmail > Sécurité > Liens et images externes.',
+    titre: 'Avertissement au clic sur liens vers domaines non fiables activé', titreEn: 'Ensure warning prompt is shown for any click on links to untrusted domains',
+    remediation: 'Gmail > Sécurité > Liens et images externes.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Links and external images, set Show warning prompt for',
     check: controlePolitique_('gmail.links_and_external_images',
       function (v) { return estActive_(champ_(v, ['enableAggressiveWarningsOnUntrustedLinks', 'aggressiveWarningsEnabled'])); },
       'avertissement liens non fiables activé')
   },
   {
     id: '3.1.3.4.3.1', level: 'L1',
-    titre: 'Protection contre l\'usurpation par domaines similaires',
-    remediation: 'Gmail > Sécurité > Usurpation d\'identité et authentification.',
+    titre: 'Protection contre l\'usurpation par domaines similaires', titreEn: 'Ensure protection against domain spoofing based on similar domain names is enabled',
+    remediation: 'Gmail > Sécurité > Usurpation d\'identité et authentification.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against',
     check: controlePolitique_('gmail.spoofing_and_authentication',
       function (v) { return estActive_(champ_(v, ['detectDomainNameSpoofing', 'domainNameSpoofingProtectionEnabled'])); },
       'détection domaines similaires activée')
   },
   {
     id: '3.1.3.4.3.2', level: 'L1',
-    titre: 'Protection contre l\'usurpation de noms d\'employés',
-    remediation: 'Gmail > Sécurité > Usurpation.',
+    titre: 'Protection contre l\'usurpation de noms d\'employés', titreEn: 'Ensure protection against spoofing of employee names is enabled',
+    remediation: 'Gmail > Sécurité > Usurpation.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against',
     check: controlePolitique_('gmail.spoofing_and_authentication',
       function (v) { return estActive_(champ_(v, ['detectEmployeeNameSpoofing', 'employeeNameSpoofingProtectionEnabled'])); },
       'détection usurpation de noms d\'employés activée')
   },
   {
     id: '3.1.3.4.3.3', level: 'L1',
-    titre: 'Protection contre les e-mails entrants usurpant votre domaine',
-    remediation: 'Gmail > Sécurité > Usurpation.',
+    titre: 'Protection contre les e-mails entrants usurpant votre domaine', titreEn: 'Ensure protection against inbound emails spoofing your domain is enabled',
+    remediation: 'Gmail > Sécurité > Usurpation.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against',
     check: controlePolitique_('gmail.spoofing_and_authentication',
       function (v) { return estActive_(champ_(v, ['detectDomainSpoofingFromUnauthenticatedSenders', 'domainSpoofingProtectionEnabled'])); },
       'détection usurpation de votre domaine activée')
   },
   {
     id: '3.1.3.4.3.4', level: 'L1',
-    titre: 'Protection contre tout e-mail non authentifié',
-    remediation: 'Gmail > Sécurité > Usurpation.',
+    titre: 'Protection contre tout e-mail non authentifié', titreEn: 'Ensure protection against any unauthenticated emails is enabled',
+    remediation: 'Gmail > Sécurité > Usurpation.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against any',
     check: controlePolitique_('gmail.spoofing_and_authentication',
       function (v) { return estActive_(champ_(v, ['detectUnauthenticatedEmails', 'unauthenticatedEmailProtectionEnabled'])); },
       'protection e-mails non authentifiés activée')
   },
   {
     id: '3.1.3.4.3.5', level: 'L1',
-    titre: 'Groupes protégés des e-mails entrants usurpant le domaine',
-    remediation: 'Gmail > Sécurité > Usurpation (protection des groupes).',
+    titre: 'Groupes protégés des e-mails entrants usurpant le domaine', titreEn: 'Ensure groups are protected from inbound emails spoofing your domain',
+    remediation: 'Gmail > Sécurité > Usurpation (protection des groupes).', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect your Groups',
     check: controlePolitique_('gmail.spoofing_and_authentication',
       function (v) { return estActive_(champ_(v, ['detectGroupsSpoofing', 'groupsSpoofingProtectionEnabled'])); },
       'protection usurpation vers les groupes activée')
   },
   {
     id: '3.1.3.5.1', level: 'L2',
-    titre: 'Accès POP et IMAP désactivé pour tous les utilisateurs',
-    remediation: 'Gmail > Accès utilisateur final > POP et IMAP.',
+    titre: 'Accès POP et IMAP désactivé pour tous les utilisateurs', titreEn: 'Ensure POP and IMAP access is disabled for all users',
+    remediation: 'Gmail > Accès utilisateur final > POP et IMAP.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under End User Access - POP and IMAP Access',
     check: controlePolitique_('gmail.pop_access', function (v) {
       return estDesactive_(champ_(v, ['enablePopAccess', 'enabled', 'state']));
     }, 'POP désactivé — vérifier aussi gmail.imap_access dans l\'onglet Politiques (brut)')
   },
   {
     id: '3.1.3.5.2', level: 'L1',
-    titre: 'Transfert automatique désactivé',
-    remediation: 'Gmail > Accès utilisateur final > Transfert automatique.',
+    titre: 'Transfert automatique désactivé', titreEn: 'Ensure automatic forwarding options are disabled',
+    remediation: 'Gmail > Accès utilisateur final > Transfert automatique.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under End User Access - Automatic forwarding, set Allow users to',
     check: controlePolitique_('gmail.auto_forwarding',
       function (v) { return estDesactive_(champ_(v, ['enableAutoForwarding', 'enabled', 'state'])); },
       'transfert automatique désactivé')
   },
   {
     id: '3.1.3.5.3', level: 'L1',
-    titre: 'Passerelles sortantes par utilisateur désactivées',
-    remediation: 'Gmail > Accès utilisateur final > Passerelle sortante par utilisateur.',
+    titre: 'Passerelles sortantes par utilisateur désactivées', titreEn: 'Ensure per-user outbound gateways is disabled',
+    remediation: 'Gmail > Accès utilisateur final > Passerelle sortante par utilisateur.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under End User Access - Allow per-user outbound gateways, set Allow',
     check: controlePolitique_('gmail.per_user_outbound_gateway',
       function (v) { return estDesactive_(champ_(v, ['allowUsersToUseExternalSmtp', 'enabled', 'state'])); },
       'passerelle SMTP externe par utilisateur désactivée')
   },
   {
     id: '3.1.3.5.4', level: 'L1',
-    titre: 'Avertissement destinataires externes activé',
-    remediation: 'Gmail > Accès utilisateur final > Avertissement de réponse à un externe.',
+    titre: 'Avertissement destinataires externes activé', titreEn: 'Ensure external recipient warnings are enabled',
+    remediation: 'Gmail > Accès utilisateur final > Avertissement de réponse à un externe.', remediationEn: 'To configure external recipient warnings are enabled, use the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail',
     check: controlePolitique_('gmail.unintended_external_reply_warning',
       function (v) { return estActive_(champ_(v, ['enableUnintendedExternalReplyWarning', 'enabled', 'state'])); },
       'avertissement destinataire externe activé')
   },
   {
     id: '3.1.3.6.1', level: 'L1',
-    titre: 'Analyse renforcée des messages avant distribution activée',
-    remediation: 'Gmail > Spam, hameçonnage et logiciels malveillants > Analyse renforcée pré-distribution.',
+    titre: 'Analyse renforcée des messages avant distribution activée', titreEn: 'Ensure enhanced pre-delivery message scanning is enabled',
+    remediation: 'Gmail > Spam, hameçonnage et logiciels malveillants > Analyse renforcée pré-distribution.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Spam, phishing, and malware',
     check: controlePolitique_('gmail.enhanced_pre_delivery_message_scanning',
       function (v) { return estActive_(champ_(v, ['enableImprovedSuspiciousContentDetection', 'enabled', 'state'])); },
       'analyse renforcée activée')
   },
   {
     id: '3.1.3.6.2', level: 'L1',
-    titre: 'Filtres anti-spam non contournés pour les expéditeurs internes',
-    remediation: 'Gmail > Spam : ne pas ajouter le domaine interne en liste d\'expéditeurs approuvés sans authentification.',
+    titre: 'Filtres anti-spam non contournés pour les expéditeurs internes', titreEn: 'Ensure spam filters are not bypased for internal senders',
+    remediation: 'Gmail > Spam : ne pas ajouter le domaine interne en liste d\'expéditeurs approuvés sans authentification.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Spam, phishing, and malware',
     check: controlePolitique_('gmail.spam_override_lists',
       function (v) {
         const listes = champ_(v, ['spamOverrideLists', 'approvedSenders', 'lists']);
@@ -1514,16 +1608,16 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.3.7.1', level: 'L1',
-    titre: 'Stockage complet des e-mails (comprehensive mail storage) activé',
-    remediation: 'Gmail > Conformité > Stockage complet du courrier.',
+    titre: 'Stockage complet des e-mails (comprehensive mail storage) activé', titreEn: 'Ensure comprehensive mail storage is enabled',
+    remediation: 'Gmail > Conformité > Stockage complet du courrier.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Compliance',
     check: controlePolitique_('gmail.comprehensive_mail_storage',
       function (v) { return estActive_(champ_(v, ['enableComprehensiveMailStorage', 'enabled', 'state'])); },
       'stockage complet activé')
   },
   {
     id: '3.1.3.7.2', level: 'L1',
-    titre: 'Envoi des e-mails via connexion TLS sécurisée activé',
-    remediation: 'Gmail > Conformité > Connexion TLS sécurisée (au minimum vers domaines partenaires).',
+    titre: 'Envoi des e-mails via connexion TLS sécurisée activé', titreEn: 'Ensure \'Send email over a secure TLS connection\' Is Enabled',
+    remediation: 'Gmail > Conformité > Connexion TLS sécurisée (au minimum vers domaines partenaires).', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Compliance',
     check: manuel_('Applications > Gmail > Conformité > Connexion TLS sécurisée',
       'Réglage de conformité par domaine non exposé par la Policy API — vérifier la règle TLS.')
   },
@@ -1531,8 +1625,8 @@ const DEFINITION_CONTROLES = [
   // ===== SECTION 3.1.4 — GOOGLE CHAT ========================================
   {
     id: '3.1.4.1.1', level: 'L1',
-    titre: 'Partage de fichiers externe dans Chat désactivé',
-    remediation: 'Admin > Applications > Google Chat > Partage de fichiers.',
+    titre: 'Partage de fichiers externe dans Chat désactivé', titreEn: 'Ensure external filesharing in Google Chat and Hangouts is disabled',
+    remediation: 'Admin > Applications > Google Chat > Partage de fichiers.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat File Sharing 5. Under Setting, set External filesharing to No files',
     check: controlePolitique_('chat.chat_file_sharing',
       function (v) {
         const s = champ_(v, ['externalFileSharing', 'externalChatFileSharing']);
@@ -1543,8 +1637,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.4.1.2', level: 'L2',
-    titre: 'Partage de fichiers interne dans Chat restreint',
-    remediation: 'Google Chat > Partage de fichiers (interne).',
+    titre: 'Partage de fichiers interne dans Chat restreint', titreEn: 'Ensure internal filesharing in Google Chat and Hangouts is disabled',
+    remediation: 'Google Chat > Partage de fichiers (interne).', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat File Sharing 5. Under Setting, set Internal filesharing to No files',
     check: controlePolitique_('chat.chat_file_sharing',
       function (v) {
         const s = champ_(v, ['internalFileSharing', 'internalChatFileSharing']);
@@ -1555,8 +1649,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.4.2.1', level: 'L1',
-    titre: 'Chat externe restreint aux domaines autorisés',
-    remediation: 'Google Chat > Paramètres de chat externe : limiter aux domaines de confiance.',
+    titre: 'Chat externe restreint aux domaines autorisés', titreEn: 'Ensure Google Chat externally is restricted to allowed domains',
+    remediation: 'Google Chat > Paramètres de chat externe : limiter aux domaines de confiance.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select External Chat Settings 5. Select Chat externally',
     check: controlePolitique_('chat.external_chat_restriction',
       function (v) {
         const s = champ_(v, ['allowExternalChat', 'externalChatRestriction', 'restrictionLevel']);
@@ -1568,8 +1662,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.4.3.1', level: 'L1',
-    titre: 'Espaces (Spaces) externes restreints',
-    remediation: 'Google Chat > Espaces externes.',
+    titre: 'Espaces (Spaces) externes restreints', titreEn: 'Ensure external spaces in Google Chat and Hangouts are restricted',
+    remediation: 'Google Chat > Espaces externes.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select External Spaces 5. Under Setting, set Allow users at <domain> to create and join spaces',
     check: controlePolitique_('chat.external_chat_restriction',
       function (v) {
         const s = champ_(v, ['externalSpaces', 'allowExternalSpaces', 'externalSpacesRestriction']);
@@ -1581,16 +1675,16 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.4.4.1', level: 'L1',
-    titre: 'Installation d\'applications Chat par les utilisateurs désactivée',
-    remediation: 'Google Chat > Applications Chat.',
+    titre: 'Installation d\'applications Chat par les utilisateurs désactivée', titreEn: 'Ensure allow users to install Chat apps is disabled',
+    remediation: 'Google Chat > Applications Chat.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat apps 5. Under Chat apps access settings, set Allow users to install Chat',
     check: controlePolitique_('chat.chat_apps_access',
       function (v) { return estDesactive_(champ_(v, ['enableChatApps', 'allowChatApps', 'enabled', 'state'])); },
       'installation d\'apps Chat désactivée')
   },
   {
     id: '3.1.4.4.2', level: 'L1',
-    titre: 'Webhooks entrants dans Chat désactivés',
-    remediation: 'Google Chat > Applications Chat > Webhooks entrants.',
+    titre: 'Webhooks entrants dans Chat désactivés', titreEn: 'Ensure allow users to add and use incoming webhooks is disabled',
+    remediation: 'Google Chat > Applications Chat > Webhooks entrants.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat apps 5. Under Chat apps access settings, set Allow users to add and use',
     check: controlePolitique_('chat.chat_apps_access',
       function (v) { return estDesactive_(champ_(v, ['enableWebhooks', 'allowWebhooks'])); },
       'webhooks entrants désactivés')
@@ -1599,8 +1693,8 @@ const DEFINITION_CONTROLES = [
   // ===== SECTION 3.1.6 — GROUPS FOR BUSINESS ================================
   {
     id: '3.1.6.1', level: 'L1',
-    titre: 'Accès aux groupes depuis l\'extérieur : privé',
-    remediation: 'Admin > Applications > Groups for Business > Paramètres de partage : accès externe = privé.',
+    titre: 'Accès aux groupes depuis l\'extérieur : privé', titreEn: 'Ensure accessing groups from outside this organization is set to private',
+    remediation: 'Admin > Applications > Groups for Business > Paramètres de partage : accès externe = privé.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Sharing options',
     check: function (ctx) {
       const pol = lirePolitique_(ctx, 'groups_for_business.groups_sharing');
       if (pol) {
@@ -1632,8 +1726,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.6.2', level: 'L1',
-    titre: 'Création de groupes restreinte',
-    remediation: 'Groups for Business > Paramètres de partage : création réservée aux admins (ou au domaine).',
+    titre: 'Création de groupes restreinte', titreEn: 'Ensure creating groups is restricted',
+    remediation: 'Groups for Business > Paramètres de partage : création réservée aux admins (ou au domaine).', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Creating groups',
     check: controlePolitique_('groups_for_business.groups_sharing',
       function (v) {
         const s = champ_(v, ['createGroupsAccessLevel', 'whoCanCreateGroups', 'createGroups']);
@@ -1644,8 +1738,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.6.3', level: 'L1',
-    titre: 'Permission par défaut de voir les conversations : restreinte',
-    remediation: 'Groups for Business > Autorisation par défaut d\'affichage des conversations.',
+    titre: 'Permission par défaut de voir les conversations : restreinte', titreEn: 'Ensure default for permission to view conversations is restricted',
+    remediation: 'Groups for Business > Autorisation par défaut d\'affichage des conversations.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Sharing options',
     check: function (ctx) {
       const pol = lirePolitique_(ctx, 'groups_for_business.groups_sharing');
       if (pol) {
@@ -1674,24 +1768,24 @@ const DEFINITION_CONTROLES = [
   // ===== SECTIONS 3.1.7 / 3.1.8 / 3.1.9 =====================================
   {
     id: '3.1.7.1', level: 'L1',
-    titre: 'Service Google Sites désactivé',
-    remediation: 'Admin > Applications > Google Workspace > Sites : état du service = désactivé.',
+    titre: 'Service Google Sites désactivé', titreEn: 'Ensure service status for Google Sites is set to off',
+    remediation: 'Admin > Applications > Google Workspace > Sites : état du service = désactivé.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Sites 5. Select Service status',
     check: controlePolitique_('sites.service_status',
       function (v) { return estDesactive_(champ_(v, ['serviceState', 'state', 'enabled'])); },
       'service Sites désactivé (OFF)')
   },
   {
     id: '3.1.8.1', level: 'L1',
-    titre: 'Accès aux groupes Google externes désactivé pour tous',
-    remediation: 'Admin > Applications > Services Google supplémentaires > Google Groups (service grand public) : OFF.',
+    titre: 'Accès aux groupes Google externes désactivé pour tous', titreEn: 'Ensure access to external Google Groups is OFF for Everyone',
+    remediation: 'Admin > Applications > Services Google supplémentaires > Google Groups (service grand public) : OFF.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select `Additional Google services 5. Scroll down to Google Groups',
     check: controlePolitique_('groups.service_status',
       function (v) { return estDesactive_(champ_(v, ['serviceState', 'state', 'enabled'])); },
       'service Google Groups (grand public, groups.google.com externes) désactivé')
   },
   {
     id: '3.1.9.1.1', level: 'L1',
-    titre: 'Accès aux applications du Marketplace restreint',
-    remediation: 'Admin > Applications > Google Workspace Marketplace : liste d\'autorisation d\'applications.',
+    titre: 'Accès aux applications du Marketplace restreint', titreEn: 'Ensure users access to Google Workspace Marketplace apps is restricted',
+    remediation: 'Admin > Applications > Google Workspace Marketplace : liste d\'autorisation d\'applications.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace Marketplace apps 4. Select Settings 5. Under Manage Google Workspace Marketplace allowlist access, set',
     check: controlePolitique_('workspace_marketplace.apps_access_options',
       function (v) {
         const s = champ_(v, ['accessLevel', 'appsAccessLevel', 'marketplaceAccess']);
@@ -1704,8 +1798,8 @@ const DEFINITION_CONTROLES = [
   // ===== SECTION 4.1 — AUTHENTIFICATION =====================================
   {
     id: '4.1.1.1', level: 'L1',
-    titre: '2SV / MFA appliquée à tous les utilisateurs à privilèges',
-    remediation: 'Sécurité > Authentification > Validation en deux étapes : application forcée.',
+    titre: '2SV / MFA appliquée à tous les utilisateurs à privilèges', titreEn: 'Ensure 2-Step Verification (Multi-Factor Authentication) is enforced for all users in administrative roles',
+    remediation: 'Sécurité > Authentification > Validation en deux étapes : application forcée.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Security and click on 2-Step Verification 3. Select the appropriate group with ALL ADMIN ROLES -- Create this group if needed 4. Under Authentication, set Allow users to turn on 2-Step Verification',
     check: function (ctx) {
       if (!ctx.superAdmins) return { statut: STATUT.ERROR, detail: 'Directory API indisponible.' };
       const sans2sv = ctx.superAdmins.filter(function (u) { return !u.isEnrolledIn2Sv; });
@@ -1721,8 +1815,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '4.1.1.2', level: 'L2',
-    titre: 'Clés de sécurité matérielles pour les rôles administratifs',
-    remediation: 'Sécurité > 2SV : imposer "clé de sécurité uniquement" pour l\'OU des admins.',
+    titre: 'Clés de sécurité matérielles pour les rôles administratifs', titreEn: 'Ensure hardware security keys are used for all users in administrative roles and other high-value accounts',
+    remediation: 'Sécurité > 2SV : imposer "clé de sécurité uniquement" pour l\'OU des admins.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Security and click on Authentication 3. Under Authentication, select 2-Step Verification 4. Select the option to Allow users to turn on 2-Step Verification 5. Under Enforcement, enable either \'On\' or else \'On from\' and configure a valid',
     check: controlePolitique_('security.two_step_verification_enforcement_factor',
       function (v) {
         const s = champ_(v, ['allowedSignInFactorSet', 'enforcementFactor', 'factor']);
@@ -1733,8 +1827,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '4.1.1.3', level: 'L1',
-    titre: '2SV / MFA appliquée à TOUS les utilisateurs',
-    remediation: 'Sécurité > 2SV : application forcée sur l\'ensemble du domaine + suivi de l\'enrôlement.',
+    titre: '2SV / MFA appliquée à TOUS les utilisateurs', titreEn: 'Ensure 2-Step Verification (Multi-Factor Authentication) is enforced for all users',
+    remediation: 'Sécurité > 2SV : application forcée sur l\'ensemble du domaine + suivi de l\'enrôlement.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select 2-Step Verification 4. Under Authentication, check - Allow users to turn on 2-Step Verification',
     check: function (ctx) {
       if (!ctx.utilisateurs) return { statut: STATUT.ERROR, detail: 'Directory API indisponible.' };
       const actifs = ctx.utilisateurs.filter(function (u) { return !u.suspended; });
@@ -1752,40 +1846,40 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '4.1.2.1', level: 'L2',
-    titre: 'Récupération de compte Super Admin désactivée',
-    remediation: 'Sécurité > Récupération de compte : désactiver l\'auto-récupération pour les super admins.',
+    titre: 'Récupération de compte Super Admin désactivée', titreEn: 'Ensure Super Admin account recovery is disabled',
+    remediation: 'Sécurité > Récupération de compte : désactiver l\'auto-récupération pour les super admins.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Security. 3. Select Authentication. 4. Under Account recovery select Super admin account recovery. 5. Set Allow super admins to recover their account to unchecked',
     check: controlePolitique_('security.super_admin_account_recovery',
       function (v) { return estDesactive_(champ_(v, ['enableAccountRecovery', 'accountRecoveryEnabled', 'enabled'])); },
       'auto-récupération des super admins désactivée')
   },
   {
     id: '4.1.2.2', level: 'L1',
-    titre: 'Récupération de compte utilisateur activée',
-    remediation: 'Sécurité > Récupération de compte : activer pour les utilisateurs standards.',
+    titre: 'Récupération de compte utilisateur activée', titreEn: 'Ensure User account recovery is enabled',
+    remediation: 'Sécurité > Récupération de compte : activer pour les utilisateurs standards.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Security. 3. Select User account recovery 4. Select either the pencil icon or the setting itself. 5. Set Allow users and non-super admins to recover their account to',
     check: controlePolitique_('security.user_account_recovery',
       function (v) { return estActive_(champ_(v, ['enableAccountRecovery', 'accountRecoveryEnabled', 'enabled'])); },
       'auto-récupération activée pour les utilisateurs standards')
   },
   {
     id: '4.1.3.1', level: 'L2',
-    titre: 'Programme Protection Avancée configuré',
-    remediation: 'Sécurité > Programme Protection Avancée : activer l\'inscription pour les comptes sensibles.',
+    titre: 'Programme Protection Avancée configuré', titreEn: 'Ensure Advanced Protection Program is configured',
+    remediation: 'Sécurité > Programme Protection Avancée : activer l\'inscription pour les comptes sensibles.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Advanced Protection Program 4. Under Enrollment - Allow users to enroll in the Advanced Protection Program, set Enable user enrollment to selected for the',
     check: controlePolitique_('security.advanced_protection_program',
       function (v) { return estActive_(champ_(v, ['enableAdvancedProtectionSelfEnrollment', 'allowEnrollment', 'enabled'])); },
       'inscription au Programme Protection Avancée autorisée / déployée pour les comptes à risque')
   },
   {
     id: '4.1.4.1', level: 'L2',
-    titre: 'Défis de connexion (login challenges) appliqués',
-    remediation: 'Sécurité > Défis de connexion : activer la vérification supplémentaire (ID employé, etc.).',
+    titre: 'Défis de connexion (login challenges) appliqués', titreEn: 'Ensure login challenges are enforced',
+    remediation: 'Sécurité > Défis de connexion : activer la vérification supplémentaire (ID employé, etc.).', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Authentication 4. Select Login Challenges 5. Depending on your organization\'s SSO configuration:',
     check: controlePolitique_('security.login_challenges',
       function (v) { return estActive_(champ_(v, ['enableEmployeeIdChallenge', 'enabled', 'state'])); },
       'défi de connexion supplémentaire activé')
   },
   {
     id: '4.1.5.1', level: 'L1',
-    titre: 'Politique de mots de passe renforcée',
-    remediation: 'Sécurité > Authentification > Gestion des mots de passe : force obligatoire, longueur >= 12 (CIS), réutilisation interdite, expiration selon politique.',
+    titre: 'Politique de mots de passe renforcée', titreEn: 'Ensure password policy is configured for enhanced security',
+    remediation: 'Sécurité > Authentification > Gestion des mots de passe : force obligatoire, longueur >= 12 (CIS), réutilisation interdite, expiration selon politique.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Password management 4. Under Strength, set Enforce strong passwords to checked 5. Under Length, set Minimum Length to 14 or greater',
     check: controlePolitique_('security.password',
       function (v) {
         const longueur = champ_(v, ['minimumLength', 'minLength']);
@@ -1805,8 +1899,8 @@ const DEFINITION_CONTROLES = [
   // ===== SECTION 4.2 — CONTRÔLES D'ACCÈS ====================================
   {
     id: '4.2.1.1', level: 'L2',
-    titre: 'Accès des applications tierces aux services Google restreint',
-    remediation: 'Sécurité > Contrôles des API > Accès aux applications tierces : restreindre les services non configurés.',
+    titre: 'Accès des applications tierces aux services Google restreint', titreEn: 'Ensure application access to Google services is restricted',
+    remediation: 'Sécurité > Contrôles des API > Accès aux applications tierces : restreindre les services non configurés.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select API Controls, then select App access control 5. Under Overview, select MANAGE GOOGLE SERVICES',
     check: controlePolitique_('api_controls.unconfigured_third_party_apps',
       function (v) {
         const s = champ_(v, ['accessLevel', 'defaultAccessLevel', 'state']);
@@ -1817,8 +1911,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '4.2.1.2', level: 'L2',
-    titre: 'Revue périodique des applications tierces',
-    remediation: 'Sécurité > Contrôles des API > Gérer l\'accès aux applications tierces — revue régulière.',
+    titre: 'Revue périodique des applications tierces', titreEn: 'Review third-party applications periodically',
+    remediation: 'Sécurité > Contrôles des API > Gérer l\'accès aux applications tierces — revue régulière.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select API Controls, then select App access control 5. Under Overview, select MANAGE THIRD-PARTY APP ACCESS',
     check: function (ctx) {
       // Aide à la revue : agrégation des jetons OAuth des super admins et d'un échantillon d'utilisateurs.
       if (!ctx.utilisateurs) return { statut: STATUT.ERROR, detail: 'Directory API indisponible.' };
@@ -1848,30 +1942,30 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '4.2.1.3', level: 'L1',
-    titre: 'Les applications internes peuvent accéder aux API Workspace',
-    remediation: 'Sécurité > Contrôles des API : marquer les apps internes de confiance.',
+    titre: 'Les applications internes peuvent accéder aux API Workspace', titreEn: 'Ensure internal apps can access Google Workspace APIs',
+    remediation: 'Sécurité > Contrôles des API : marquer les apps internes de confiance.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select API Controls, then select App access control 5. Under Settings, select Trust internal, domain-owned apps',
     check: controlePolitique_('api_controls.internal_apps',
       function (v) { return estActive_(champ_(v, ['trustInternalApps', 'internalAppsTrusted', 'enabled'])); },
       'apps internes marquées de confiance (accès API autorisé)')
   },
   {
     id: '4.2.1.4', level: 'L2',
-    titre: 'Revue périodique de la délégation au niveau du domaine (DWD)',
-    remediation: 'Sécurité > Contrôles des API > Délégation au niveau du domaine — revue régulière des client IDs et scopes.',
+    titre: 'Revue périodique de la délégation au niveau du domaine (DWD)', titreEn: 'Review domain-wide delegation for applications periodically',
+    remediation: 'Sécurité > Contrôles des API > Délégation au niveau du domaine — revue régulière des client IDs et scopes.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select API Controls 5. Under Domain wide delegation, select MANAGE DOMAIN WIDE DELEGATION',
     check: manuel_('Sécurité > Contrôles des API > Délégation au niveau du domaine',
       'La liste DWD n\'est pas exposée par API — exporter et revoir chaque client ID / scopes.')
   },
   {
     id: '4.2.2.1', level: 'L1',
-    titre: 'Blocage des accès depuis des zones géographiques non approuvées',
-    remediation: 'Sécurité > Accès contextuel (Context-Aware Access) : règle de géoblocage.',
+    titre: 'Blocage des accès depuis des zones géographiques non approuvées', titreEn: 'Ensure blocking access from unapproved geographic locations',
+    remediation: 'Sécurité > Accès contextuel (Context-Aware Access) : règle de géoblocage.', remediationEn: 'To configure this setting via the Google Admin Console: Create an appropriate Access Level 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Context-Aware Access',
     check: manuel_('Sécurité > Accès contextuel',
       'Les niveaux d\'accès CAA ne sont pas lisibles par cette API — vérifier l\'existence d\'une règle de géoblocage.')
   },
   {
     id: '4.2.3.1', level: 'L1',
-    titre: 'Règles DLP configurées pour Google Drive',
-    remediation: 'Sécurité > Protection des données : créer des règles DLP Drive (détecteurs prédéfinis + personnalisés).',
+    titre: 'Règles DLP configurées pour Google Drive', titreEn: 'Ensure DLP policies for Google Drive are configured',
+    remediation: 'Sécurité > Protection des données : créer des règles DLP Drive (détecteurs prédéfinis + personnalisés).', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Data protection 5. Select Manage Rules',
     check: function (ctx) {
       // Les règles DLP apparaissent dans la Policy API sous des types "rule.dlp*" selon les tenants.
       const typesDlp = Object.keys(ctx.policyIndex || {}).filter(function (t) { return /dlp/i.test(t); });
@@ -1884,8 +1978,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '4.2.4.1', level: 'L1',
-    titre: 'Contrôle de session Google configuré (durée limitée)',
-    remediation: 'Sécurité > Contrôle des sessions Google : durée <= 8 h recommandée par profil strict.',
+    titre: 'Contrôle de session Google configuré (durée limitée)', titreEn: 'Ensure Google session control is configured',
+    remediation: 'Sécurité > Contrôle des sessions Google : durée <= 8 h recommandée par profil strict.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Google session control 5. Set Web session duration to 12 hours or less',
     check: controlePolitique_('security.session_controls',
       function (v) {
         const d = champ_(v, ['webSessionDuration', 'sessionDuration', 'duration']);
@@ -1900,8 +1994,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '4.2.5.1', level: 'L2',
-    titre: 'Contrôle de session Google Cloud configuré',
-    remediation: 'Sécurité > Contrôle des sessions Google Cloud : ré-authentification exigée.',
+    titre: 'Contrôle de session Google Cloud configuré', titreEn: 'Ensure Google Cloud session control is configured',
+    remediation: 'Sécurité > Contrôle des sessions Google Cloud : ré-authentification exigée.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Google Cloud session control 5. Under Reauthentication policy, set Require reauthentication to',
     check: controlePolitique_('cloud.cloud_session_controls',
       function (v) {
         const d = champ_(v, ['sessionDuration', 'reauthDuration', 'duration']);
@@ -1918,38 +2012,54 @@ const DEFINITION_CONTROLES = [
   // ===== SECTION 4.3 + 5 — REVUES DE SUPERVISION ============================
   {
     id: '4.3.1', level: 'L1',
-    titre: 'Revue régulière du tableau de bord Sécurité (anomalies)',
-    remediation: 'Sécurité > Tableau de bord — instaurer une revue périodique documentée.',
+    titre: 'Revue régulière du tableau de bord Sécurité (anomalies)', titreEn: 'Ensure the Dashboard is reviewed regularly for anomalies',
+    remediation: 'Sécurité > Tableau de bord — instaurer une revue périodique documentée.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against',
     check: manuel_('Sécurité > Tableau de bord', 'Processus organisationnel : planifier une revue hebdomadaire.')
   },
   {
     id: '4.3.2', level: 'L1',
-    titre: 'Revue régulière de la page État de sécurité (Security Health)',
-    remediation: 'Sécurité > État de sécurité — corriger les recommandations signalées.',
+    titre: 'Revue régulière de la page État de sécurité (Security Health)', titreEn: 'Ensure the Security health is reviewed regularly for anomalies',
+    remediation: 'Sécurité > État de sécurité — corriger les recommandations signalées.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against',
     check: manuel_('Sécurité > État de sécurité', 'Processus organisationnel : revue périodique documentée.')
   },
   {
     id: '5.1.1.1', level: 'L1',
-    titre: 'Revue régulière du rapport d\'utilisation des applications',
-    remediation: 'Rapports > Utilisation des applications — revue périodique.',
+    titre: 'Revue régulière du rapport d\'utilisation des applications', titreEn: 'Ensure the App Usage Report is reviewed regularly for anomalies',
+    remediation: 'Rapports > Utilisation des applications — revue périodique.', remediationEn: 'The remediation for any anomalies in the various fields varies widely (different sections of the Google Workspace Admin UI). Please refer to Google\'s documentation for specifics (here). NOTE: Many of these settings will be remedied by implementing other sections of this Benchmark. For example, an Admin showing recent Gmail (IMAP) - last used time and/or Gmail (POP) - last used time can be remedied by implementing the Remediation',
     check: manuel_('Rapports > Utilisation des applications', 'Processus organisationnel.')
   },
   {
     id: '5.1.1.2', level: 'L1',
-    titre: 'Revue régulière du rapport de sécurité',
-    remediation: 'Rapports > Sécurité — revue périodique (partage externe, 2SV, etc.).',
+    titre: 'Revue régulière du rapport de sécurité', titreEn: 'Ensure the Security Report is reviewed regularly for anomalies',
+    remediation: 'Rapports > Sécurité — revue périodique (partage externe, 2SV, etc.).', remediationEn: 'The remediation for any anomalies in the various fields varies widely (different sections of the Google Workspace Admin UI). Please refer to Google\'s documentation for specifics (here). NOTE: Many of these settings will be remedied by implementing other sections of this Benchmark. For example, an Admin not enrolled in 2-Step Verification can be remedied by implementing the Remediation procedure for the recommendation Ensure 2-Step',
     check: manuel_('Rapports > Sécurité', 'Processus organisationnel.')
   },
 
   // ===== SECTION 6 — RÈGLES D'ALERTES ADMIN =================================
-  { id: '6.1', level: 'L1', titre: 'Alerte "Mot de passe utilisateur modifié" configurée', remediation: 'Sécurité > Règles > Mot de passe modifié : e-mail aux admins.', check: manuel_('Règles d\'alerte (Centre d\'alerte)', 'Les règles système ne sont pas listables par API — vérifier l\'activation de la notification.') },
-  { id: '6.2', level: 'L1', titre: 'Alerte "Attaques soutenues par un État" configurée', remediation: 'Sécurité > Règles > Government-backed attacks.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
-  { id: '6.3', level: 'L1', titre: 'Alerte "Utilisateur suspendu (activité suspecte)" configurée', remediation: 'Sécurité > Règles.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
-  { id: '6.4', level: 'L1', titre: 'Alerte "Privilège admin accordé" configurée', remediation: 'Sécurité > Règles.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
-  { id: '6.5', level: 'L1', titre: 'Alerte "Connexion programmatique suspecte" configurée', remediation: 'Sécurité > Règles.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
-  { id: '6.6', level: 'L1', titre: 'Alerte "Connexion suspecte" configurée', remediation: 'Sécurité > Règles.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
-  { id: '6.7', level: 'L1', titre: 'Alerte "Mot de passe divulgué" configurée', remediation: 'Sécurité > Règles.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
-  { id: '6.8', level: 'L1', titre: 'Alerte "Usurpation potentielle d\'employé (Gmail)" configurée', remediation: 'Sécurité > Règles.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') }
+  { id: '6.1', level: 'L1',
+    titre: 'Alerte "Mot de passe utilisateur modifié" configurée', titreEn: 'Ensure User\'s password changed is configured',
+    remediation: 'Sécurité > Règles > Mot de passe modifié : e-mail aux admins.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Spam, phishing, and malware', check: manuel_('Règles d\'alerte (Centre d\'alerte)', 'Les règles système ne sont pas listables par API — vérifier l\'activation de la notification.') },
+  { id: '6.2', level: 'L1',
+    titre: 'Alerte "Attaques soutenues par un État" configurée', titreEn: 'Ensure Government-backed attacks is configured',
+    remediation: 'Sécurité > Règles > Government-backed attacks.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Spam, phishing, and malware', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
+  { id: '6.3', level: 'L1',
+    titre: 'Alerte "Utilisateur suspendu (activité suspecte)" configurée', titreEn: 'Ensure User suspended due to suspicious activity is configured',
+    remediation: 'Sécurité > Règles.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Sharing options', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
+  { id: '6.4', level: 'L1',
+    titre: 'Alerte "Privilège admin accordé" configurée', titreEn: 'Ensure User granted Admin privilege is configured',
+    remediation: 'Sécurité > Règles.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to User granted Admin privilege and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
+  { id: '6.5', level: 'L1',
+    titre: 'Alerte "Connexion programmatique suspecte" configurée', titreEn: 'Ensure Suspicious programmatic login is configured',
+    remediation: 'Sécurité > Règles.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Suspicious programmatic login and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
+  { id: '6.6', level: 'L1',
+    titre: 'Alerte "Connexion suspecte" configurée', titreEn: 'Ensure Suspicious login is configured',
+    remediation: 'Sécurité > Règles.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Suspicious login and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
+  { id: '6.7', level: 'L1',
+    titre: 'Alerte "Mot de passe divulgué" configurée', titreEn: 'Ensure Leaked password is configured',
+    remediation: 'Sécurité > Règles.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Leaked password and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
+  { id: '6.8', level: 'L1',
+    titre: 'Alerte "Usurpation potentielle d\'employé (Gmail)" configurée', titreEn: 'Ensure Gmail potential employee spoofing is configured',
+    remediation: 'Sécurité > Règles.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Gmail potential employee spoofing and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') }
 ];
 
 // ---------------------------------------------------------------------------

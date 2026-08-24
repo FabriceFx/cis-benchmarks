@@ -47,7 +47,14 @@
   header h1{font-size:20px;color:var(--texte);display:flex;align-items:center;gap:10px}
   .chip-version{background:#f1f3f4;border-radius:100px;padding:2px 10px;
     font-family:'Roboto Mono',monospace;font-size:11px;font-weight:400;color:var(--sourdine)}
-  header .droite{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header .droite{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  
+  .langue{display:flex;border:1px solid var(--ligne);border-radius:100px;overflow:hidden;background:#fff}
+  .langue button{background:transparent;color:var(--sourdine);border:0;padding:6px 12px;cursor:pointer;
+    font-size:12px;font-weight:500;transition:all .15s}
+  .langue button + button{border-left:1px solid var(--ligne)}
+  .langue button.actif{background:var(--bleu);color:#fff;font-weight:700}
+
   .profil{display:flex;border:1px solid var(--ligne);border-radius:100px;overflow:hidden;background:#fff}
   .profil button{background:transparent;color:var(--sourdine);border:0;padding:8px 18px;cursor:pointer;
     font-size:13px;font-weight:500}
@@ -148,154 +155,146 @@
   .collecte h3{font-size:14.5px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .collecte h3 .mono{font-size:11.5px;color:var(--sourdine);font-weight:400}
   .etape-ligne{display:flex;align-items:baseline;gap:10px;padding:7px 0;
-    border-bottom:1px solid #f1f3f4;font-size:13px}
+    font-size:13px;border-bottom:1px solid #f1f3f4}
   .etape-ligne:last-child{border-bottom:0}
-  .etape-ligne .icone{width:18px;text-align:center;flex:none;font-family:'Roboto Mono',monospace}
-  .etape-ligne .lib{min-width:230px}
-  .etape-ligne .info{color:var(--sourdine);font-size:12.5px;flex:1}
-  .etape-ligne.ok .icone{color:var(--conforme);font-weight:700}
-  .etape-ligne.ko .icone{color:var(--echec);font-weight:700}
-  .etape-ligne.cours .lib{color:var(--bleu);font-weight:500}
-  .etape-ligne .duree{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--sourdine)}
-  .collecte .resume{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--texte);
-    font-weight:400;display:none}
-  .collecte .bascule{margin-left:auto;background:transparent;border:0;
-    color:var(--bleu);border-radius:100px;padding:5px 14px;font-size:12.5px;font-weight:500;
-    cursor:pointer;display:none}
-  .collecte .bascule:hover{background:#f6fafe}
-  .collecte.repliee{padding:10px 20px;margin-bottom:14px}
+  .etape-ligne .icone{font-family:'Roboto Mono',monospace;width:16px;color:var(--sourdine);text-align:center}
+  .etape-ligne.cours .icone{color:var(--bleu)}
+  .etape-ligne.ok .icone{color:var(--conforme);font-weight:bold}
+  .etape-ligne.ko .icone{color:var(--echec);font-weight:bold}
+  .etape-ligne .lib{font-weight:500;min-width:260px}
+  .etape-ligne .info{color:var(--sourdine);font-size:12px;flex:1}
+  .etape-ligne .duree{font-family:'Roboto Mono',monospace;font-size:11.5px;color:var(--sourdine)}
+  .spin{display:inline-block;width:10px;height:10px;border:2px solid var(--bleu-f);
+    border-top-color:var(--bleu);border-radius:50%;animation:tourne .7s linear infinite;
+    vertical-align:-1px;margin-right:6px}
+  @keyframes tourne{to{transform:rotate(360deg)}}
+
+  /* Mode replié : la collecte terminée prend 1 ligne de synthèse */
   .collecte.repliee #listeEtapes{display:none}
-  .collecte.repliee .resume{display:inline}
-  .collecte.repliee h3{margin-bottom:0}
+  .collecte.repliee{padding:10px 18px;margin-bottom:12px}
+  .collecte.repliee h3{margin-bottom:0;font-size:13px;font-weight:400;color:var(--sourdine)}
+  .collecte .bascule{margin-left:auto;background:transparent;border:0;color:var(--bleu);
+    font-size:12.5px;cursor:pointer;padding:2px 8px;border-radius:4px;font-weight:500}
+  .collecte .bascule:hover{background:var(--bleu-f)}
+  .collecte .resume{font-size:12.5px;color:var(--texte);margin-left:4px}
 
-  /* ---- Journal (console sombre, façon Cloud Logging) ---- */
-  .journal{margin-top:16px;max-width:780px}
-  .journal summary{cursor:pointer;font-size:12px;font-weight:500;letter-spacing:.5px;
-    text-transform:uppercase;color:var(--sourdine);user-select:none;padding:4px 0}
-  .journal pre{background:#202124;color:#e8eaed;border-radius:8px;padding:12px 14px;
-    font-family:'Roboto Mono',monospace;font-size:11.5px;line-height:1.6;
-    max-height:220px;overflow:auto;white-space:pre-wrap;margin:8px 0 0}
-  .journal pre .err{color:#f28b82}
-  .journal pre .ok{color:#81c995}
+  /* ---- Tableau du registre ---- */
+  table#tableau{width:100%;border-collapse:collapse;display:none;background:#fff;
+    border:1px solid var(--ligne);border-radius:8px;overflow:hidden;box-shadow:none}
+  table#tableau th{background:#fff;color:var(--sourdine);font-family:var(--police-titre);
+    font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.6px;
+    padding:12px 14px;border-bottom:1px solid var(--ligne);text-align:left;position:sticky;top:57px;z-index:2}
+  table#tableau td{padding:10px 14px;border-bottom:1px solid #f1f3f4;vertical-align:top;font-size:13px}
+  table#tableau tr.section td{background:#f8f9fa;color:var(--encre);font-family:var(--police-titre);
+    font-weight:500;font-size:12px;letter-spacing:.3px;padding:10px 14px;
+    border-top:1px solid var(--ligne);border-bottom:1px solid var(--ligne)}
+  table#tableau tr:hover:not(.section){background:#f8fafd}
+  table#tableau tr.cache{display:none}
+  table#tableau tr.nouveau{animation:flash .8s ease}
+  @keyframes flash{0%{background:#e8f0fe}100%{background:transparent}}
+  table#tableau tr.encours td{background:#f6fafe}
 
-  /* ---- Table des contrôles ---- */
-  table{border-collapse:collapse;width:100%;background:#fff;border:1px solid var(--ligne);
-    border-radius:8px;overflow:hidden;display:none}
-  th{font-size:12px;font-weight:500;color:var(--sourdine);text-align:left;
-    padding:12px;border-bottom:1px solid var(--ligne);background:#fff}
-  tr.section td{font-size:11.5px;font-weight:500;letter-spacing:.5px;
-    background:var(--papier);border-top:1px solid var(--ligne);border-bottom:1px solid var(--ligne);
-    padding:8px 12px;text-transform:uppercase;color:var(--sourdine)}
-  td{padding:10px 12px;border-bottom:1px solid #f1f3f4;vertical-align:top}
-  tbody tr:not(.section):hover td{background:#f8f9fa}
-  td.id{font-family:'Roboto Mono',monospace;font-size:12.5px;font-weight:500;white-space:nowrap;color:var(--accepte)}
-  td.niveau{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--sourdine);white-space:nowrap}
-  td.titre{min-width:260px}
-  td.statut{white-space:nowrap;width:140px}
-  td.constat{color:#3c4043;font-size:12.5px;max-width:560px}
-  td.constat details summary{cursor:pointer;color:var(--bleu);font-size:12px;user-select:none}
-  td.constat .remede{margin-top:5px;color:var(--sourdine);font-size:12px}
-  tr.cache{display:none}
+  .id{font-family:'Roboto Mono',monospace;font-size:12px;font-weight:500;color:var(--bleu);width:90px}
+  .niveau{font-size:11.5px;color:var(--sourdine);width:50px}
+  .titre{font-weight:500;width:30%}
+  .statut{width:140px}
+  .constat{color:var(--texte);font-size:12.5px;line-height:1.45}
+  .constat details{margin-top:4px}
+  .constat details summary{cursor:pointer;color:var(--bleu);font-size:12px;user-select:none}
+  .constat details summary:hover{text-decoration:underline}
+  .constat details div{margin-top:4px;padding:6px 8px;background:#f8f9fa;border-radius:4px;
+    font-family:'Roboto Mono',monospace;font-size:11.5px;color:var(--texte);white-space:pre-wrap;word-break:break-all}
+  .constat details .remede{margin-top:6px;font-family:var(--police);font-size:12px;color:var(--sourdine);background:none;padding:0}
 
-  /* ---- Chips de statut (Material) ---- */
-  .badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;
-    letter-spacing:.3px;padding:3px 10px;border-radius:100px}
-  .b-attente{color:var(--sourdine);background:#f1f3f4}
-  .b-cours{color:var(--bleu);background:var(--bleu-f)}
-  .b-CONFORME{color:var(--conforme);background:var(--conforme-f)}
-  .b-NONCONFORME{color:var(--echec);background:var(--echec-f)}
-  .b-AVERIFIER{color:var(--verif);background:var(--verif-f)}
-  .b-MANUEL{color:var(--manuel);background:var(--manuel-f)}
-  .b-ERREUR{color:var(--erreur);background:var(--erreur-f)}
-  .b-HORSPROFIL{color:var(--skip);background:var(--skip-f)}
-  .b-ECARTACCEPTE{color:var(--accepte);background:var(--accepte-f)}
+  .badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;
+    font-weight:500;letter-spacing:.3px;white-space:nowrap}
+  .b-CONFORME,.b-COMPLIANT{background:var(--conforme-f);color:var(--conforme)}
+  .b-NONCONFORME,.b-NON-COMPLIANT{background:var(--echec-f);color:var(--echec)}
+  .b-AVERIFIER,.b-TOREVIEW{background:var(--verif-f);color:var(--verif)}
+  .b-MANUEL,.b-MANUAL{background:var(--manuel-f);color:var(--manuel)}
+  .b-ERREUR,.b-ERROR{background:var(--erreur-f);color:var(--erreur)}
+  .b-HORSPROFIL,.b-OUTOFPROFILE{background:var(--skip-f);color:var(--skip)}
+  .b-ECARTACCEPTE,.b-ACCEPTEDDEVIATION{background:var(--accepte-f);color:var(--accepte)}
+  .b-attente{background:#f1f3f4;color:var(--sourdine)}
+  .b-cours{background:var(--bleu-f);color:var(--bleu)}
 
-  .spin{width:11px;height:11px;border:2px solid #aecbfa;border-top-color:var(--bleu);
-    border-radius:50%;animation:rot .8s linear infinite;display:inline-block}
-  @keyframes rot{to{transform:rotate(360deg)}}
-  tr.encours td{background:#f6fafe}
-  tr.nouveau td{animation:pose .5s ease}
-  @keyframes pose{from{background:#fef7e0}to{background:transparent}}
+  /* ---- Journal ---- */
+  details.journal{background:#fff;border:1px solid var(--ligne);border-radius:8px;
+    margin-bottom:16px;max-width:780px}
+  details.journal summary{padding:10px 16px;cursor:pointer;font-weight:500;font-size:12.5px;
+    color:var(--sourdine);user-select:none}
+  details.journal pre{margin:0;padding:12px 16px;max-height:160px;overflow-y:auto;
+    background:#202124;color:#e8eaed;font-family:'Roboto Mono',monospace;font-size:11px;
+    line-height:1.5;border-radius:0 0 8px 8px}
+  details.journal pre span.ok{color:#81c995}
+  details.journal pre span.err{color:#f28b82}
 
-  /* ---- Traitement des écarts ---- */
-  .actions-ligne{margin-top:6px}
-  .btn-accepter{background:#fff;border:1px solid var(--ligne);color:var(--bleu);
-    border-radius:100px;padding:4px 14px;font-size:12px;font-weight:500;cursor:pointer}
-  .btn-accepter:hover{background:#f6fafe;border-color:#d2e3fc}
-  .derog-info{margin-top:6px;background:var(--accepte-f);border-left:3px solid var(--accepte);
-    padding:7px 12px;font-size:12px;color:#3c4043;border-radius:0 8px 8px 0}
-  .derog-info .btn-revoquer{margin-left:8px;background:transparent;border:0;color:var(--echec);
-    font-size:11.5px;font-weight:500;cursor:pointer;font-family:inherit;padding:0}
-  .derog-info .btn-revoquer:hover{text-decoration:underline}
-
-  /* ---- Boîtes de dialogue (Material) ---- */
-  dialog#modalDerog,dialog#modalEmail{border:0;border-radius:16px;padding:0;max-width:560px;width:92vw;
-    box-shadow:var(--ombre-2)}
-  dialog#modalGuide{border:0;border-radius:16px;padding:0;max-width:760px;width:94vw;
-    box-shadow:var(--ombre-2)}
-  dialog::backdrop{background:rgba(32,33,36,.5)}
-  .modal-tete{background:#fff;color:var(--texte);padding:22px 24px 6px;
-    font-family:var(--police-titre);font-weight:500;font-size:18px;border-radius:16px 16px 0 0}
-  .modal-corps{padding:14px 24px;font-size:13.5px}
-  .modal-corps .ctrl-ref{font-family:'Roboto Mono',monospace;color:var(--accepte);font-weight:500}
-  .modal-bloc{margin:14px 0}
-  .modal-bloc .etiquette{font-size:11.5px;letter-spacing:.3px;font-weight:500;
-    color:var(--sourdine);display:block;margin-bottom:5px}
-  .bloc-risque{background:var(--echec-f);border-left:3px solid var(--echec);padding:9px 14px;
-    border-radius:0 8px 8px 0;color:#5c1a15}
-  .bloc-constat{background:var(--papier);border-left:3px solid var(--ligne);padding:9px 14px;
-    border-radius:0 8px 8px 0;color:#3c4043;max-height:110px;overflow:auto}
-  #derogMotif{width:100%;min-height:84px;border:1px solid var(--ligne);border-radius:8px;
-    padding:9px 12px;font:inherit;resize:vertical}
-  #derogDuree{border:1px solid var(--ligne);border-radius:8px;padding:8px 12px;font:inherit;background:#fff}
-  .modal-pied{display:flex;justify-content:flex-end;gap:8px;padding:10px 24px 18px;align-items:center}
-  .modal-pied .secondaire{background:transparent;border:0;border-radius:100px;
-    padding:9px 18px;font:inherit;font-weight:500;color:var(--bleu);cursor:pointer}
-  .modal-pied .secondaire:hover{background:#f6fafe}
-  .modal-pied .principal{background:var(--bleu);color:#fff;border:0;border-radius:100px;
-    padding:9px 22px;font-family:var(--police-titre);font-weight:500;cursor:pointer;
-    transition:background .15s,box-shadow .15s}
-  .modal-pied .principal:hover:not(:disabled){background:var(--bleu-fonce);box-shadow:var(--ombre-1)}
-  .modal-pied .principal:disabled{background:#f1f3f4;color:#9aa0a6;cursor:default}
-  .modal-erreur{color:var(--echec);font-size:12px;margin-right:auto;display:none}
-
-  .champ-email{width:100%;border:1px solid var(--ligne);border-radius:8px;
-    padding:9px 12px;font:inherit}
-  #emailMessage{min-height:70px;resize:vertical}
-  .cases-email{display:flex;flex-direction:column;gap:8px;font-size:13px}
-  .cases-email label{display:flex;align-items:center;gap:10px;cursor:pointer}
-  .cases-email input{accent-color:var(--bleu);width:16px;height:16px}
-
-  /* ---- Guide ---- */
-  .guide-corps{padding:8px 26px 20px;font-size:13.5px;max-height:70vh;overflow:auto;line-height:1.6}
-  .guide-corps h3{font-size:14px;margin:20px 0 6px;padding-top:14px;border-top:1px solid #f1f3f4;font-weight:500}
-  .guide-corps h3:first-child{margin-top:0;border-top:0;padding-top:0}
-  .guide-corps p{margin:6px 0}
-  .guide-corps a{color:var(--bleu);font-weight:500;text-decoration:none}
-  .guide-corps a:hover{text-decoration:underline}
-  .guide-corps .badge{margin-right:6px}
-  .guide-corps table{display:table;border:0;width:auto;border-radius:0;overflow:visible}
-  .guide-corps td{border:0;padding:4px 10px 4px 0;vertical-align:middle}
-  .guide-corps code{font-family:'Roboto Mono',monospace;font-size:12px;background:#f1f3f4;
-    border-radius:4px;padding:1px 6px}
-
-  /* ---- Footer ---- */
-  footer{background:#fff;color:var(--sourdine);padding:14px 24px;font-size:12px;
-    display:flex;align-items:center;gap:22px;flex-wrap:wrap;border-top:1px solid var(--ligne)}
-  footer .bloc-version{color:var(--texte);font-weight:500}
-  footer .bloc-version .num{background:#f1f3f4;border-radius:100px;padding:2px 10px;margin-left:6px;
-    font-family:'Roboto Mono',monospace;font-size:11px;color:var(--sourdine)}
-  footer a{color:var(--bleu);text-decoration:none;font-weight:500}
+  /* ---- Pied de page sticky ---- */
+  footer{background:#fff;border-top:1px solid var(--ligne);padding:10px 24px;
+    display:flex;align-items:center;gap:18px;font-size:12px;color:var(--sourdine);
+    flex-wrap:wrap;position:sticky;bottom:0;z-index:4;box-shadow:0 -1px 3px rgba(60,64,67,.08)}
+  footer a{color:var(--bleu);text-decoration:none}
   footer a:hover{text-decoration:underline}
-  footer .mention{margin-left:auto;font-size:11px;color:#9aa0a6;max-width:460px;text-align:right}
-  footer .lien-bandeau{padding:4px 10px}
+  footer .bloc-version{display:flex;align-items:center;gap:6px;font-weight:500;color:var(--texte)}
+  footer .bloc-version .num{font-family:'Roboto Mono',monospace;font-size:11px;background:#f1f3f4;
+    padding:1px 6px;border-radius:4px;color:var(--sourdine);font-weight:normal}
+  footer .mention{margin-left:auto;font-size:11px;color:#80868b}
+  @media(max-width:900px){footer .mention{margin-left:0;width:100%}}
 
-  @media(prefers-reduced-motion:reduce){
-    .spin{animation:none}
-    tr.nouveau td{animation:none}
-    .anneau-val{transition:none}
-    .barre.indeterminee i{animation:none}
-  }
+  /* ---- Dialogue Guide ---- */
+  dialog#modalGuide, dialog#modalAPropos{border:0;border-radius:12px;padding:0;max-width:720px;width:90vw;
+    box-shadow:var(--ombre-2);background:#fff;color:var(--texte)}
+  dialog#modalGuide::backdrop, dialog#modalAPropos::backdrop, dialog#modalDerog::backdrop, dialog#modalEmail::backdrop{background:rgba(32,33,36,.5)}
+  .modal-tete{background:#fff;padding:18px 24px 14px;border-bottom:1px solid var(--ligne);
+    font-family:var(--police-titre);font-size:17px;font-weight:500;display:flex;align-items:center;gap:10px}
+  .guide-corps{padding:20px 24px;max-height:70vh;overflow-y:auto;font-size:13px;line-height:1.6}
+  .guide-corps h3{font-size:14px;margin:16px 0 6px;color:var(--texte)}
+  .guide-corps h3:first-child{margin-top:0}
+  .guide-corps p{margin:0 0 10px;color:var(--sourdine)}
+  .guide-corps table{width:100%;border-collapse:collapse;margin:8px 0 14px}
+  .guide-corps td{padding:6px 8px;font-size:12.5px;vertical-align:top;border-bottom:1px solid #f1f3f4}
+  .guide-corps td:first-child{width:130px}
+  .modal-pied{padding:12px 24px;border-top:1px solid var(--ligne);display:flex;justify-content:flex-end;gap:8px}
+  .modal-pied button.principal{background:var(--bleu);color:#fff;border:0;border-radius:100px;
+    padding:8px 20px;cursor:pointer;font-weight:500;font-size:13px}
+  .modal-pied button.principal:hover{background:var(--bleu-fonce)}
+  .modal-pied button.secondaire{background:transparent;color:var(--sourdine);border:1px solid var(--ligne);
+    border-radius:100px;padding:8px 18px;cursor:pointer;font-weight:500;font-size:13px}
+  .modal-pied button.secondaire:hover{background:#f1f3f4;color:var(--texte)}
+
+  /* ---- Dialogue Dérogations ---- */
+  dialog#modalDerog, dialog#modalEmail{border:0;border-radius:12px;padding:0;max-width:540px;width:92vw;
+    box-shadow:var(--ombre-2);background:#fff;color:var(--texte)}
+  .modal-corps{padding:18px 24px;font-size:13px;display:flex;flex-direction:column;gap:14px}
+  .modal-bloc{display:flex;flex-direction:column;gap:5px}
+  .modal-bloc .etiquette{font-size:11.5px;font-weight:500;color:var(--sourdine);text-transform:uppercase;letter-spacing:.4px}
+  .ctrl-ref{font-family:'Roboto Mono',monospace;color:var(--bleu);font-weight:500}
+  .bloc-risque{background:var(--echec-f);border-left:3px solid var(--echec);padding:8px 12px;
+    border-radius:0 4px 4px 0;font-size:12.5px;color:#5c100b;line-height:1.45}
+  .bloc-constat{background:#f8f9fa;border-left:3px solid var(--ligne);padding:8px 12px;
+    border-radius:0 4px 4px 0;font-family:'Roboto Mono',monospace;font-size:11.5px;color:var(--texte);
+    word-break:break-all;max-height:80px;overflow-y:auto}
+  .modal-bloc textarea{width:100%;min-height:72px;border:1px solid var(--ligne);border-radius:6px;
+    padding:8px 10px;font-family:inherit;font-size:13px;resize:vertical}
+  .modal-bloc select{border:1px solid var(--ligne);border-radius:6px;padding:8px 10px;
+    font-family:inherit;font-size:13px;background:#fff}
+  .champ-email{width:100%;border:1px solid var(--ligne);border-radius:6px;padding:8px 10px;
+    font-family:inherit;font-size:13px}
+  .cases-email{gap:8px}
+  .cases-email label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;user-select:none}
+  .cases-email input{accent-color:var(--bleu);width:15px;height:15px}
+  .modal-erreur{color:var(--echec);font-size:12px;margin-right:auto;align-self:center;display:none}
+
+  /* ---- Lignes du registre : boutons d'action ---- */
+  .actions-ligne{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
+  .btn-accepter{background:var(--accepte-f);color:var(--accepte);border:0;border-radius:100px;
+    padding:3px 10px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit}
+  .btn-accepter:hover{background:#d2e3fc}
+  .derog-info{margin-top:6px;padding:6px 10px;background:var(--accepte-f);border-left:3px solid var(--accepte);
+    border-radius:0 4px 4px 0;font-size:11.5px;color:#0d47a1;line-height:1.4}
+  .btn-revoquer{background:transparent;border:0;color:var(--echec);cursor:pointer;
+    font-size:11px;font-weight:500;margin-left:8px;padding:0;text-decoration:underline}
+  .btn-revoquer:hover{color:#b3261e}
 </style>
 </head>
 <body>
@@ -303,19 +302,24 @@
 <header>
   <div>
     <span class="eyebrow">CIS Benchmark v1.4 · Google Workspace Foundations</span>
-    <h1>Registre d'audit de conformité <span class="chip-version">v<?= version ?></span></h1>
+    <h1><span data-i18n="titreApp">Registre d'audit de conformité</span> <span class="chip-version">v<?= version ?></span></h1>
   </div>
   <div class="droite">
-    <button type="button" class="lien-bandeau" onclick="ouvrirGuide()">Guide</button>
-    <label class="opt" title="Lecture des réglages de confidentialité de chaque groupe (Groups Settings API). Sur un gros tenant (>2000 groupes), compter ~10 min avec 4 lots en parallèle. Si décoché, les contrôles 3.1.6.x s'appuient uniquement sur la Policy API.">
-      <input type="checkbox" id="optReglages" checked> Réglages par groupe
+    <div class="langue" role="group" aria-label="Langue / Language">
+      <button type="button" id="btnLangFr" class="actif" onclick="changerLangue('fr')">FR</button>
+      <button type="button" id="btnLangEn" onclick="changerLangue('en')">EN</button>
+    </div>
+    <button type="button" class="lien-bandeau" id="btnAPropos" onclick="ouvrirAPropos()" data-i18n="btnAPropos">À propos</button>
+    <button type="button" class="lien-bandeau" id="btnGuide" onclick="ouvrirGuide()" data-i18n="btnGuide">Guide</button>
+    <label class="opt" id="labelOptReglages" title="Lecture des réglages de confidentialité de chaque groupe (Groups Settings API). Sur un gros tenant (>2000 groupes), compter ~10 min avec 4 lots en parallèle. Si décoché, les contrôles 3.1.6.x s'appuient uniquement sur la Policy API.">
+      <input type="checkbox" id="optReglages" checked> <span data-i18n="optReglages">Réglages par groupe</span>
     </label>
     <div class="profil" role="group" aria-label="Profil d'audit">
-      <button type="button" id="pL1" onclick="choisirProfil('L1')">Niveau 1</button>
-      <button type="button" id="pL2" class="actif" onclick="choisirProfil('L2')">Niveaux 1+2</button>
+      <button type="button" id="pL1" onclick="choisirProfil('L1')" data-i18n="profilL1">Niveau 1</button>
+      <button type="button" id="pL2" class="actif" onclick="choisirProfil('L2')" data-i18n="profilL2">Niveaux 1+2</button>
     </div>
-    <button type="button" id="btnArreter" onclick="demanderArret()">Arrêter</button>
-    <button type="button" id="btnLancer" onclick="lancerAudit()">Lancer l'audit</button>
+    <button type="button" id="btnArreter" onclick="demanderArret()" data-i18n="btnArreter">Arrêter</button>
+    <button type="button" id="btnLancer" onclick="lancerAudit()" data-i18n="btnLancer">Lancer l'audit</button>
   </div>
 </header>
 
@@ -332,23 +336,23 @@
         </svg>
         <div class="valeur">
           <span class="pct" id="scorePct">—</span>
-          <span class="lib">Conformité résiduelle (écarts acceptés exclus)</span>
+          <span class="lib" data-i18n="scoreLib">Conformité résiduelle (écarts acceptés exclus)</span>
         </div>
       </div>
 
       <div class="avancement" id="scoreBrut" style="text-align:center;margin:-10px 0 10px"></div>
       <div class="barre" aria-hidden="true"><i id="barreAv"></i></div>
-      <div class="avancement" id="txtAv">En attente de lancement</div>
-      <div class="chrono" id="chrono">Écoulé : <b id="chronoVal">00:00</b> · dernier retour serveur il y a <b id="battement">0 s</b></div>
+      <div class="avancement" id="txtAv" data-i18n="attenteLancement">En attente de lancement</div>
+      <div class="chrono" id="chrono"><span data-i18n="chronoEcoule">Écoulé</span> : <b id="chronoVal">00:00</b> · <span data-i18n="chronoBattement">dernier retour serveur il y a</span> <b id="battement">0 s</b></div>
 
       <div class="compteurs" id="compteurs" role="group" aria-label="Filtrer par statut"></div>
 
       <div class="meta" id="metaTenant"></div>
 
-      <button type="button" id="btnExport" onclick="exporterSheets()">Générer le rapport Sheets</button>
+      <button type="button" id="btnExport" onclick="exporterSheets()" data-i18n="btnExport">Générer le rapport Sheets</button>
       <div id="lienRapport"></div>
-      <button type="button" id="btnEmail" onclick="ouvrirEmail()">Envoyer par e-mail…</button>
-      <button type="button" id="btnReinit" onclick="location.reload()">Réinitialiser (nouvel audit)</button>
+      <button type="button" id="btnEmail" onclick="ouvrirEmail()" data-i18n="btnEmail">Envoyer par e-mail…</button>
+      <button type="button" id="btnReinit" onclick="location.reload()" data-i18n="btnReinit">Réinitialiser (nouvel audit)</button>
     </div>
   </aside>
 
@@ -356,183 +360,479 @@
     <div class="avertissements" id="avertissements"></div>
 
     <div class="collecte" id="panneauCollecte">
-      <h3>Phase 1 — Collecte du contexte <span class="mono" id="collecteEtat">démarrage…</span>
+      <h3><span data-i18n="collecteTitre">Phase 1 — Collecte du contexte</span> <span class="mono" id="collecteEtat">démarrage…</span>
         <span class="resume" id="collecteResume"></span>
-        <button type="button" class="bascule" id="btnBasculeCollecte" onclick="basculerCollecte()">Détails</button>
+        <button type="button" class="bascule" id="btnBasculeCollecte" onclick="basculerCollecte()" data-i18n="btnDetails">Détails</button>
       </h3>
       <div id="listeEtapes"></div>
     </div>
 
     <details class="journal" id="journal" style="display:none" open>
-      <summary>Journal d'exécution</summary>
+      <summary data-i18n="journalTitre">Journal d'exécution</summary>
       <pre id="journalCorps"></pre>
     </details>
 
     <div class="accueil" id="accueil">
-      <h2>89 contrôles, exécutés et affichés un par un</h2>
-      <p>Choisissez le profil (Niveau 1 seul ou complet), puis lancez l'audit avec un compte
-        super administrateur. Chaque résultat s'inscrit au registre dès que le contrôle est terminé.</p>
+      <h2 data-i18n="accueilTitre">87 contrôles, exécutés et affichés un par un</h2>
+      <p data-i18n="accueilDesc">Choisissez le profil (Niveau 1 seul ou complet), puis lancez l'audit avec un compte super administrateur. Chaque résultat s'inscrit au registre dès que le contrôle est terminé.</p>
       <div class="etapes">
-        <div class="etape"><b>Phase 1</b>Collecte unique : politiques Cloud Identity, utilisateurs, domaines, groupes.</div>
-        <div class="etape"><b>Phase 2</b>Exécution des contrôles en parallèle, résultat affiché au fil de l'eau.</div>
-        <div class="etape"><b>Phase 3</b>Export facultatif du rapport complet en Google Sheets.</div>
+        <div class="etape"><b data-i18n="etape1Titre">Phase 1</b><span data-i18n="etape1Desc">Collecte unique : politiques Cloud Identity, utilisateurs, domaines, groupes.</span></div>
+        <div class="etape"><b data-i18n="etape2Titre">Phase 2</b><span data-i18n="etape2Desc">Exécution des contrôles en parallèle, résultat affiché au fil de l'eau.</span></div>
+        <div class="etape"><b data-i18n="etape3Titre">Phase 3</b><span data-i18n="etape3Desc">Export facultatif du rapport complet en Google Sheets.</span></div>
       </div>
     </div>
 
     <table id="tableau" aria-live="polite">
-      <thead><tr><th>ID</th><th>Niv.</th><th>Contrôle</th><th>Statut</th><th>Constat</th></tr></thead>
+      <thead><tr>
+        <th data-i18n="thId">ID</th>
+        <th data-i18n="thNiv">Niv.</th>
+        <th data-i18n="thCtrl">Contrôle</th>
+        <th data-i18n="thStatut">Statut</th>
+        <th data-i18n="thConstat">Constat</th>
+      </tr></thead>
       <tbody id="corps"></tbody>
     </table>
   </section>
 </main>
 
 <footer>
-  <span class="bloc-version">Registre d'audit CIS Workspace<span class="num" id="appVersion">v<?= version ?></span></span>
-  <span>Référentiel : <a href="https://www.cisecurity.org/benchmark/google_workspace" target="_blank" rel="noopener">CIS Google Workspace Foundations Benchmark v1.4</a></span>
-  <button type="button" class="lien-bandeau" onclick="ouvrirGuide()">Guide d'utilisation</button>
-  <span class="mention">Outil interne d'aide à l'évaluation, non affilié au Center for Internet Security®. Le document officiel du benchmark (PDF) est diffusé par le CIS sur son site ; il fait foi pour l'interprétation des recommandations.</span>
+  <span class="bloc-version"><span data-i18n="footerNom">Registre d'audit CIS Workspace</span><span class="num" id="appVersion">v<?= version ?></span></span>
+  <span><span data-i18n="footerRef">Référentiel</span> : <a href="https://www.cisecurity.org/benchmark/google_workspace" target="_blank" rel="noopener">CIS Google Workspace Foundations Benchmark v1.4</a></span>
+  <button type="button" class="lien-bandeau" onclick="ouvrirGuide()" data-i18n="btnGuideFooter">Guide d'utilisation</button>
+  <button type="button" class="lien-bandeau" onclick="ouvrirAPropos()" data-i18n="btnAProposFooter">À propos</button>
+  <span class="mention" data-i18n="footerMention">Outil interne d'aide à l'évaluation, non affilié au Center for Internet Security®. Le document officiel du benchmark (PDF) est diffusé par le CIS sur son site ; il fait foi pour l'interprétation des recommandations.</span>
 </footer>
 
-<dialog id="modalGuide" aria-labelledby="guideTitre">
-  <div class="modal-tete" id="guideTitre">Guide — Audit CIS Google Workspace</div>
+<!-- Modale À propos -->
+<dialog id="modalAPropos" aria-labelledby="aProposTitre">
+  <div class="modal-tete" id="aProposTitre" data-i18n="aProposTitre">À propos — Registre d'audit CIS Google Workspace</div>
   <div class="guide-corps">
-    <h3>Le référentiel</h3>
-    <p>Cet outil vérifie automatiquement le tenant Google Workspace contre les <b>86 recommandations</b> du
-      <a href="https://www.cisecurity.org/benchmark/google_workspace" target="_blank" rel="noopener">CIS Google Workspace Foundations Benchmark v1.4</a>,
-      référentiel de configuration sécurisée publié par le Center for Internet Security. Le PDF officiel se télécharge
-      gratuitement depuis cette page (inscription CIS demandée) ; les identifiants affichés ici (ex. <code>3.1.3.5.2</code>)
-      renvoient aux sections correspondantes du document, qui détaille pour chaque point la justification, l'audit et la remédiation.</p>
+    <h3 data-i18n="aProposOutilTitre">L'outil d'audit</h3>
+    <p data-i18n="aProposOutilDesc">Cet outil automatisé évalue la configuration d'un tenant Google Workspace contre les 86 recommandations officielles du <b>CIS Google Workspace Foundations Benchmark v1.4</b>, fournissant un état des lieux exhaustif, un calcul de conformité résiduelle et un plan d'actions priorisé.</p>
+    
+    <h3 data-i18n="aProposDevTitre">Développeur</h3>
+    <p><b>Fabrice Faucheux</b><br>
+      Site web : <a href="https://faucheux.bzh" target="_blank" rel="noopener">https://faucheux.bzh</a>
+    </p>
 
-    <h3>Profils Niveau 1 / Niveaux 1+2</h3>
-    <p><b>Niveau 1</b> : socle de sécurité essentiel, applicable à la plupart des organisations avec un impact
-      fonctionnel limité. <b>Niveau 2</b> : durcissement pour environnements exigeants (défense en profondeur),
-      pouvant restreindre certains usages (ex. Drive pour ordinateur, POP/IMAP). Le sélecteur du bandeau
-      détermine les contrôles exécutés ; les contrôles N2 hors profil sont classés « HORS PROFIL ».</p>
-
-    <h3>Déroulé d'un audit</h3>
-    <p><b>Phase 1 — Collecte</b> : lecture unique du contexte (politiques Cloud Identity, utilisateurs et 2SV, domaines,
-      groupes). Le panneau affiche chaque étape avec son avancement. L'option « Réglages par groupe » lit la
-      confidentialité de chaque groupe (plus long ; décochable, les contrôles 3.1.6.x s'appuient alors sur la seule Policy API).<br>
-      <b>Phase 2 — Contrôles</b> : les 89 vérifications s'exécutent en parallèle, chaque résultat s'inscrit au registre dès
-      qu'il est connu.<br>
-      <b>Phase 3 — Export</b> : génération du rapport Google Sheets (synthèse, détail, plan d'actions, registre des
-      dérogations, politiques brutes).</p>
-
-    <h3>Lecture des statuts</h3>
-    <table>
-      <tr><td><span class="badge b-CONFORME">CONFORME</span></td><td>la configuration relevée correspond à la recommandation.</td></tr>
-      <tr><td><span class="badge b-NONCONFORME">NON CONFORME</span></td><td>écart avéré — à corriger (plan d'actions) ou à accepter formellement.</td></tr>
-      <tr><td><span class="badge b-ECARTACCEPTE">ÉCART ACCEPTÉ</span></td><td>dérogation enregistrée au registre : motif, acceptant, échéance de révision.</td></tr>
-      <tr><td><span class="badge b-AVERIFIER">À VÉRIFIER</span></td><td>données collectées mais jugement humain requis, ou réglage non interprétable automatiquement (voir l'onglet « Politiques (brut) » du rapport).</td></tr>
-      <tr><td><span class="badge b-MANUEL">MANUEL</span></td><td>non exposé par API (revues de tableaux de bord, règles d'alertes…) — le chemin console est indiqué.</td></tr>
-      <tr><td><span class="badge b-ERREUR">ERREUR</span></td><td>échec technique (droits, API non activée, réseau) — la cause est dans le constat et le journal.</td></tr>
-    </table>
-
-    <h3>Traiter les écarts</h3>
-    <p>Chaque ligne NON CONFORME propose « Accepter l'écart… » : la fenêtre présente le <b>risque assumé</b> et le
-      constat, puis exige un motif (mesures compensatoires, contexte métier) et une échéance de révision. Les
-      dérogations sont durables et partagées entre administrateurs ; révocables en un clic. Le <b>tampon</b> affiche le
-      score <i>résiduel</i> (écarts acceptés exclus), le score <i>brut</i> reste indiqué dessous. L'export Sheets fournit le
-      plan d'actions priorisé (P1/P2) pour les écarts restants et le registre des dérogations avec alertes de révision.</p>
-
-    <h3>Bonnes pratiques d'exécution</h3>
-    <p>Exécuter avec un compte <b>super administrateur</b> (exigé par la Policy API). Garder l'onglet ouvert et le poste
-      alimenté (l'anti-veille maintient l'écran, pas le capot fermé). En cas de coupure, l'audit se suspend
-      automatiquement : « Reprendre l'audit » repart où il s'était arrêté (contexte conservé 6 h). La version affichée
-      au pied de page est celle du <b>serveur déployé</b> : après une mise à jour du code, si elle n'a pas changé,
-      le redéploiement (« Nouvelle version ») n'a pas été fait.</p>
-
-    <h3>Mentions</h3>
-    <p>CIS® et CIS Benchmarks™ sont des marques du Center for Internet Security, Inc. Cet outil interne n'est ni
-      édité ni approuvé par le CIS ; en cas de divergence, le document officiel prévaut.</p>
+    <h3 data-i18n="aProposSecuTitre">Sécurité & Confidentialité</h3>
+    <p data-i18n="aProposSecuDesc">L'audit s'exécute entièrement dans le périmètre Google Workspace de votre organisation via Google Apps Script (exécution en lecture seule). Aucun secret, clé API ou donnée sensible n'est transféré vers des serveurs tiers.</p>
   </div>
   <div class="modal-pied">
-    <button type="button" class="principal" onclick="fermerGuide()">Fermer</button>
+    <button type="button" class="principal" onclick="fermerAPropos()" data-i18n="btnFermer">Fermer</button>
   </div>
 </dialog>
 
+<!-- Modale Guide -->
+<dialog id="modalGuide" aria-labelledby="guideTitre">
+  <div class="modal-tete" id="guideTitre" data-i18n="guideTitre">Guide — Audit CIS Google Workspace</div>
+  <div class="guide-corps" id="guideCorps">
+    <!-- Contenu injecté dynamiquement selon la langue -->
+  </div>
+  <div class="modal-pied">
+    <button type="button" class="principal" onclick="fermerGuide()" data-i18n="btnFermer">Fermer</button>
+  </div>
+</dialog>
+
+<!-- Modale E-mail -->
 <dialog id="modalEmail" aria-labelledby="emailTitre">
-  <div class="modal-tete" id="emailTitre">Envoyer les résultats par e-mail</div>
+  <div class="modal-tete" id="emailTitre" data-i18n="emailTitre">Envoyer les résultats par e-mail</div>
   <div class="modal-corps">
     <div class="modal-bloc">
-      <span class="etiquette">Destinataires (séparés par des virgules)</span>
-      <input type="text" class="champ-email" id="emailDest" placeholder="prenom.nom@cooperl.com, rssi@cooperl.com">
+      <span class="etiquette" data-i18n="emailDestLabel">Destinataires (séparés par des virgules)</span>
+      <input type="text" class="champ-email" id="emailDest" placeholder="admin@domain.com, rssi@domain.com">
     </div>
     <div class="modal-bloc">
-      <span class="etiquette">Objet</span>
+      <span class="etiquette" data-i18n="emailObjetLabel">Objet</span>
       <input type="text" class="champ-email" id="emailObjet">
     </div>
     <div class="modal-bloc">
-      <span class="etiquette">Message d'accompagnement (facultatif)</span>
-      <textarea class="champ-email" id="emailMessage" placeholder="Contexte, décisions attendues, échéances…"></textarea>
+      <span class="etiquette" data-i18n="emailMsgLabel">Message d'accompagnement (facultatif)</span>
+      <textarea class="champ-email" id="emailMessage" data-i18n-ph="emailMsgPh" placeholder="Contexte, décisions attendues, échéances…"></textarea>
     </div>
     <div class="modal-bloc cases-email">
-      <label><input type="checkbox" id="emailLien" checked> Générer le rapport Google Sheets et joindre son lien</label>
-      <label><input type="checkbox" id="emailDetails" checked> Inclure la liste des écarts à corriger dans le corps du message</label>
+      <label><input type="checkbox" id="emailLien" checked> <span data-i18n="emailJoindreLien">Générer le rapport Google Sheets et joindre son lien</span></label>
+      <label><input type="checkbox" id="emailDetails" checked> <span data-i18n="emailInclureDetails">Inclure la liste des écarts à corriger dans le corps du message</span></label>
     </div>
   </div>
   <div class="modal-pied">
     <span class="modal-erreur" id="emailErreur"></span>
-    <button type="button" class="secondaire" onclick="fermerEmail()">Annuler</button>
-    <button type="button" class="principal" id="emailEnvoyer" onclick="confirmerEnvoiEmail()">Envoyer</button>
+    <button type="button" class="secondaire" onclick="fermerEmail()" data-i18n="btnAnnuler">Annuler</button>
+    <button type="button" class="principal" id="emailEnvoyer" onclick="confirmerEnvoiEmail()" data-i18n="btnEnvoyer">Envoyer</button>
   </div>
 </dialog>
 
+<!-- Modale Dérogation -->
 <dialog id="modalDerog" aria-labelledby="modalTitre">
-  <div class="modal-tete" id="modalTitre">Accepter un écart en connaissance de cause</div>
+  <div class="modal-tete" id="modalTitre" data-i18n="derogTitre">Accepter un écart en connaissance de cause</div>
   <div class="modal-corps">
     <div><span class="ctrl-ref" id="derogRef"></span> — <span id="derogTitreCtrl"></span></div>
     <div class="modal-bloc">
-      <span class="etiquette">Risque assumé en acceptant cet écart</span>
+      <span class="etiquette" data-i18n="derogRisqueLabel">Risque assumé en acceptant cet écart</span>
       <div class="bloc-risque" id="derogRisque"></div>
     </div>
     <div class="modal-bloc">
-      <span class="etiquette">Constat de l'audit</span>
+      <span class="etiquette" data-i18n="derogConstatLabel">Constat de l'audit</span>
       <div class="bloc-constat" id="derogConstat"></div>
     </div>
     <div class="modal-bloc">
-      <span class="etiquette">Motif de la dérogation (obligatoire — compensations, contexte métier…)</span>
-      <textarea id="derogMotif" placeholder="Ex. : transfert automatique requis par l'outil X pour le service Y ; mesure compensatoire : règle de routage limitée au domaine partenaire, revue trimestrielle des règles."></textarea>
+      <span class="etiquette" data-i18n="derogMotifLabel">Motif de la dérogation (obligatoire — compensations, contexte métier…)</span>
+      <textarea id="derogMotif" data-i18n-ph="derogMotifPh" placeholder="Ex. : transfert automatique requis par l'outil X ; mesure compensatoire : règle de routage limitée au domaine partenaire, revue trimestrielle."></textarea>
     </div>
     <div class="modal-bloc">
-      <span class="etiquette">Échéance de révision</span>
+      <span class="etiquette" data-i18n="derogDureeLabel">Échéance de révision</span>
       <select id="derogDuree">
-        <option value="3">Dans 3 mois</option>
-        <option value="6" selected>Dans 6 mois</option>
-        <option value="12">Dans 12 mois</option>
-        <option value="0">Permanente (revue à chaque audit)</option>
+        <option value="3" data-i18n="duree3m">Dans 3 mois</option>
+        <option value="6" selected data-i18n="duree6m">Dans 6 mois</option>
+        <option value="12" data-i18n="duree12m">Dans 12 mois</option>
+        <option value="0" data-i18n="dureePerm">Permanente (revue à chaque audit)</option>
       </select>
     </div>
   </div>
   <div class="modal-pied">
     <span class="modal-erreur" id="derogErreur"></span>
-    <button type="button" class="secondaire" onclick="fermerModale()">Annuler</button>
-    <button type="button" class="principal" id="derogConfirmer" onclick="confirmerAcceptation()">Accepter l'écart</button>
+    <button type="button" class="secondaire" onclick="fermerModale()" data-i18n="btnAnnuler">Annuler</button>
+    <button type="button" class="principal" id="derogConfirmer" onclick="confirmerAcceptation()" data-i18n="btnAccepter">Accepter l'écart</button>
   </div>
 </dialog>
 
 <script>
-  const CONCURRENCE = 3;
-  const SECTIONS = [
-    ['6.','6 — Règles d\'alertes administrateur'],
-    ['5.','5 — Revue des rapports'],
-    ['4.3','4.3 — Supervision de la sécurité'],
-    ['4.2','4.2 — Contrôles d\'accès'],
-    ['4.1','4.1 — Authentification'],
-    ['3.1.9','3.1.9 — Marketplace'],
-    ['3.1.8','3.1.8 — Services Google supplémentaires'],
-    ['3.1.7','3.1.7 — Sites'],
-    ['3.1.6','3.1.6 — Groups for Business'],
-    ['3.1.4','3.1.4 — Google Chat'],
-    ['3.1.3','3.1.3 — Gmail'],
-    ['3.1.2','3.1.2 — Drive et Docs'],
-    ['3.1.1','3.1.1 — Agenda'],
-    ['1.2','1.2 — Annuaire'],
-    ['1.1','1.1 — Comptes super administrateur']
-  ];
-  const ORDRE_STATUTS = ['CONFORME','NON CONFORME','ÉCART ACCEPTÉ','À VÉRIFIER','MANUEL','ERREUR','HORS PROFIL'];
-  const CLASSE = s => 'b-' + s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s/g,'');
+  // =========================================================================
+  // DICTIONNAIRE I18N CENTRALISÉ (FRANÇAIS / ANGLAIS)
+  // =========================================================================
+  const I18N = {
+    fr: {
+      titreApp: 'Registre d\'audit de conformité',
+      btnAPropos: 'À propos',
+      btnGuide: 'Guide',
+      optReglages: 'Réglages par groupe',
+      profilL1: 'Niveau 1',
+      profilL2: 'Niveaux 1+2',
+      btnArreter: 'Arrêter',
+      btnLancer: 'Lancer l\'audit',
+      btnRelancer: 'Relancer l\'audit',
+      btnReprendre: 'Reprendre l\'audit',
+      scoreLib: 'Conformité résiduelle (écarts acceptés exclus)',
+      attenteLancement: 'En attente de lancement',
+      chronoEcoule: 'Écoulé',
+      chronoBattement: 'dernier retour serveur il y a',
+      btnExport: 'Générer le rapport Sheets',
+      btnEmail: 'Envoyer par e-mail…',
+      btnReinit: 'Réinitialiser (nouvel audit)',
+      collecteTitre: 'Phase 1 — Collecte du contexte',
+      btnDetails: 'Détails',
+      btnReplier: 'Replier',
+      journalTitre: 'Journal d\'exécution',
+      accueilTitre: '87 contrôles, exécutés et affichés un par un',
+      accueilDesc: 'Choisissez le profil (Niveau 1 seul ou complet), puis lancez l\'audit avec un compte super administrateur. Chaque résultat s\'inscrit au registre dès que le contrôle est terminé.',
+      etape1Titre: 'Phase 1',
+      etape1Desc: 'Collecte unique : politiques Cloud Identity, utilisateurs, domaines, groupes.',
+      etape2Titre: 'Phase 2',
+      etape2Desc: 'Exécution des contrôles en parallèle, résultat affiché au fil de l\'eau.',
+      etape3Titre: 'Phase 3',
+      etape3Desc: 'Export facultatif du rapport complet en Google Sheets.',
+      thId: 'ID',
+      thNiv: 'Niv.',
+      thCtrl: 'Contrôle',
+      thStatut: 'Statut',
+      thConstat: 'Constat',
+      footerNom: 'Registre d\'audit CIS Workspace',
+      footerRef: 'Référentiel',
+      btnGuideFooter: 'Guide d\'utilisation',
+      btnAProposFooter: 'À propos',
+      footerMention: 'Outil interne d\'aide à l\'évaluation, non affilié au Center for Internet Security®. Le document officiel du benchmark (PDF) est diffusé par le CIS sur son site ; il fait foi pour l\'interprétation des recommandations.',
+      aProposTitre: 'À propos — Registre d\'audit CIS Google Workspace',
+      aProposOutilTitre: 'L\'outil d\'audit',
+      aProposOutilDesc: 'Cet outil automatisé évalue la configuration d\'un tenant Google Workspace contre les 86 recommandations officielles du <b>CIS Google Workspace Foundations Benchmark v1.4</b>, fournissant un état des lieux exhaustif, un calcul de conformité résiduelle et un plan d\'actions priorisé.',
+      aProposDevTitre: 'Développeur',
+      aProposSecuTitre: 'Sécurité & Confidentialité',
+      aProposSecuDesc: 'L\'audit s\'exécute entièrement dans le périmètre Google Workspace de votre organisation via Google Apps Script (exécution en lecture seule). Aucun secret, clé API ou donnée sensible n\'est transféré vers des serveurs tiers.',
+      guideTitre: 'Guide — Audit CIS Google Workspace',
+      btnFermer: 'Fermer',
+      btnAnnuler: 'Annuler',
+      btnEnvoyer: 'Envoyer',
+      btnAccepter: 'Accepter l\'écart',
+      emailTitre: 'Envoyer les résultats par e-mail',
+      emailDestLabel: 'Destinataires (séparés par des virgules)',
+      emailObjetLabel: 'Objet',
+      emailMsgLabel: 'Message d\'accompagnement (facultatif)',
+      emailMsgPh: 'Contexte, décisions attendues, échéances…',
+      emailJoindreLien: 'Générer le rapport Google Sheets et joindre son lien',
+      emailInclureDetails: 'Inclure la liste des écarts à corriger dans le corps du message',
+      derogTitre: 'Accepter un écart en connaissance de cause',
+      derogRisqueLabel: 'Risque assumé en acceptant cet écart',
+      derogConstatLabel: 'Constat de l\'audit',
+      derogMotifLabel: 'Motif de la dérogation (obligatoire — compensations, contexte métier…)',
+      derogMotifPh: 'Ex. : transfert automatique requis par l\'outil X ; mesure compensatoire : règle de routage limitée au domaine partenaire, revue trimestrielle.',
+      derogDureeLabel: 'Échéance de révision',
+      duree3m: 'Dans 3 mois',
+      duree6m: 'Dans 6 mois',
+      duree12m: 'Dans 12 mois',
+      dureePerm: 'Permanente (revue à chaque audit)',
+      statuts: {
+        'CONFORME': 'CONFORME',
+        'NON CONFORME': 'NON CONFORME',
+        'ÉCART ACCEPTÉ': 'ÉCART ACCEPTÉ',
+        'À VÉRIFIER': 'À VÉRIFIER',
+        'MANUEL': 'MANUEL',
+        'ERREUR': 'ERREUR',
+        'HORS PROFIL': 'HORS PROFIL'
+      },
+      sections: [
+        ['6.', '6 — Règles d\'alertes administrateur'],
+        ['5.', '5 — Revue des rapports'],
+        ['4.3', '4.3 — Supervision de la sécurité'],
+        ['4.2', '4.2 — Contrôles d\'accès'],
+        ['4.1', '4.1 — Authentification'],
+        ['3.1.9', '3.1.9 — Marketplace'],
+        ['3.1.8', '3.1.8 — Services Google supplémentaires'],
+        ['3.1.7', '3.1.7 — Sites'],
+        ['3.1.6', '3.1.6 — Groups for Business'],
+        ['3.1.4', '3.1.4 — Google Chat'],
+        ['3.1.3', '3.1.3 — Gmail'],
+        ['3.1.2.3', '3.1.2.3 — Google Drive for desktop'],
+        ['3.1.2', '3.1.2 — Drive et Docs'],
+        ['3.1.1', '3.1.1 — Agenda'],
+        ['1.2', '1.2 — Annuaire'],
+        ['1.1', '1.1 — Comptes super administrateur']
+      ],
+      etapesCollecte: {
+        domaines: 'Domaines du tenant',
+        politiques: 'Politiques Cloud Identity (réglages console)',
+        utilisateurs: 'Utilisateurs (admins, état 2SV)',
+        groupes: 'Liste des groupes',
+        reglages: 'Réglages de confidentialité des groupes'
+      },
+      btnAccepterEcart: 'Accepter l\'écart…',
+      btnRevoquer: 'Révoquer',
+      derogAccepteePar: 'Écart accepté par ',
+      derogLe: ' le ',
+      derogReviser: ' — à réviser le ',
+      derogPermanente: ' — permanente',
+      derogMotifPrefix: '.<br>Motif : ',
+      remedeRisqueCouvert: 'Risque couvert : ',
+      remedeRemediation: 'Remédiation : ',
+      remedeDetail: 'Détail',
+      scoreBrutSuffix: 'brut : ',
+      scoreBrutEcarts: ' écart(s) accepté(s)',
+      enCoursCollecteTxt: 'Phase 1 — collecte du contexte…',
+      enCoursControlesTxt: 'Phase 2 — exécution des contrôles…',
+      controlesTerminesTxt: 'contrôles terminés',
+      rapportCreeTxt: 'Rapport créé : ',
+      ouvrirSheetsTxt: 'ouvrir le Google Sheets'
+    },
+    en: {
+      titreApp: 'Compliance Audit Registry',
+      btnAPropos: 'About',
+      btnGuide: 'Guide',
+      optReglages: 'Per-group settings',
+      profilL1: 'Level 1',
+      profilL2: 'Levels 1+2',
+      btnArreter: 'Stop',
+      btnLancer: 'Start audit',
+      btnRelancer: 'Rerun audit',
+      btnReprendre: 'Resume audit',
+      scoreLib: 'Residual compliance (accepted deviations excluded)',
+      attenteLancement: 'Waiting to start',
+      chronoEcoule: 'Elapsed',
+      chronoBattement: 'last server heartbeat',
+      btnExport: 'Generate Sheets report',
+      btnEmail: 'Send by email…',
+      btnReinit: 'Reset (new audit)',
+      collecteTitre: 'Phase 1 — Context collection',
+      btnDetails: 'Details',
+      btnReplier: 'Collapse',
+      journalTitre: 'Execution log',
+      accueilTitre: '87 controls, executed and displayed one by one',
+      accueilDesc: 'Choose your profile (Level 1 only or full Level 1+2), then launch the audit with a super administrator account. Each finding is displayed as soon as evaluation completes.',
+      etape1Titre: 'Phase 1',
+      etape1Desc: 'Single collection: Cloud Identity policies, users, domains, groups.',
+      etape2Titre: 'Phase 2',
+      etape2Desc: 'Parallel controls execution with real-time streaming results.',
+      etape3Titre: 'Phase 3',
+      etape3Desc: 'Optional export to a complete Google Sheets report.',
+      thId: 'ID',
+      thNiv: 'Lvl.',
+      thCtrl: 'Control',
+      thStatut: 'Status',
+      thConstat: 'Finding',
+      footerNom: 'CIS Workspace Audit Registry',
+      footerRef: 'Framework',
+      btnGuideFooter: 'User guide',
+      btnAProposFooter: 'About',
+      footerMention: 'Internal evaluation aid tool, not affiliated with the Center for Internet Security®. Official CIS benchmark documentation remains the authoritative reference.',
+      aProposTitre: 'About — CIS Google Workspace Audit Registry',
+      aProposOutilTitre: 'The Audit Tool',
+      aProposOutilDesc: 'This automated tool audits a Google Workspace tenant configuration against the 86 official recommendations from the <b>CIS Google Workspace Foundations Benchmark v1.4</b>, providing full inventory, residual compliance scoring, and a prioritized action plan.',
+      aProposDevTitre: 'Developer',
+      aProposSecuTitre: 'Security & Privacy',
+      aProposSecuDesc: 'The audit runs entirely within your organization's Google Workspace tenant via Google Apps Script (read-only execution). No secrets, API keys, or tenant data are ever sent to external third-party servers.',
+      guideTitre: 'Guide — CIS Google Workspace Audit',
+      btnFermer: 'Close',
+      btnAnnuler: 'Cancel',
+      btnEnvoyer: 'Send',
+      btnAccepter: 'Accept gap',
+      emailTitre: 'Send results by email',
+      emailDestLabel: 'Recipients (comma separated)',
+      emailObjetLabel: 'Subject',
+      emailMsgLabel: 'Cover message (optional)',
+      emailMsgPh: 'Context, decisions needed, deadlines…',
+      emailJoindreLien: 'Generate Google Sheets report and attach link',
+      emailInclureDetails: 'Include list of non-compliant gaps in message body',
+      derogTitre: 'Formally accept security deviation',
+      derogRisqueLabel: 'Risk assumed by accepting this gap',
+      derogConstatLabel: 'Audit finding',
+      derogMotifLabel: 'Deviation rationale (mandatory — compensatory controls, business context…)',
+      derogMotifPh: 'E.g.: automatic forwarding required by Tool X; compensatory control: routing rule restricted to partner domain, quarterly review.',
+      derogDureeLabel: 'Review deadline',
+      duree3m: 'In 3 months',
+      duree6m: 'In 6 months',
+      duree12m: 'In 12 months',
+      dureePerm: 'Permanent (reviewed at each audit)',
+      statuts: {
+        'CONFORME': 'COMPLIANT',
+        'NON CONFORME': 'NON-COMPLIANT',
+        'ÉCART ACCEPTÉ': 'ACCEPTED DEVIATION',
+        'À VÉRIFIER': 'TO REVIEW',
+        'MANUEL': 'MANUAL',
+        'ERREUR': 'ERROR',
+        'HORS PROFIL': 'OUT OF PROFILE'
+      },
+      sections: [
+        ['6.', '6 — Administrator Alert Rules'],
+        ['5.', '5 — Reporting Reviews'],
+        ['4.3', '4.3 — Security Center Supervision'],
+        ['4.2', '4.2 — Access and Data Control'],
+        ['4.1', '4.1 — Authentication'],
+        ['3.1.9', '3.1.9 — Google Workspace Marketplace'],
+        ['3.1.8', '3.1.8 — Additional Google Services'],
+        ['3.1.7', '3.1.7 — Google Sites'],
+        ['3.1.6', '3.1.6 — Groups for Business'],
+        ['3.1.4', '3.1.4 — Google Chat'],
+        ['3.1.3', '3.1.3 — Gmail'],
+        ['3.1.2.3', '3.1.2.3 — Google Drive for desktop'],
+        ['3.1.2', '3.1.2 — Drive and Docs'],
+        ['3.1.1', '3.1.1 — Calendar'],
+        ['1.2', '1.2 — Directory Settings'],
+        ['1.1', '1.1 — Super Admin Accounts']
+      ],
+      etapesCollecte: {
+        domaines: 'Tenant domains',
+        politiques: 'Cloud Identity policies (admin settings)',
+        utilisateurs: 'Users (admins, 2SV enforcement)',
+        groupes: 'Groups list',
+        reglages: 'Group privacy and sharing settings'
+      },
+      btnAccepterEcart: 'Accept gap…',
+      btnRevoquer: 'Revoke',
+      derogAccepteePar: 'Gap accepted by ',
+      derogLe: ' on ',
+      derogReviser: ' — review date: ',
+      derogPermanente: ' — permanent',
+      derogMotifPrefix: '.<br>Rationale: ',
+      remedeRisqueCouvert: 'Mitigated risk: ',
+      remedeRemediation: 'Remediation: ',
+      remedeDetail: 'Details',
+      scoreBrutSuffix: 'raw: ',
+      scoreBrutEcarts: ' accepted gap(s)',
+      enCoursCollecteTxt: 'Phase 1 — context collection…',
+      enCoursControlesTxt: 'Phase 2 — controls execution…',
+      controlesTerminesTxt: 'controls completed',
+      rapportCreeTxt: 'Report created: ',
+      ouvrirSheetsTxt: 'open Google Sheets'
+    }
+  };
 
+  const GUIDE_HTML = {
+    fr: `
+      <h3>Le référentiel</h3>
+      <p>Cet outil vérifie automatiquement le tenant Google Workspace contre les <b>86 recommandations</b> du
+        <a href="https://www.cisecurity.org/benchmark/google_workspace" target="_blank" rel="noopener">CIS Google Workspace Foundations Benchmark v1.4</a>,
+        référentiel de configuration sécurisée publié par le Center for Internet Security. Le PDF officiel se télécharge
+        gratuitement depuis cette page (inscription CIS demandée) ; les identifiants affichés ici (ex. <code>3.1.3.5.2</code>)
+        renvoient aux sections correspondantes du document, qui détaille pour chaque point la justification, l'audit et la remédiation.</p>
+
+      <h3>Profils Niveau 1 / Niveaux 1+2</h3>
+      <p><b>Niveau 1</b> : socle de sécurité essentiel, applicable à la plupart des organisations avec un impact
+        fonctionnel limité. <b>Niveau 2</b> : durcissement pour environnements exigeants (défense en profondeur),
+        pouvant restreindre certains usages (ex. Drive pour ordinateur, POP/IMAP). Le sélecteur du bandeau
+        détermine les contrôles exécutés ; les contrôles N2 hors profil sont classés « HORS PROFIL ».</p>
+
+      <h3>Déroulé d'un audit</h3>
+      <p><b>Phase 1 — Collecte</b> : lecture unique du contexte (politiques Cloud Identity, utilisateurs et 2SV, domaines,
+        groupes). Le panneau affiche chaque étape avec son avancement. L'option « Réglages par groupe » lit la
+        confidentialité de chaque groupe (plus long ; décochable, les contrôles 3.1.6.x s'appuient alors sur la seule Policy API).<br>
+        <b>Phase 2 — Contrôles</b> : les 87 vérifications s'exécutent en parallèle, chaque résultat s'inscrit au registre dès
+        qu'il est connu.<br>
+        <b>Phase 3 — Export</b> : génération du rapport Google Sheets (synthèse, détail, plan d'actions, registre des
+        dérogations, politiques brutes).</p>
+
+      <h3>Lecture des statuts</h3>
+      <table>
+        <tr><td><span class="badge b-CONFORME">CONFORME</span></td><td>la configuration relevée correspond à la recommandation.</td></tr>
+        <tr><td><span class="badge b-NONCONFORME">NON CONFORME</span></td><td>écart avéré — à corriger (plan d'actions) ou à accepter formellement.</td></tr>
+        <tr><td><span class="badge b-ECARTACCEPTE">ÉCART ACCEPTÉ</span></td><td>dérogation enregistrée au registre : motif, acceptant, échéance de révision.</td></tr>
+        <tr><td><span class="badge b-AVERIFIER">À VÉRIFIER</span></td><td>données collectées mais jugement humain requis, ou réglage non interprétable automatiquement.</td></tr>
+        <tr><td><span class="badge b-MANUEL">MANUEL</span></td><td>non exposé par API (revues de tableaux de bord, règles d'alertes…) — le chemin console est indiqué.</td></tr>
+        <tr><td><span class="badge b-ERREUR">ERREUR</span></td><td>échec technique (droits, API non activée, réseau) — la cause est dans le constat et le journal.</td></tr>
+      </table>
+
+      <h3>Traiter les écarts</h3>
+      <p>Chaque ligne NON CONFORME propose « Accepter l'écart… » : la fenêtre présente le <b>risque assumé</b> et le
+        constat, puis exige un motif (mesures compensatoires, contexte métier) et une échéance de révision. Les
+        dérogations sont durables et partagées entre administrateurs ; révocables en un clic. Le <b>tampon</b> affiche le
+        score <i>résiduel</i> (écarts acceptés exclus), le score <i>brut</i> reste indiqué dessous.</p>
+
+      <h3>Bonnes pratiques d'exécution</h3>
+      <p>Exécuter avec un compte <b>super administrateur</b> (exigé par la Policy API). Garder l'onglet ouvert et le poste
+        alimenté (l'anti-veille maintient l'écran, pas le capot fermé). En cas de coupure, l'audit se suspend
+        automatiquement : « Reprendre l'audit » repart où il s'était arrêté.</p>
+    `,
+    en: `
+      <h3>The Benchmark</h3>
+      <p>This tool automatically audits your Google Workspace tenant against the <b>86 recommendations</b> from the
+        <a href="https://www.cisecurity.org/benchmark/google_workspace" target="_blank" rel="noopener">CIS Google Workspace Foundations Benchmark v1.4</a>,
+        the security configuration baseline published by the Center for Internet Security. The official PDF can be downloaded
+        freely from their website; identifiers displayed here (e.g. <code>3.1.3.5.2</code>)
+        refer directly to matching sections in the benchmark document with detailed rationale, audit, and remediation.</p>
+
+      <h3>Level 1 vs Levels 1+2 Profiles</h3>
+      <p><b>Level 1</b>: Essential security baseline, applicable to most organizations with limited user friction.
+        <b>Level 2</b>: Defense-in-depth hardening for demanding environments, which may restrict certain features
+        (e.g., Drive for desktop, POP/IMAP). The header toggle controls active checks; L2 checks outside L1 profile are tagged "OUT OF PROFILE".</p>
+
+      <h3>Audit Workflow</h3>
+      <p><b>Phase 1 — Collection</b>: Single read of tenant context (Cloud Identity policies, users and 2SV status, domains,
+        groups). The panel streams each step's progress. "Per-group settings" inspects individual group privacy (longer; optional).<br>
+        <b>Phase 2 — Controls</b>: All 87 checks execute in parallel, displaying results as soon as evaluated.<br>
+        <b>Phase 3 — Export</b>: Generates a multi-sheet Google Sheets workbook (Summary, Control Details, Action Plan, Deviation Register, Raw Policies).</p>
+
+      <h3>Status Interpretation</h3>
+      <table>
+        <tr><td><span class="badge b-COMPLIANT">COMPLIANT</span></td><td>Current configuration satisfies the CIS recommendation.</td></tr>
+        <tr><td><span class="badge b-NON-COMPLIANT">NON-COMPLIANT</span></td><td>Security gap detected — action required or formal acceptance.</td></tr>
+        <tr><td><span class="badge b-ACCEPTEDDEVIATION">ACCEPTED DEVIATION</span></td><td>Documented risk acceptance: rationale, approver, review date.</td></tr>
+        <tr><td><span class="badge b-TOREVIEW">TO REVIEW</span></td><td>Data collected but human judgement or manual check required.</td></tr>
+        <tr><td><span class="badge b-MANUAL">MANUAL</span></td><td>Not exposed via API (dashboard reviews, alert rules) — console path provided.</td></tr>
+        <tr><td><span class="badge b-ERROR">ERROR</span></td><td>Technical failure (permissions, disabled API, network) — see log for root cause.</td></tr>
+      </table>
+
+      <h3>Managing Deviations</h3>
+      <p>Every NON-COMPLIANT line offers "Accept gap…": the dialog displays the <b>assumed risk</b> and finding,
+        requiring compensatory measures and a review deadline. Deviations are persistent and shared across administrators.
+        The <b>circular gauge</b> displays the <i>residual</i> compliance score (accepted gaps excluded), while raw score is shown below.</p>
+
+      <h3>Execution Best Practices</h3>
+      <p>Run with a <b>super admin</b> account (required by Policy API). Keep the tab open and computer powered.
+        If interrupted, the audit pauses safely: "Resume audit" picks up exactly where it left off.</p>
+    `
+  };
+
+  const CONCURRENCE = 3;
+  const ORDRE_STATUTS = ['CONFORME','NON CONFORME','ÉCART ACCEPTÉ','À VÉRIFIER','MANUEL','ERREUR','HORS PROFIL'];
+  const CLASSE = s => 'b-' + s.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[\s-]/g,'');
+
+  let langActuelle = localStorage.getItem('cis_lang') || 'fr';
   let profil='L2', token=null, controles=[], etapes=[], file=[], actifs=0;
   let resultats={}, compte={}, total=0, faits=0, enCours=false, filtre=null;
   let reessayes = new Map();
@@ -543,11 +843,63 @@
   let compteCollecte = {}, compteSession = '';
   const CONCURRENCE_REGLAGES = 4;
 
-  /** Message d'erreur lisible : google.script.run renvoie "undefined" quand la
-      connexion est coupée (veille du poste, réseau) ou la session interrompue. */
+  function t(cle){ return (I18N[langActuelle] && I18N[langActuelle][cle]) || (I18N.fr && I18N.fr[cle]) || cle; }
+
+  function changerLangue(nl){
+    langActuelle = (nl === 'en') ? 'en' : 'fr';
+    localStorage.setItem('cis_lang', langActuelle);
+    document.documentElement.lang = langActuelle;
+    document.getElementById('btnLangFr').classList.toggle('actif', langActuelle === 'fr');
+    document.getElementById('btnLangEn').classList.toggle('actif', langActuelle === 'en');
+    appliquerTraductions();
+    majCompteurs();
+    majScore();
+    if (Object.keys(resultats).length > 0 || controles.length > 0){
+      reconstruireTableauApresChangementLangue();
+    }
+  }
+
+  function appliquerTraductions(){
+    const dic = I18N[langActuelle] || I18N.fr;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.getAttribute('data-i18n');
+      if (dic[k]) el.innerHTML = dic[k];
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+      const k = el.getAttribute('data-i18n-ph');
+      if (dic[k]) el.placeholder = dic[k];
+    });
+    document.getElementById('guideCorps').innerHTML = GUIDE_HTML[langActuelle] || GUIDE_HTML.fr;
+    if (!enCours && !interrompu && faits === 0){
+      document.getElementById('txtAv').textContent = t('attenteLancement');
+    }
+    const btnL = document.getElementById('btnLancer');
+    if (!enCours && !interrompu && faits === 0) btnL.textContent = t('btnLancer');
+    else if (!enCours && interrompu) btnL.textContent = t('btnReprendre');
+    else if (!enCours && faits > 0) btnL.textContent = t('btnRelancer');
+  }
+
+  function reconstruireTableauApresChangementLangue(){
+    document.querySelectorAll('#corps tr.section').forEach(tr => {
+      const premierId = (tr.nextElementSibling && tr.nextElementSibling.querySelector('.id'))
+        ? tr.nextElementSibling.querySelector('.id').textContent : '';
+      if (premierId) tr.querySelector('td').textContent = sectionDe(premierId);
+    });
+    Object.values(resultats).forEach(r => {
+      const tr = ligne(r.id);
+      if (tr) {
+        tr.querySelector('.titre').textContent = (langActuelle === 'en' && r.titreEn) ? r.titreEn : r.titre;
+        afficherLigne(r);
+      }
+    });
+  }
+
   function msgErreur(e){
     const m = e && e.message;
-    return (m && m !== 'undefined') ? m : 'erreur réseau ou session interrompue (mise en veille du poste ?)';
+    if (m && m !== 'undefined') return m;
+    return langActuelle === 'en'
+      ? 'network error or session interrupted (computer went to sleep?)'
+      : 'erreur réseau ou session interrompue (mise en veille du poste ?)';
   }
 
   // ---------- Anti-veille (Screen Wake Lock) ----------
@@ -556,10 +908,14 @@
       if ('wakeLock' in navigator && !wakeLock){
         wakeLock = await navigator.wakeLock.request('screen');
         wakeLock.addEventListener('release', () => { wakeLock = null; });
-        journal('Anti-veille activé : l\'écran restera allumé pendant l\'audit (ne pas fermer le capot).');
+        journal(langActuelle === 'en'
+          ? 'Anti-sleep active: screen will remain awake during audit (do not close laptop lid).'
+          : 'Anti-veille activé : l'écran restera allumé pendant l'audit (ne pas fermer le capot).');
       }
     }catch(e){
-      journal('Anti-veille indisponible (' + msgErreur(e) + ') — désactiver la mise en veille du poste pendant l\'audit.');
+      journal(langActuelle === 'en'
+        ? 'Anti-sleep unavailable (' + msgErreur(e) + ') — disable computer sleep mode during audit.'
+        : 'Anti-veille indisponible (' + msgErreur(e) + ') — désactiver la mise en veille du poste pendant l'audit.');
     }
   }
   function relacherWakeLock(){
@@ -577,7 +933,8 @@
     const h = new Date().toTimeString().slice(0,8);
     const ligne = document.createElement('span');
     if (classe) ligne.className = classe;
-    ligne.textContent = h + '  ' + msg + '\n';
+    ligne.textContent = h + '  ' + msg + '
+';
     corps.appendChild(ligne);
     corps.scrollTop = corps.scrollHeight;
   }
@@ -591,16 +948,17 @@
         String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
       const b = Math.floor((Date.now()-tDernierRetour)/1000);
       document.getElementById('battement').textContent = b + ' s';
-      if (b > 0 && b % 45 === 0) journal('Appel serveur toujours en cours (' + b + ' s sans retour) — normal si le tenant est volumineux.');
+      if (b > 0 && b % 45 === 0) journal(langActuelle === 'en'
+        ? 'Server call still in progress (' + b + ' s without response) — normal for large tenants.'
+        : 'Appel serveur toujours en cours (' + b + ' s sans retour) — normal si le tenant est volumineux.');
     }, 1000);
   }
   function arreterChrono(){ if (minuteur){ clearInterval(minuteur); minuteur=null; } }
 
-  /** Attente programmée (quota API) : compte à rebours visible puis rappel. */
   function attenteProgrammee(ligne, secondes, message, rappel){
     let restant = secondes;
     const maj = () => {
-      if (ligne) ligne.querySelector('.info').textContent = message + ' — reprise dans ' + restant + ' s';
+      if (ligne) ligne.querySelector('.info').textContent = message + (langActuelle === 'en' ? ' — resuming in ' : ' — reprise dans ') + restant + ' s';
     };
     maj();
     const iv = setInterval(() => { restant--; if (restant > 0) maj(); else clearInterval(iv); }, 1000);
@@ -609,17 +967,21 @@
 
   function ouvrirGuide(){ document.getElementById('modalGuide').showModal(); }
   function fermerGuide(){ document.getElementById('modalGuide').close(); }
+  function ouvrirAPropos(){ document.getElementById('modalAPropos').showModal(); }
+  function fermerAPropos(){ document.getElementById('modalAPropos').close(); }
+
   const VERSION_PAGE = (document.getElementById('appVersion').textContent || '').replace(/^v/,'');
 
   function choisirProfil(p){
-    if (enCours || interrompu) return; // le profil est figé tant qu'une reprise est possible
+    if (enCours || interrompu) return;
     profil = p;
     document.getElementById('pL1').classList.toggle('actif', p==='L1');
     document.getElementById('pL2').classList.toggle('actif', p==='L2');
   }
   function sectionDe(id){
-    for (const [pre, lib] of SECTIONS) if (id.startsWith(pre)) return lib;
-    return 'Autres';
+    const liste = (I18N[langActuelle] && I18N[langActuelle].sections) || I18N.fr.sections;
+    for (const [pre, lib] of liste) if (id.startsWith(pre)) return lib;
+    return langActuelle === 'en' ? 'Other' : 'Autres';
   }
 
   // ---------- Lancement ----------
@@ -630,7 +992,7 @@
     stopDemande = false; interrompu = false; phase = null; posCollecte = null;
     document.getElementById('btnArreter').style.display = 'inline-block';
     document.getElementById('btnArreter').disabled = false;
-    document.getElementById('btnArreter').textContent = 'Arrêter';
+    document.getElementById('btnArreter').textContent = t('btnArreter');
     document.getElementById('btnReinit').style.display = 'none';
     reessayes = new Map(); resultats = {}; compte = {}; faits = 0; filtre = null;
     cfg = null; nbGroupes = 0; reglagesEtat = null; echecsConsec = 0;
@@ -643,14 +1005,15 @@
     document.getElementById('lienRapport').style.display = 'none';
     demarrerChrono();
     demanderWakeLock();
-    journal('Ouverture de la session d\'audit (profil ' + profil + ')…');
+    journal(langActuelle === 'en' ? 'Opening audit session (profile ' + profil + ')…' : 'Ouverture de la session d'audit (profil ' + profil + ')…');
     const barre = document.getElementById('barreAv');
     barre.parentElement.classList.add('indeterminee');
-    document.getElementById('txtAv').textContent = 'Ouverture de la session…';
+    document.getElementById('txtAv').textContent = langActuelle === 'en' ? 'Opening session…' : 'Ouverture de la session…';
     google.script.run
       .withSuccessHandler(preparerCollecte)
-      .withFailureHandler(e => echecFatal('Ouverture de session impossible : ' + e.message +
-        ' — vérifier le déploiement de la WebApp et les autorisations.'))
+      .withFailureHandler(e => echecFatal(langActuelle === 'en'
+        ? 'Cannot open session: ' + e.message + ' — verify WebApp deployment and permissions.'
+        : 'Ouverture de session impossible : ' + e.message + ' — vérifier le déploiement de la WebApp et les autorisations.'))
       .demarrerSession(profil);
   }
 
@@ -661,9 +1024,9 @@
     document.getElementById('btnArreter').style.display = 'none';
     document.getElementById('btnLancer').disabled = false;
     document.getElementById('barreAv').parentElement.classList.remove('indeterminee');
-    document.getElementById('txtAv').textContent = 'Interrompu';
+    document.getElementById('txtAv').textContent = langActuelle === 'en' ? 'Interrupted' : 'Interrompu';
     afficherAvert(msg);
-    journal('ÉCHEC : ' + msg, 'err');
+    journal((langActuelle === 'en' ? 'FAILED: ' : 'ÉCHEC : ') + msg, 'err');
   }
 
   // ---------- Phase 1 : collecte pilotée étape par étape ----------
@@ -677,26 +1040,27 @@
     compteSession = session.compte || '';
     compteCollecte = {};
     const nDerog = Object.keys(derogations).length;
-    if (nDerog) journal(nDerog + ' dérogation(s) au registre — les écarts couverts seront affichés « ÉCART ACCEPTÉ ».');
+    if (nDerog) journal(nDerog + (langActuelle === 'en' ? ' deviation(s) in register.' : ' dérogation(s) au registre — les écarts couverts seront affichés « ÉCART ACCEPTÉ ».'));
     document.getElementById('optReglages').disabled = true;
     total = controles.length;
-    journal('Session ouverte (' + session.compte + ') — outil v' + (session.version || '?') + ' — ' + total + ' contrôles au registre.', 'ok');
+    journal((langActuelle === 'en' ? 'Session opened (' : 'Session ouverte (') + session.compte + ') — v' + (session.version || '?') + ' — ' + total + ' ' + (langActuelle === 'en' ? 'controls in scope.' : 'contrôles au registre.'), 'ok');
     if (session.version && VERSION_PAGE && session.version !== VERSION_PAGE){
-      afficherAvert('La page a été chargée en v' + VERSION_PAGE + ' mais le serveur exécute la v' + session.version + ' — recharger la page (F5) pour aligner l\'interface.');
-      journal('Version de page (' + VERSION_PAGE + ') différente du serveur (' + session.version + ') — recharger la page.', 'err');
+      afficherAvert('Version mismatch: page loaded v' + VERSION_PAGE + ', server running v' + session.version + '. Reload (F5).');
     }
     document.getElementById('metaTenant').innerHTML =
-      '<span><b>Profil</b> : ' + (session.niveau==='L1'?'Niveau 1':'Niveaux 1+2') + '</span>' +
-      '<span><b>Compte</b> : ' + echapper(session.compte) + '</span>';
+      '<span><b>' + (langActuelle === 'en' ? 'Profile' : 'Profil') + '</b> : ' + (session.niveau==='L1'?(langActuelle==='en'?'Level 1':'Niveau 1'):(langActuelle==='en'?'Levels 1+2':'Niveaux 1+2')) + '</span>' +
+      '<span><b>' + (langActuelle === 'en' ? 'Account' : 'Compte') + '</b> : ' + echapper(session.compte) + '</span>';
 
     const liste = document.getElementById('listeEtapes');
     liste.innerHTML = '';
+    const etapesDic = (I18N[langActuelle] && I18N[langActuelle].etapesCollecte) || I18N.fr.etapesCollecte;
     etapes.forEach(et => {
       const d = document.createElement('div');
       d.className = 'etape-ligne';
       d.id = 'etape-' + et.cle;
-      d.innerHTML = '<span class="icone">·</span><span class="lib">' + echapper(et.libelle) + '</span>' +
-                    '<span class="info">en attente</span><span class="duree"></span>';
+      const libelle = etapesDic[et.cle] || et.libelle;
+      d.innerHTML = '<span class="icone">·</span><span class="lib">' + echapper(libelle) + '</span>' +
+                    '<span class="info">' + (langActuelle === 'en' ? 'waiting' : 'en attente') + '</span><span class="duree"></span>';
       liste.appendChild(d);
     });
     document.getElementById('panneauCollecte').style.display = 'block';
@@ -704,8 +1068,8 @@
     document.getElementById('btnBasculeCollecte').style.display = 'none';
     document.getElementById('collecteResume').textContent = '';
     document.getElementById('journal').setAttribute('open', '');
-    document.getElementById('collecteEtat').textContent = 'en cours';
-    document.getElementById('txtAv').textContent = 'Phase 1 — collecte du contexte…';
+    document.getElementById('collecteEtat').textContent = langActuelle === 'en' ? 'in progress' : 'en cours';
+    document.getElementById('txtAv').textContent = t('enCoursCollecteTxt');
     executerEtape(0, null);
   }
 
@@ -713,30 +1077,28 @@
     phase = 'collecte';
     tentative = tentative || 0;
     if (stopDemande){
-      posCollecte = { idx: idx, curseur: curseur }; // position exacte pour la reprise
+      posCollecte = { idx: idx, curseur: curseur };
       stopEffectif();
       return;
     }
     if (idx >= etapes.length){ finCollecte(); return; }
     const et = etapes[idx];
     const ligne = document.getElementById('etape-' + et.cle);
-    if (et.cle === 'reglages'){ etapeReglages(idx, ligne); return; } // étape parallélisée dédiée
+    if (et.cle === 'reglages'){ etapeReglages(idx, ligne); return; }
     if (!curseur && tentative === 0){
       etapeEnCoursDepuis = Date.now();
       ligne.className = 'etape-ligne cours';
       ligne.querySelector('.icone').innerHTML = '<span class="spin"></span>';
-      ligne.querySelector('.info').textContent = 'démarrage…';
-      journal('Collecte : ' + et.libelle + '…');
+      ligne.querySelector('.info').textContent = langActuelle === 'en' ? 'starting…' : 'démarrage…';
+      journal((langActuelle === 'en' ? 'Collection: ' : 'Collecte : ') + et.libelle + '…');
     }
     google.script.run
       .withSuccessHandler(r => {
         battementRecu(); echecsConsec = 0;
         if (r.attente){
-          // Quota API : l'acquis est sauvegardé côté serveur, on attend puis
-          // on rappelle exactement la même position — aucun abandon d'étape.
-          journal('Quota API sur "' + et.libelle + '" : ' + (r.info || 'limite atteinte') +
-            ' — reprise automatique dans ' + r.attente + ' s. (Si récurrent : augmenter les quotas de l\'API dans la console GCP du projet.)', 'err');
-          attenteProgrammee(ligne, r.attente, r.info || 'quota API atteint',
+          journal((langActuelle === 'en' ? 'API Quota on "' : 'Quota API sur "') + et.libelle + '" : ' + (r.info || 'limit reached') +
+            (langActuelle === 'en' ? ' — auto resuming in ' : ' — reprise automatique dans ') + r.attente + ' s.', 'err');
+          attenteProgrammee(ligne, r.attente, r.info || 'API quota reached',
             () => executerEtape(idx, r.curseur));
           return;
         }
@@ -748,8 +1110,8 @@
         if (r.erreur){
           ligne.className = 'etape-ligne ko';
           ligne.querySelector('.icone').textContent = '✕';
-          journal('Collecte "' + et.libelle + '" en échec : ' + r.erreur, 'err');
-          afficherAvert('Collecte partielle — ' + r.info);
+          journal((langActuelle === 'en' ? 'Collection failed "' : 'Collecte en échec "') + et.libelle + '" : ' + r.erreur, 'err');
+          afficherAvert((langActuelle === 'en' ? 'Partial collection — ' : 'Collecte partielle — ') + r.info);
           executerEtape(idx + 1, null);
         } else if (r.termine){
           ligne.className = 'etape-ligne ok';
@@ -758,22 +1120,22 @@
           executerEtape(idx + 1, null);
         } else {
           journal('… ' + r.info);
-          executerEtape(idx, r.curseur); // tranche suivante de la même étape
+          executerEtape(idx, r.curseur);
         }
       })
       .withFailureHandler(e => {
         battementRecu();
         if (tentative < 2 && !stopDemande){
           const delai = tentative === 0 ? 3000 : 10000;
-          journal('Collecte "' + et.libelle + '" — échec (' + msgErreur(e) + '), nouvelle tentative dans ' + (delai/1000) + ' s.', 'err');
+          journal('Collecte "' + et.libelle + '" — retry in ' + (delai/1000) + ' s (' + msgErreur(e) + ')', 'err');
           setTimeout(() => executerEtape(idx, curseur, tentative + 1), delai);
           return;
         }
         ligne.className = 'etape-ligne ko';
         ligne.querySelector('.icone').textContent = '✕';
-        ligne.querySelector('.info').textContent = 'échec : ' + msgErreur(e);
-        journal('Collecte "' + et.libelle + '" — abandon après 3 tentatives : ' + msgErreur(e), 'err');
-        afficherAvert('Étape "' + et.libelle + '" en échec : ' + msgErreur(e) + ' — l\'audit continue, les contrôles dépendants seront en ERREUR.');
+        ligne.querySelector('.info').textContent = (langActuelle === 'en' ? 'failed: ' : 'échec : ') + msgErreur(e);
+        journal('Collecte "' + et.libelle + '" — given up: ' + msgErreur(e), 'err');
+        afficherAvert('Step "' + et.libelle + '" failed: ' + msgErreur(e));
         executerEtape(idx + 1, null);
       })
       .collecterEtape(token, et.cle, curseur);
@@ -784,8 +1146,10 @@
     if (!document.getElementById('optReglages').checked){
       ligne.className = 'etape-ligne ok';
       ligne.querySelector('.icone').textContent = '–';
-      ligne.querySelector('.info').textContent = 'ignorée (option décochée) — contrôles 3.1.6.x via Policy API uniquement';
-      journal('Réglages par groupe : étape ignorée (option décochée).');
+      ligne.querySelector('.info').textContent = langActuelle === 'en'
+        ? 'skipped (option unchecked) — 3.1.6.x checks evaluated via Policy API only'
+        : 'ignorée (option décochée) — contrôles 3.1.6.x via Policy API uniquement';
+      journal(langActuelle === 'en' ? 'Per-group settings: step skipped.' : 'Réglages par groupe : étape ignorée (option décochée).');
       executerEtape(idx + 1, null);
       return;
     }
@@ -798,7 +1162,7 @@
     if (E.borne === 0){
       ligne.className = 'etape-ligne ok';
       ligne.querySelector('.icone').textContent = '✓';
-      ligne.querySelector('.info').textContent = 'aucun groupe à analyser';
+      ligne.querySelector('.info').textContent = langActuelle === 'en' ? 'no groups to analyze' : 'aucun groupe à analyser';
       reglagesEtat = null;
       executerEtape(idx + 1, null);
       return;
@@ -807,16 +1171,15 @@
     ligne.className = 'etape-ligne cours';
     ligne.querySelector('.icone').innerHTML = '<span class="spin"></span>';
     const estMin = Math.ceil((E.borne - E.faits) / cfg.groupesParAppel / CONCURRENCE_REGLAGES * 40 / 60);
-    journal('Réglages de groupes : ' + (E.borne - E.faits) + ' à lire, ' + CONCURRENCE_REGLAGES +
-      ' lots en parallèle (durée estimée ~' + estMin + ' min).');
+    journal((langActuelle === 'en' ? 'Group settings: ' : 'Réglages de groupes : ') + (E.borne - E.faits) + ' to read, ' + CONCURRENCE_REGLAGES + ' parallel batches (~' + estMin + ' min).');
 
     function majInfo(){
-      ligne.querySelector('.info').textContent = E.faits + ' / ' + E.borne + ' réglages de groupes lus';
+      ligne.querySelector('.info').textContent = E.faits + ' / ' + E.borne + (langActuelle === 'en' ? ' group settings read' : ' réglages de groupes lus');
     }
     function finirSiVide(){
       if (E.actifs > 0) return;
       if (stopDemande){
-        posCollecte = { idx: idx, curseur: null }; // reglagesEtat conserve la position réelle
+        posCollecte = { idx: idx, curseur: null };
         stopEffectif();
         return;
       }
@@ -825,7 +1188,7 @@
       ligne.querySelector('.icone').textContent = '✓';
       ligne.querySelector('.duree').textContent = duree + ' s';
       majInfo();
-      journal('OK — ' + E.faits + ' / ' + E.borne + ' réglages de groupes lus (' + duree + ' s)', 'ok');
+      journal('OK — ' + E.faits + ' / ' + E.borne + ' (' + duree + ' s)', 'ok');
       compteCollecte.reglages = E.faits + '/' + E.borne;
       reglagesEtat = null;
       executerEtape(idx + 1, null);
@@ -842,15 +1205,12 @@
         .withSuccessHandler(r => {
           battementRecu(); echecsConsec = 0;
           if (r && r.attente){
-            journal('Quota Groups Settings : lot ' + debut + ' reporté — reprise dans ' + r.attente + ' s.', 'err');
-            attenteProgrammee(ligne, r.attente, E.faits + ' / ' + E.borne + ' lus, quota API atteint',
-              () => appelerLot(debut, tentative));
-            return; // le worker reste occupé pendant l'attente, sans marteler l'API
+            journal('Quota Groups Settings : batch ' + debut + ' deferred — resuming in ' + r.attente + ' s.', 'err');
+            attenteProgrammee(ligne, r.attente, E.faits + ' / ' + E.borne + ' read', () => appelerLot(debut, tentative));
+            return;
           }
           if (r && r.borne && r.borne !== E.borne) E.borne = r.borne;
-          if (r && r.erreur){
-            journal('Lot ' + debut + ' : ' + r.erreur, 'err');
-          }
+          if (r && r.erreur) journal('Lot ' + debut + ' : ' + r.erreur, 'err');
           E.faits = Math.min(E.faits + cfg.groupesParAppel, E.borne);
           majInfo();
           E.actifs--;
@@ -859,18 +1219,17 @@
         .withFailureHandler(e => {
           battementRecu();
           if (stopDemande){
-            E.prochain = Math.min(E.prochain, debut); // le lot sera rejoué à la reprise
+            E.prochain = Math.min(E.prochain, debut);
             E.actifs--;
             finirSiVide();
             return;
           }
           if (tentative < 2){
             const delai = tentative === 0 ? 3000 : 10000;
-            journal('Lot de réglages ' + debut + ' en échec (' + msgErreur(e) + ') — nouvelle tentative dans ' + (delai/1000) + ' s.', 'err');
             setTimeout(() => appelerLot(debut, tentative + 1), delai);
             return;
           }
-          journal('Lot de réglages ' + debut + ' abandonné après 3 tentatives : ' + msgErreur(e), 'err');
+          journal('Batch ' + debut + ' abandoned after 3 attempts: ' + msgErreur(e), 'err');
           E.faits = Math.min(E.faits + cfg.groupesParAppel, E.borne);
           majInfo();
           E.actifs--;
@@ -882,21 +1241,19 @@
   }
 
   function finCollecte(){
-    document.getElementById('collecteEtat').textContent = 'terminée';
-    // Repli : place aux résultats — un résumé d'une ligne remplace le détail,
-    // le bouton « Détails » et le journal restent accessibles à la demande.
-    const fr = n => (typeof n === 'number') ? n.toLocaleString('fr-FR') : (n || '?');
+    document.getElementById('collecteEtat').textContent = langActuelle === 'en' ? 'completed' : 'terminée';
+    const numFmt = n => (typeof n === 'number') ? n.toLocaleString(langActuelle === 'en' ? 'en-US' : 'fr-FR') : (n || '?');
     const morceaux = [];
-    if (compteCollecte.domaines !== undefined) morceaux.push(fr(compteCollecte.domaines) + ' domaines');
-    if (compteCollecte.politiques !== undefined) morceaux.push(fr(compteCollecte.politiques) + ' politiques');
-    if (compteCollecte.utilisateurs !== undefined) morceaux.push(fr(compteCollecte.utilisateurs) + ' utilisateurs');
-    if (compteCollecte.groupes !== undefined) morceaux.push(fr(compteCollecte.groupes) + ' groupes');
-    if (compteCollecte.reglages !== undefined) morceaux.push('réglages ' + compteCollecte.reglages);
+    if (compteCollecte.domaines !== undefined) morceaux.push(numFmt(compteCollecte.domaines) + (langActuelle === 'en' ? ' domains' : ' domaines'));
+    if (compteCollecte.politiques !== undefined) morceaux.push(numFmt(compteCollecte.politiques) + ' ' + (langActuelle === 'en' ? 'policies' : 'politiques'));
+    if (compteCollecte.utilisateurs !== undefined) morceaux.push(numFmt(compteCollecte.utilisateurs) + ' ' + (langActuelle === 'en' ? 'users' : 'utilisateurs'));
+    if (compteCollecte.groupes !== undefined) morceaux.push(numFmt(compteCollecte.groupes) + ' ' + (langActuelle === 'en' ? 'groups' : 'groupes'));
+    if (compteCollecte.reglages !== undefined) morceaux.push((langActuelle === 'en' ? 'settings ' : 'réglages ') + compteCollecte.reglages);
     document.getElementById('collecteResume').textContent = morceaux.join(' · ');
     document.getElementById('panneauCollecte').classList.add('repliee');
     document.getElementById('btnBasculeCollecte').style.display = 'inline-block';
     document.getElementById('journal').removeAttribute('open');
-    journal('Phase 1 terminée — passage à l\'exécution des contrôles.', 'ok');
+    journal(langActuelle === 'en' ? 'Phase 1 completed — starting controls execution.' : 'Phase 1 terminée — passage à l'exécution des contrôles.', 'ok');
     construireRegistre();
   }
 
@@ -904,7 +1261,7 @@
     const p = document.getElementById('panneauCollecte');
     p.classList.toggle('repliee');
     document.getElementById('btnBasculeCollecte').textContent =
-      p.classList.contains('repliee') ? 'Détails' : 'Replier';
+      p.classList.contains('repliee') ? t('btnDetails') : t('btnReplier');
   }
 
   // ---------- Phase 2 : contrôles ----------
@@ -924,11 +1281,12 @@
       const tr = document.createElement('tr');
       tr.id = 'ctrl-' + c.id.replace(/\./g,'-');
       tr.dataset.statut = '';
+      const titreAffiche = (langActuelle === 'en' && c.titreEn) ? c.titreEn : c.titre;
       tr.innerHTML =
         '<td class="id">' + c.id + '</td>' +
         '<td class="niveau">' + c.level + '</td>' +
-        '<td class="titre">' + echapper(c.titre) + '</td>' +
-        '<td class="statut"><span class="badge b-attente">EN ATTENTE</span></td>' +
+        '<td class="titre">' + echapper(titreAffiche) + '</td>' +
+        '<td class="statut"><span class="badge b-attente">' + (langActuelle === 'en' ? 'PENDING' : 'EN ATTENTE') + '</span></td>' +
         '<td class="constat"></td>';
       corps.appendChild(tr);
     });
@@ -941,20 +1299,25 @@
     file = [];
     controles.forEach(c => {
       if (profil === 'L1' && c.level === 'L2'){
-        poserResultat({ id:c.id, level:c.level, titre:c.titre, statut:'HORS PROFIL',
-          detail:'Contrôle de niveau 2 exclu du profil Niveau 1.', remediation:'' });
+        poserResultat({
+          id: c.id, level: c.level,
+          titre: c.titre, titreEn: c.titreEn,
+          statut: 'HORS PROFIL',
+          detail: langActuelle === 'en' ? 'Level 2 control excluded from Level 1 profile.' : 'Contrôle de niveau 2 exclu du profil Niveau 1.',
+          remediation: '', remediationEn: ''
+        });
       } else {
         file.push(c.id);
       }
     });
-    document.getElementById('txtAv').textContent = 'Phase 2 — exécution des contrôles…';
-    journal('Phase 2 — ' + file.length + ' contrôles à exécuter (' + CONCURRENCE + ' en parallèle).');
+    document.getElementById('txtAv').textContent = t('enCoursControlesTxt');
+    journal((langActuelle === 'en' ? 'Phase 2 — ' : 'Phase 2 — ') + file.length + (langActuelle === 'en' ? ' controls to execute (' + CONCURRENCE + ' in parallel).' : ' contrôles à exécuter (' + CONCURRENCE + ' en parallèle).'));
     for (let i = 0; i < CONCURRENCE; i++) suivant();
   }
 
   function suivant(){
     if (stopDemande){
-      if (actifs === 0) stopEffectif(); // les appels en vol se sont terminés proprement
+      if (actifs === 0) stopEffectif();
       return;
     }
     if (!file.length){
@@ -965,23 +1328,20 @@
     actifs++;
     const tr = ligne(id);
     tr.classList.add('encours');
-    tr.querySelector('.statut').innerHTML = '<span class="badge b-cours"><span class="spin"></span>EN COURS</span>';
+    tr.querySelector('.statut').innerHTML = '<span class="badge b-cours"><span class="spin"></span>' + (langActuelle === 'en' ? 'RUNNING' : 'EN COURS') + '</span>';
     google.script.run
       .withSuccessHandler(rs => { battementRecu(); echecsConsec = 0; poserResultat(rs[0]); actifs--; suivant(); })
       .withFailureHandler(e => {
         battementRecu();
         echecsConsec++;
-        // Disjoncteur : une rafale d'échecs identiques = connexion perdue
-        // (mise en veille, réseau). On suspend proprement au lieu de marquer
-        // toute la file en ERREUR ; la reprise rejouera les contrôles.
         if (echecsConsec >= 6){
           file.unshift(id);
           if (!stopDemande){
             stopDemande = true;
-            journal('Connexion au serveur perdue (' + msgErreur(e) + ') — suspension automatique de l\'audit. Cliquer « Reprendre l\'audit » une fois la connexion rétablie.', 'err');
-            afficherAvert('Audit suspendu automatiquement : connexion au serveur perdue. Reprendre une fois le poste/réseau rétabli.');
+            journal((langActuelle === 'en' ? 'Server connection lost — auto pausing audit.' : 'Connexion au serveur perdue — suspension automatique de l'audit.'), 'err');
+            afficherAvert(langActuelle === 'en' ? 'Audit paused automatically: connection lost.' : 'Audit suspendu automatiquement : connexion au serveur perdue.');
             const b = document.getElementById('btnArreter');
-            b.disabled = true; b.textContent = 'Suspension…';
+            b.disabled = true; b.textContent = langActuelle === 'en' ? 'Pausing…' : 'Suspension…';
           }
           actifs--;
           if (actifs === 0) stopEffectif();
@@ -991,12 +1351,10 @@
         if (n < 2){
           reessayes.set(id, n + 1);
           const delai = n === 0 ? 3000 : 10000;
-          journal('Contrôle ' + id + ' en échec (' + msgErreur(e) + ') — tentative ' + (n + 2) + '/3 dans ' + (delai/1000) + ' s.', 'err');
           setTimeout(() => { file.unshift(id); actifs--; suivant(); }, delai);
           return;
         }
-        journal('Contrôle ' + id + ' en échec après 3 tentatives : ' + msgErreur(e), 'err');
-        poserResultat({ id:id, statut:'ERREUR', detail:'Appel serveur en échec (3 tentatives) : ' + msgErreur(e), titre:'', level:'', remediation:'' });
+        poserResultat({ id:id, statut:'ERREUR', detail:'Server error: ' + msgErreur(e), titre:'', level:'', remediation:'' });
         actifs--; suivant();
       })
       .executerControles(token, [id], profil);
@@ -1008,28 +1366,34 @@
 
   function afficherLigne(r){
     const tr = ligne(r.id);
+    if (!tr) return;
     const eff = statutEffectif(r);
     tr.dataset.statut = eff;
-    tr.querySelector('.statut').innerHTML = '<span class="badge ' + CLASSE(eff) + '">' + eff + '</span>';
+    const statutsDic = (I18N[langActuelle] && I18N[langActuelle].statuts) || I18N.fr.statuts;
+    const statutLabel = statutsDic[eff] || eff;
+    tr.querySelector('.statut').innerHTML = '<span class="badge ' + CLASSE(eff) + '">' + statutLabel + '</span>';
     const cellule = tr.querySelector('.constat');
     const court = echapper((r.detail || '').split(' | ')[0]).slice(0, 220);
     let html = court + ((r.detail||'').length > court.length ? '…' : '');
-    if ((r.detail && r.detail.length > 220) || r.remediation || r.risque){
-      html = '<details><summary>' + (court || 'Détail') + '</summary>' +
+    const remedeAffiche = (langActuelle === 'en' && r.remediationEn) ? r.remediationEn : r.remediation;
+    const risqueAffiche = (langActuelle === 'en' && r.risqueEn) ? r.risqueEn : r.risque;
+    
+    if ((r.detail && r.detail.length > 220) || remedeAffiche || risqueAffiche){
+      html = '<details><summary>' + (court || t('remedeDetail')) + '</summary>' +
              '<div>' + echapper(r.detail || '') + '</div>' +
-             (r.risque ? '<div class="remede">Risque couvert : ' + echapper(r.risque) + '</div>' : '') +
-             (r.remediation ? '<div class="remede">Remédiation : ' + echapper(r.remediation) + '</div>' : '') +
+             (risqueAffiche ? '<div class="remede">' + t('remedeRisqueCouvert') + echapper(risqueAffiche) + '</div>' : '') +
+             (remedeAffiche ? '<div class="remede">' + t('remedeRemediation') + echapper(remedeAffiche) + '</div>' : '') +
              '</details>';
     }
     if (eff === 'ÉCART ACCEPTÉ'){
       const d = derogations[r.id];
-      html += '<div class="derog-info">Écart accepté par ' + echapper(d.par) + ' le ' + echapper(d.date) +
-              (d.revision ? ' — à réviser le ' + echapper(d.revision) : ' — permanente') +
-              '.<br>Motif : ' + echapper(d.motif) +
-              '<button type="button" class="btn-revoquer" onclick="revoquerEcart(\'' + r.id + '\')">Révoquer</button></div>';
+      html += '<div class="derog-info">' + t('derogAccepteePar') + echapper(d.par) + t('derogLe') + echapper(d.date) +
+              (d.revision ? t('derogReviser') + echapper(d.revision) : t('derogPermanente')) +
+              t('derogMotifPrefix') + echapper(d.motif) +
+              '<button type="button" class="btn-revoquer" onclick="revoquerEcart('' + r.id + '')">' + t('btnRevoquer') + '</button></div>';
     } else if (r.statut === 'NON CONFORME'){
       html += '<div class="actions-ligne"><button type="button" class="btn-accepter" ' +
-              'onclick="ouvrirAcceptation(\'' + r.id + '\')">Accepter l\'écart…</button></div>';
+              'onclick="ouvrirAcceptation('' + r.id + '')">' + t('btnAccepterEcart') + '</button></div>';
     }
     cellule.innerHTML = html;
     tr.classList.toggle('cache', !!filtre && eff !== filtre);
@@ -1039,18 +1403,22 @@
     resultats[r.id] = r;
     faits++;
     const tr = ligne(r.id);
-    tr.classList.remove('encours');
-    tr.classList.add('nouveau');
+    if (tr){
+      tr.classList.remove('encours');
+      tr.classList.add('nouveau');
+      const titreAffiche = (langActuelle === 'en' && r.titreEn) ? r.titreEn : r.titre;
+      tr.querySelector('.titre').textContent = titreAffiche || r.id;
+    }
     const eff = statutEffectif(r);
     if (r.statut === 'NON CONFORME' || r.statut === 'ERREUR')
-      journal(r.id + ' — ' + r.statut + (eff === 'ÉCART ACCEPTÉ' ? ' (dérogation au registre → ÉCART ACCEPTÉ)' : '') +
+      journal(r.id + ' — ' + r.statut + (eff === 'ÉCART ACCEPTÉ' ? ' (deviation in register → ACCEPTED)' : '') +
         (r.titre ? ' — ' + r.titre : ''), eff === 'ÉCART ACCEPTÉ' ? undefined : 'err');
     afficherLigne(r);
     compte[eff] = (compte[eff] || 0) + 1;
     majCompteurs();
     majScore();
     document.getElementById('barreAv').style.width = Math.round(100 * faits / total) + '%';
-    document.getElementById('txtAv').textContent = 'Phase 2 — ' + faits + ' / ' + total + ' contrôles terminés';
+    document.getElementById('txtAv').textContent = 'Phase 2 — ' + faits + ' / ' + total + ' ' + t('controlesTerminesTxt');
   }
 
   // ---------- Acceptation / révocation d'écarts ----------
@@ -1059,8 +1427,8 @@
     if (!r) return;
     derogEnCours = id;
     document.getElementById('derogRef').textContent = r.id;
-    document.getElementById('derogTitreCtrl').textContent = r.titre || '';
-    document.getElementById('derogRisque').textContent = r.risque || 'Écart au benchmark CIS.';
+    document.getElementById('derogTitreCtrl').textContent = (langActuelle === 'en' && r.titreEn) ? r.titreEn : (r.titre || '');
+    document.getElementById('derogRisque').textContent = (langActuelle === 'en' && r.risqueEn) ? r.risqueEn : (r.risque || 'CIS deviation.');
     document.getElementById('derogConstat').textContent = r.detail || '';
     document.getElementById('derogMotif').value = '';
     document.getElementById('derogDuree').value = '6';
@@ -1078,7 +1446,7 @@
     const motif = document.getElementById('derogMotif').value.trim();
     const err = document.getElementById('derogErreur');
     if (!motif){
-      err.textContent = 'Le motif est obligatoire.';
+      err.textContent = langActuelle === 'en' ? 'Rationale is mandatory.' : 'Le motif est obligatoire.';
       err.style.display = 'inline';
       return;
     }
@@ -1092,8 +1460,7 @@
         compte['ÉCART ACCEPTÉ'] = (compte['ÉCART ACCEPTÉ'] || 0) + 1;
         afficherLigne(resultats[id]);
         majCompteurs(); majScore();
-        journal('Dérogation enregistrée pour ' + id + ' par ' + entree.par +
-          (entree.revision ? ' (révision : ' + entree.revision + ')' : ' (permanente)') + '.', 'ok');
+        journal((langActuelle === 'en' ? 'Deviation registered for ' : 'Dérogation enregistrée pour ') + id + (langActuelle === 'en' ? ' by ' : ' par ') + entree.par + '.', 'ok');
       })
       .withFailureHandler(e => {
         btn.disabled = false;
@@ -1110,9 +1477,9 @@
         compte['NON CONFORME'] = (compte['NON CONFORME'] || 0) + 1;
         afficherLigne(resultats[id]);
         majCompteurs(); majScore();
-        journal('Dérogation révoquée pour ' + id + ' — l\'écart redevient à corriger.', 'ok');
+        journal((langActuelle === 'en' ? 'Deviation revoked for ' : 'Dérogation révoquée pour ') + id, 'ok');
       })
-      .withFailureHandler(e => afficherAvert('Révocation impossible : ' + msgErreur(e)))
+      .withFailureHandler(e => afficherAvert('Revocation failed: ' + msgErreur(e)))
       .revoquerDerogation(id);
   }
 
@@ -1126,24 +1493,25 @@
       brutEl.textContent = '';
       return;
     }
-    // Score résiduel : les écarts formellement acceptés sortent du dénominateur
     const pct = (p + f) > 0 ? Math.round(100 * p / (p + f)) : 100;
     document.getElementById('scorePct').textContent = pct + '%';
     anneau.style.strokeDashoffset = String(301.6 * (1 - pct / 100));
     anneau.style.stroke = pct >= 80 ? 'var(--conforme)' : (pct >= 50 ? '#f9ab00' : 'var(--echec)');
     brutEl.textContent = a > 0
-      ? 'brut : ' + Math.round(100 * p / (p + f + a)) + ' % · ' + a + ' écart(s) accepté(s)'
+      ? t('scoreBrutSuffix') + Math.round(100 * p / (p + f + a)) + ' % · ' + a + t('scoreBrutEcarts')
       : '';
   }
 
   function majCompteurs(){
     const zone = document.getElementById('compteurs');
     zone.innerHTML = '';
+    const statutsDic = (I18N[langActuelle] && I18N[langActuelle].statuts) || I18N.fr.statuts;
     ORDRE_STATUTS.forEach(s => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = (filtre === s) ? 'actif' : '';
-      b.innerHTML = '<span><span class="pastille" style="background:var(' + couleurVar(s) + ')"></span>' + s + '</span>' +
+      const libelle = statutsDic[s] || s;
+      b.innerHTML = '<span><span class="pastille" style="background:var(' + couleurVar(s) + ')"></span>' + libelle + '</span>' +
                     '<span class="n">' + (compte[s] || 0) + '</span>';
       b.onclick = () => basculerFiltre(s);
       zone.appendChild(b);
@@ -1176,9 +1544,9 @@
     stopDemande = true;
     const b = document.getElementById('btnArreter');
     b.disabled = true;
-    b.textContent = 'Arrêt en cours…';
-    journal('Arrêt demandé — les appels serveur en cours se terminent, aucun nouveau ne sera lancé.');
-    document.getElementById('txtAv').textContent = 'Arrêt en cours — attente des appels en vol…';
+    b.textContent = langActuelle === 'en' ? 'Stopping…' : 'Arrêt en cours…';
+    journal(langActuelle === 'en' ? 'Stop requested — pending calls will finish cleanly.' : 'Arrêt demandé — les appels serveur en cours se terminent.');
+    document.getElementById('txtAv').textContent = langActuelle === 'en' ? 'Stopping…' : 'Arrêt en cours…';
   }
 
   function stopEffectif(){
@@ -1191,19 +1559,17 @@
     relacherWakeLock();
     const btn = document.getElementById('btnLancer');
     btn.disabled = false;
-    btn.textContent = 'Reprendre l\'audit';
+    btn.textContent = t('btnReprendre');
     document.getElementById('btnReinit').style.display = 'block';
     const restants = (phase === 'controles') ? file.length : (total - faits);
-    document.getElementById('txtAv').textContent = 'Interrompu — ' + faits + ' / ' + total +
-      ' contrôles réalisés' + (phase === 'collecte' ? ' (arrêt pendant la collecte)' : '');
-    journal('Audit interrompu proprement. ' + faits + ' résultat(s) posé(s), ' + restants +
-      ' contrôle(s) restant(s). Reprise possible pendant 6 h (durée de vie du contexte en cache).', 'ok');
+    document.getElementById('txtAv').textContent = (langActuelle === 'en' ? 'Interrupted — ' : 'Interrompu — ') + faits + ' / ' + total + ' ' + t('controlesTerminesTxt');
+    journal((langActuelle === 'en' ? 'Audit safely paused. ' : 'Audit interrompu proprement. ') + faits + ' ' + (langActuelle === 'en' ? 'done, ' : 'posé(s), ') + restants + (langActuelle === 'en' ? ' remaining.' : ' restant(s).'), 'ok');
     if (Object.keys(resultats).length > 0){
-      document.getElementById('btnExport').style.display = 'block'; // export partiel possible
+      document.getElementById('btnExport').style.display = 'block';
       document.getElementById('btnEmail').style.display = 'block';
     }
     if (phase === 'collecte'){
-      document.getElementById('collecteEtat').textContent = 'interrompue';
+      document.getElementById('collecteEtat').textContent = langActuelle === 'en' ? 'interrupted' : 'interrompue';
     }
   }
 
@@ -1215,20 +1581,20 @@
     document.getElementById('btnLancer').disabled = true;
     document.getElementById('btnReinit').style.display = 'none';
     const b = document.getElementById('btnArreter');
-    b.style.display = 'inline-block'; b.disabled = false; b.textContent = 'Arrêter';
+    b.style.display = 'inline-block'; b.disabled = false; b.textContent = t('btnArreter');
     demarrerChrono();
     demanderWakeLock();
     if (phase === 'collecte' && posCollecte){
-      journal('Reprise de la collecte à l\'étape ' + (posCollecte.idx + 1) + '/' + etapes.length + '…', 'ok');
-      document.getElementById('collecteEtat').textContent = 'en cours';
-      document.getElementById('txtAv').textContent = 'Phase 1 — reprise de la collecte…';
+      journal(langActuelle === 'en' ? 'Resuming collection…' : 'Reprise de la collecte…', 'ok');
+      document.getElementById('collecteEtat').textContent = langActuelle === 'en' ? 'in progress' : 'en cours';
+      document.getElementById('txtAv').textContent = langActuelle === 'en' ? 'Phase 1 — resuming collection…' : 'Phase 1 — reprise de la collecte…';
       document.getElementById('barreAv').parentElement.classList.add('indeterminee');
       etapeEnCoursDepuis = Date.now();
       const p = posCollecte; posCollecte = null;
       executerEtape(p.idx, p.curseur);
     } else {
-      journal('Reprise de l\'exécution — ' + file.length + ' contrôle(s) restant(s).', 'ok');
-      document.getElementById('txtAv').textContent = 'Phase 2 — reprise des contrôles…';
+      journal((langActuelle === 'en' ? 'Resuming execution — ' : 'Reprise de l'exécution — ') + file.length + ' ' + (langActuelle === 'en' ? 'remaining.' : 'restant(s).'), 'ok');
+      document.getElementById('txtAv').textContent = langActuelle === 'en' ? 'Phase 2 — resuming controls…' : 'Phase 2 — reprise des contrôles…';
       for (let i = 0; i < CONCURRENCE; i++) suivant();
     }
   }
@@ -1241,40 +1607,33 @@
     document.getElementById('btnReinit').style.display = 'block';
     arreterChrono();
     const s = Math.floor((Date.now()-tDebut)/1000);
-    document.getElementById('txtAv').textContent = 'Audit terminé — ' + total + ' contrôles en ' +
-      Math.floor(s/60) + ' min ' + (s%60) + ' s';
-    journal('Audit terminé (' + Math.floor(s/60) + ' min ' + (s%60) + ' s). CONFORME : ' + (compte['CONFORME']||0) +
-      ' · NON CONFORME : ' + (compte['NON CONFORME']||0) + ' · ÉCART ACCEPTÉ : ' + (compte['ÉCART ACCEPTÉ']||0) +
-      ' · À VÉRIFIER : ' + (compte['À VÉRIFIER']||0) +
-      ' · MANUEL : ' + (compte['MANUEL']||0) + ' · ERREUR : ' + (compte['ERREUR']||0), 'ok');
-    if ((compte['NON CONFORME']||0) > 0){
-      journal('Traitement des écarts : bouton « Accepter l\'écart… » sur chaque ligne NON CONFORME, ou plan d\'actions détaillé dans l\'export Sheets.');
-    }
+    document.getElementById('txtAv').textContent = (langActuelle === 'en' ? 'Audit completed — ' : 'Audit terminé — ') + total + ' ' + (langActuelle === 'en' ? 'controls in ' : 'contrôles en ') + Math.floor(s/60) + ' min ' + (s%60) + ' s';
+    journal((langActuelle === 'en' ? 'Audit completed (' : 'Audit terminé (') + Math.floor(s/60) + ' min ' + (s%60) + ' s).', 'ok');
     document.getElementById('btnExport').style.display = 'block';
     document.getElementById('btnEmail').style.display = 'block';
     document.getElementById('btnLancer').disabled = false;
-    document.getElementById('btnLancer').textContent = 'Relancer l\'audit';
+    document.getElementById('btnLancer').textContent = t('btnRelancer');
   }
 
   function exporterSheets(){
     const btn = document.getElementById('btnExport');
-    btn.disabled = true; btn.textContent = 'Génération du rapport…';
-    journal('Génération du rapport Google Sheets…');
+    btn.disabled = true; btn.textContent = langActuelle === 'en' ? 'Generating report…' : 'Génération du rapport…';
+    journal(langActuelle === 'en' ? 'Generating Google Sheets report…' : 'Génération du rapport Google Sheets…');
     const liste = controles.map(c => resultats[c.id]).filter(Boolean);
     google.script.run
       .withSuccessHandler(url => {
-        btn.disabled = false; btn.textContent = 'Générer le rapport Sheets';
-        journal('Rapport créé : ' + url, 'ok');
+        btn.disabled = false; btn.textContent = t('btnExport');
+        journal((langActuelle === 'en' ? 'Report created: ' : 'Rapport créé : ') + url, 'ok');
         const z = document.getElementById('lienRapport');
         z.style.display = 'block';
-        z.innerHTML = 'Rapport créé : <a href="' + url + '" target="_blank" rel="noopener">ouvrir le Google Sheets</a>';
+        z.innerHTML = t('rapportCreeTxt') + '<a href="' + url + '" target="_blank" rel="noopener">' + t('ouvrirSheetsTxt') + '</a>';
       })
       .withFailureHandler(e => {
-        btn.disabled = false; btn.textContent = 'Générer le rapport Sheets';
-        journal('Échec de la génération du rapport : ' + e.message, 'err');
-        afficherAvert('Échec de la génération du rapport : ' + e.message);
+        btn.disabled = false; btn.textContent = t('btnExport');
+        journal('Export failed: ' + e.message, 'err');
+        afficherAvert('Export failed: ' + e.message);
       })
-      .genererRapportSheets(token, liste);
+      .genererRapportSheets(token, liste, langActuelle);
   }
 
   // ---------- Envoi par e-mail ----------
@@ -1283,15 +1642,15 @@
     const res = (p + f) > 0 ? Math.round(100 * p / (p + f)) : 100;
     const d = new Date();
     document.getElementById('emailDest').value = compteSession || '';
-    document.getElementById('emailObjet').value = 'Audit CIS Google Workspace — ' +
-      String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear() +
-      ' — conformité résiduelle ' + res + ' %';
+    document.getElementById('emailObjet').value = langActuelle === 'en'
+      ? ('CIS Google Workspace Audit — ' + String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear() + ' — residual score ' + res + ' %')
+      : ('Audit CIS Google Workspace — ' + String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear() + ' — conformité résiduelle ' + res + ' %');
     document.getElementById('emailMessage').value = '';
     document.getElementById('emailLien').checked = true;
     document.getElementById('emailDetails').checked = true;
     document.getElementById('emailErreur').style.display = 'none';
     document.getElementById('emailEnvoyer').disabled = false;
-    document.getElementById('emailEnvoyer').textContent = 'Envoyer';
+    document.getElementById('emailEnvoyer').textContent = t('btnEnvoyer');
     document.getElementById('modalEmail').showModal();
   }
   function fermerEmail(){ document.getElementById('modalEmail').close(); }
@@ -1299,28 +1658,27 @@
     const err = document.getElementById('emailErreur');
     const dest = document.getElementById('emailDest').value.trim();
     if (!dest){
-      err.textContent = 'Au moins un destinataire est requis.';
+      err.textContent = langActuelle === 'en' ? 'At least one recipient is required.' : 'Au moins un destinataire est requis.';
       err.style.display = 'inline';
       return;
     }
     const btn = document.getElementById('emailEnvoyer');
     btn.disabled = true;
-    btn.textContent = document.getElementById('emailLien').checked
-      ? 'Génération du rapport et envoi…' : 'Envoi…';
+    btn.textContent = langActuelle === 'en' ? 'Sending…' : 'Envoi…';
     const liste = controles.map(c => resultats[c.id]).filter(Boolean);
     google.script.run
       .withSuccessHandler(r => {
         fermerEmail();
-        journal('Rapport envoyé à ' + r.destinataires + (r.url ? ' (lien Sheets joint).' : '.'), 'ok');
+        journal((langActuelle === 'en' ? 'Report sent to ' : 'Rapport envoyé à ') + r.destinataires + '.', 'ok');
         if (r.url){
           const z = document.getElementById('lienRapport');
           z.style.display = 'block';
-          z.innerHTML = 'Rapport créé : <a href="' + r.url + '" target="_blank" rel="noopener">ouvrir le Google Sheets</a>';
+          z.innerHTML = t('rapportCreeTxt') + '<a href="' + r.url + '" target="_blank" rel="noopener">' + t('ouvrirSheetsTxt') + '</a>';
         }
       })
       .withFailureHandler(e => {
         btn.disabled = false;
-        btn.textContent = 'Envoyer';
+        btn.textContent = t('btnEnvoyer');
         err.textContent = msgErreur(e);
         err.style.display = 'inline';
       })
@@ -1330,7 +1688,7 @@
         message: document.getElementById('emailMessage').value,
         joindreLien: document.getElementById('emailLien').checked,
         inclureDetails: document.getElementById('emailDetails').checked
-      });
+      }, langActuelle);
   }
 
   function afficherAvert(msg){
@@ -1340,6 +1698,11 @@
   }
   function ligne(id){ return document.getElementById('ctrl-' + id.replace(/\./g,'-')); }
   function echapper(t){ const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+
+  // Initialisation de la langue au chargement
+  document.addEventListener('DOMContentLoaded', () => {
+    changerLangue(langActuelle);
+  });
 </script>
 </body>
 </html>
