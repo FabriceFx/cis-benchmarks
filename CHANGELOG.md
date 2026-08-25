@@ -5,6 +5,31 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.0.1] - 2026-08-25
+
+### 🎯 Angle émotionnel : Douleur
+> *Rien n'est plus risqué que de croire son organisation protégée par un audit au vert, alors qu'une subtilité d'interprétation ou un réglage trop permissif laissait la porte entrouverte. La version 5.0.1 verrouille l'évaluation au millimètre près sur les critères stricts du document officiel CIS v1.4.*
+
+### Corrigé / Fixed
+- **Écart sémantique sur les comptes administrateurs (Section 1.1.x)** :
+  - `1.1.1` (*Entre 2 et 4 comptes Super Admin*) : vérification stricte de la plage `2 <= superAdmins.length <= 4` (auparavant scindée de façon incorrecte).
+  - `1.1.2` (*Séparation des privilèges Super Admin*) : détection et rejet formel des comptes cumulant les privilèges Super Admin et Administrateur délégué (`isDelegatedAdmin`).
+  - `1.1.3` (*Comptes dédiés à l'administration*) : requalifié en contrôle bonus avec statut `À VÉRIFIER` pour auditer le nommage et l'usage quotidien des comptes à privilèges.
+- **Resserrement des contrôles sur les seuils stricts CIS Benchmark v1.4** :
+  - `3.1.1.1.2` & `3.1.1.2.2` (*Agendas interne*) : conformité accordée uniquement si restreint aux disponibilités (*free/busy*), rejet de `ALL_INFO_READ`.
+  - `3.1.2.1.1.5` (*Access Checker Drive*) : conformité accordée uniquement sur l'option stricte « Destinataires uniquement » (*Recipients only*).
+  - `3.1.4.1.2` (*Fichiers Chat interne*) : rejet du transfert de fichiers y compris les images seules (`NO_FILES` / `DISABLED` requis).
+  - `3.1.6.2` (*Création de groupes*) : restriction stricte aux administrateurs ET désactivation impérative des sous-options de communication et d'adhésion externes.
+  - `4.1.5.1` (*Politique de mots de passe*) : longueur minimale portée à 14 caractères (au lieu de 12), application à la prochaine connexion requise et expiration <= 365 jours.
+  - `4.2.4.1` (*Durée de session web Google*) : durée maximale autorisée abaissée à 12 heures (au lieu de 24 h).
+- **Fiabilisation et localisation complète du socle bilingue (FR/EN)** :
+  - Correction de la signature serveur de `envoyerRapportEmail(token, resultats, options, lang)` et résolution robuste de la langue sélectionnée.
+  - Création du dictionnaire serveur centralisé `TRADUCTIONS_SERVEUR` (statuts, e-mails, onglets et entêtes Google Sheets).
+  - Transmission des métadonnées bilingues complètes (`titreEn`, `remediationEn`, `risqueEn`) au client WebApp et dans le plan d'actions Google Sheets.
+  - Correction des apostrophes non échappées dans le code JavaScript de `Index.html` (`demanderWakeLock`, `journal`, modale de révocation).
+
+---
+
 ## [5.0.0] - 2026-08-24
 
 ### 🎯 Angle émotionnel : Terre promise

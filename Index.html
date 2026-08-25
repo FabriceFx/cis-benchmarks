@@ -666,7 +666,7 @@
       aProposOutilDesc: 'This automated tool audits a Google Workspace tenant configuration against the 86 official recommendations from the <b>CIS Google Workspace Foundations Benchmark v1.4</b>, providing full inventory, residual compliance scoring, and a prioritized action plan.',
       aProposDevTitre: 'Developer',
       aProposSecuTitre: 'Security & Privacy',
-      aProposSecuDesc: 'The audit runs entirely within your organization's Google Workspace tenant via Google Apps Script (read-only execution). No secrets, API keys, or tenant data are ever sent to external third-party servers.',
+      aProposSecuDesc: 'The audit runs entirely within your organization\'s Google Workspace tenant via Google Apps Script (read-only execution). No secrets, API keys, or tenant data are ever sent to external third-party servers.',
       guideTitre: 'Guide — CIS Google Workspace Audit',
       btnFermer: 'Close',
       btnAnnuler: 'Cancel',
@@ -910,12 +910,12 @@
         wakeLock.addEventListener('release', () => { wakeLock = null; });
         journal(langActuelle === 'en'
           ? 'Anti-sleep active: screen will remain awake during audit (do not close laptop lid).'
-          : 'Anti-veille activé : l'écran restera allumé pendant l'audit (ne pas fermer le capot).');
+          : 'Anti-veille activé : l\'écran restera allumé pendant l\'audit (ne pas fermer le capot).');
       }
     }catch(e){
       journal(langActuelle === 'en'
         ? 'Anti-sleep unavailable (' + msgErreur(e) + ') — disable computer sleep mode during audit.'
-        : 'Anti-veille indisponible (' + msgErreur(e) + ') — désactiver la mise en veille du poste pendant l'audit.');
+        : 'Anti-veille indisponible (' + msgErreur(e) + ') — désactiver la mise en veille du poste pendant l\'audit.');
     }
   }
   function relacherWakeLock(){
@@ -933,8 +933,7 @@
     const h = new Date().toTimeString().slice(0,8);
     const ligne = document.createElement('span');
     if (classe) ligne.className = classe;
-    ligne.textContent = h + '  ' + msg + '
-';
+    ligne.textContent = h + '  ' + msg + '\n';
     corps.appendChild(ligne);
     corps.scrollTop = corps.scrollHeight;
   }
@@ -1005,7 +1004,7 @@
     document.getElementById('lienRapport').style.display = 'none';
     demarrerChrono();
     demanderWakeLock();
-    journal(langActuelle === 'en' ? 'Opening audit session (profile ' + profil + ')…' : 'Ouverture de la session d'audit (profil ' + profil + ')…');
+    journal(langActuelle === 'en' ? 'Opening audit session (profile ' + profil + ')…' : 'Ouverture de la session d\'audit (profil ' + profil + ')…');
     const barre = document.getElementById('barreAv');
     barre.parentElement.classList.add('indeterminee');
     document.getElementById('txtAv').textContent = langActuelle === 'en' ? 'Opening session…' : 'Ouverture de la session…';
@@ -1253,7 +1252,7 @@
     document.getElementById('panneauCollecte').classList.add('repliee');
     document.getElementById('btnBasculeCollecte').style.display = 'inline-block';
     document.getElementById('journal').removeAttribute('open');
-    journal(langActuelle === 'en' ? 'Phase 1 completed — starting controls execution.' : 'Phase 1 terminée — passage à l'exécution des contrôles.', 'ok');
+    journal(langActuelle === 'en' ? 'Phase 1 completed — starting controls execution.' : 'Phase 1 terminée — passage à l\'exécution des contrôles.', 'ok');
     construireRegistre();
   }
 
@@ -1338,7 +1337,7 @@
           file.unshift(id);
           if (!stopDemande){
             stopDemande = true;
-            journal((langActuelle === 'en' ? 'Server connection lost — auto pausing audit.' : 'Connexion au serveur perdue — suspension automatique de l'audit.'), 'err');
+            journal((langActuelle === 'en' ? 'Server connection lost — auto pausing audit.' : 'Connexion au serveur perdue — suspension automatique de l\'audit.'), 'err');
             afficherAvert(langActuelle === 'en' ? 'Audit paused automatically: connection lost.' : 'Audit suspendu automatiquement : connexion au serveur perdue.');
             const b = document.getElementById('btnArreter');
             b.disabled = true; b.textContent = langActuelle === 'en' ? 'Pausing…' : 'Suspension…';
@@ -1390,10 +1389,10 @@
       html += '<div class="derog-info">' + t('derogAccepteePar') + echapper(d.par) + t('derogLe') + echapper(d.date) +
               (d.revision ? t('derogReviser') + echapper(d.revision) : t('derogPermanente')) +
               t('derogMotifPrefix') + echapper(d.motif) +
-              '<button type="button" class="btn-revoquer" onclick="revoquerEcart('' + r.id + '')">' + t('btnRevoquer') + '</button></div>';
+              '<button type="button" class="btn-revoquer" onclick="revoquerEcart(\'' + r.id + '\')">' + t('btnRevoquer') + '</button></div>';
     } else if (r.statut === 'NON CONFORME'){
       html += '<div class="actions-ligne"><button type="button" class="btn-accepter" ' +
-              'onclick="ouvrirAcceptation('' + r.id + '')">' + t('btnAccepterEcart') + '</button></div>';
+              'onclick="ouvrirAcceptation(\'' + r.id + '\')">' + t('btnAccepterEcart') + '</button></div>';
     }
     cellule.innerHTML = html;
     tr.classList.toggle('cache', !!filtre && eff !== filtre);
@@ -1593,7 +1592,7 @@
       const p = posCollecte; posCollecte = null;
       executerEtape(p.idx, p.curseur);
     } else {
-      journal((langActuelle === 'en' ? 'Resuming execution — ' : 'Reprise de l'exécution — ') + file.length + ' ' + (langActuelle === 'en' ? 'remaining.' : 'restant(s).'), 'ok');
+      journal((langActuelle === 'en' ? 'Resuming execution — ' : 'Reprise de l\'exécution — ') + file.length + ' ' + (langActuelle === 'en' ? 'remaining.' : 'restant(s).'), 'ok');
       document.getElementById('txtAv').textContent = langActuelle === 'en' ? 'Phase 2 — resuming controls…' : 'Phase 2 — reprise des contrôles…';
       for (let i = 0; i < CONCURRENCE; i++) suivant();
     }

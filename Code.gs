@@ -57,9 +57,11 @@ const CONFIG = {
   // Affichée dans le footer de la WebApp (injectée par doGet), dans le journal
   // et dans la synthèse du rapport : si le footer n'affiche pas la version
   // attendue après une mise à jour, le redéploiement n'a pas été fait.
-  VERSION: '5.0.0',
+  VERSION: '5.0.1',
   // 'L1' = contrôles de niveau 1 uniquement, 'L2' = niveaux 1 + 2
   NIVEAU_PROFIL: 'L2',
+  // Langue par défaut du script
+  LANGUE: 'fr',
   // Nombre max d'utilisateurs analysés pour les contrôles par utilisateur (2SV, tokens)
   MAX_UTILISATEURS: 12000,
   // Nombre max de groupes analysés pour les contrôles Groups Settings
@@ -109,13 +111,15 @@ function lancerAuditCIS() {
       id: ctrl.id,
       level: ctrl.level,
       titre: ctrl.titre,
+      titreEn: ctrl.titreEn || ctrl.titre,
       statut: res.statut,
       detail: res.detail || '',
-      remediation: ctrl.remediation || ''
+      remediation: ctrl.remediation || '',
+      remediationEn: ctrl.remediationEn || ''
     });
   });
 
-  const url = ecrireRapport_(resultats, ctx, debut);
+  const url = ecrireRapport_(resultats, ctx, debut, CONFIG.LANGUE || 'fr');
   Logger.log('Audit terminé. Rapport : ' + url);
   return url;
 }
@@ -127,8 +131,8 @@ function lancerAuditCIS() {
 // (formulations synthétiques rédigées à partir de la logique du benchmark)
 // ---------------------------------------------------------------------------
 const RISQUES = {
-  '1.1.1': 'Un seul super admin est un point de défaillance unique : compte perdu, suspendu ou compromis, plus aucune administration du tenant n\'est possible.',
-  '1.1.2': 'Chaque super admin supplémentaire est une cible de phishing à impact maximal ; au-delà de 4, la surface d\'attaque devient difficile à surveiller.',
+  '1.1.1': 'Avoir moins de 2 super admins crée un point unique de défaillance ; en avoir plus de 4 élargit excessivement la surface d\'attaque.',
+  '1.1.2': 'Cumuler le rôle Super Admin avec des rôles délégués mélange les privilèges globaux et opérationnels, rendant la traçabilité et le principe du moindre privilège inopérants.',
   '1.1.3': 'Un super admin utilisé au quotidien (mail, navigation, docs) expose des privilèges totaux aux risques ordinaires : une seule pièce jointe piégée suffit.',
   '1.2.1.1': 'Un annuaire consultable de l\'extérieur facilite la cartographie des employés, donc le phishing ciblé et l\'ingénierie sociale.',
   '3.1.1.1.1': 'Le partage externe des détails d\'agenda révèle réunions, participants et sujets sensibles hors de l\'organisation.',
@@ -202,7 +206,6 @@ const RISQUES = {
   '4.2.3.1': 'Sans DLP, les données sensibles (RIB, données personnelles, secrets) sortent de Drive sans détection.',
   '4.2.4.1': 'Des sessions sans expiration laissent des accès ouverts sur des postes partagés, perdus ou volés.',
   '4.2.5.1': 'Les consoles Cloud pilotent l\'infrastructure : sans ré-authentification, une session volée suffit.',
-
   '4.3.1': 'Sans revue du tableau de bord, les signaux d\'attaque (pics de phishing, partages anormaux) passent inaperçus.',
   '4.3.2': 'Les recommandations de Security Health non traitées laissent des faiblesses connues et documentées ouvertes.',
   '5.1.1.1': 'Sans revue d\'utilisation, les usages anormaux (comptes dormants actifs, volumes inhabituels) ne sont pas détectés.',
@@ -218,8 +221,8 @@ const RISQUES = {
 };
 
 const RISQUES_EN = {
-  "1.1.1": "A single super admin creates a critical single point of failure if the administrator is unavailable or compromised.",
-  "1.1.2": "Too many super admins unnecessarily expands the attack surface: privilege escalation and rogue actions become harder to contain.",
+  "1.1.1": "Fewer than 2 super admins creates a critical single point of failure; more than 4 unnecessarily expands the attack surface.",
+  "1.1.2": "Combining Super Admin and Delegated Admin roles blurs privilege boundaries and violates the principle of least privilege.",
   "1.1.3": "Using super admin accounts for daily tasks (email, web browsing) drastically increases exposure to phishing and credential theft.",
   "1.2.1.1": "Exposing directory data externally enables attacker reconnaissance, social engineering, and targeted phishing against employees.",
   "3.1.1.1.1": "Public calendar sharing exposes internal schedules, confidential meetings, and employee availability to external reconnaissance.",
@@ -307,10 +310,153 @@ const RISQUES_EN = {
   "6.8": "Gmail employee spoofing detection alerts on BEC fraud attempts before employees execute fraudulent requests."
 };
 
-
 function risquePour_(id) {
   return RISQUES[id] || 'Écart au benchmark CIS : la protection visée par ce contrôle n\'est pas assurée.';
 }
+
+function risquePourEn_(id) {
+  return RISQUES_EN[id] || 'CIS benchmark deviation: the protection targeted by this check is not enforced.';
+}
+
+// ---------------------------------------------------------------------------
+// DICTIONNAIRE DE TRADUCTION SERVEUR (FR / EN)
+// ---------------------------------------------------------------------------
+const TRADUCTIONS_SERVEUR = {
+  fr: {
+    statuts: {
+      'CONFORME': 'CONFORME',
+      'NON CONFORME': 'NON CONFORME',
+      'ÉCART ACCEPTÉ': 'ÉCART ACCEPTÉ',
+      'À VÉRIFIER': 'À VÉRIFIER',
+      'MANUEL': 'MANUEL',
+      'ERREUR': 'ERREUR',
+      'HORS PROFIL': 'HORS PROFIL'
+    },
+    email: {
+      banniere: 'SÉCURITÉ GOOGLE WORKSPACE',
+      rapportTitre: 'Rapport d\'audit CIS Foundations v1.4',
+      confResiduelle: 'Conformité résiduelle (hors dérogations)',
+      confBrute: 'Conformité brute',
+      ecartsCorriger: 'Écarts à corriger',
+      aucunEcart: '✅ Aucun écart non conforme restant (hors dérogations en vigueur).',
+      derogEnVigueur: 'dérogation(s) formelle(s) en vigueur',
+      rapportGenere: 'Rapport détaillé Google Sheets généré',
+      ouvrirRapport: '📊 Ouvrir le classeur Google Sheets',
+      piedGenere: 'Généré par Audit CIS Google Workspace',
+      piedExec: ' — Exécuté par : ',
+      piedRef: ' — Référentiel : CIS Google Workspace Foundations Benchmark v1.4'
+    },
+    sheets: {
+      nomSynthese: 'Synthèse',
+      nomDetail: 'Détail des contrôles',
+      nomPlan: "Plan d'actions",
+      nomDerog: 'Registre des dérogations',
+      nomPolitiques: 'Politiques (brut)',
+      titreSynthese: 'AUDIT CIS GOOGLE WORKSPACE FOUNDATIONS BENCHMARK v1.4',
+      dateExec: "Date d'exécution",
+      execPar: 'Exécuté par',
+      profilAudite: 'Profil audité',
+      profilL1: 'Niveau 1',
+      profilL2: 'Niveaux 1 + 2',
+      versionOutil: "Version de l'outil d'audit",
+      referentiel: 'Référentiel',
+      referentielDesc: 'CIS Google Workspace Foundations Benchmark v1.4 — document officiel : cisecurity.org/benchmark/google_workspace',
+      domaines: 'Domaines',
+      nd: 'n/d',
+      policiesLues: 'Politiques Cloud Identity lues',
+      scoreResiduel: 'Score de conformité résiduel (écarts acceptés exclus)',
+      scoreBrut: 'Score de conformité brut (écarts acceptés comptés non conformes)',
+      avertCollecte: 'Avertissements de collecte',
+      entetesDetail: ['ID CIS', 'Niveau', 'Contrôle', 'Statut', 'Constat / valeur relevée', 'Remédiation (console)'],
+      derogationPrefix: 'DÉROGATION — acceptée par ',
+      derogationLe: ' le ',
+      derogationRev: ' (à réviser le ',
+      derogationPerm: ' (permanente)',
+      derogationMotif: '. Motif : ',
+      derogationConstat: ' | Constat : ',
+      entetesPlan: ['Priorité', 'ID CIS', 'Contrôle', 'Constat', 'Action recommandée', 'Risque couvert', 'Responsable', 'Échéance', 'État'],
+      prioHaute: 'P1 — Haute',
+      prioMoyenne: 'P2 — Moyenne',
+      cible: ' Cible : ',
+      aFaire: 'À faire',
+      aucuneAction: 'Aucune action : aucun écart non conforme restant (hors dérogations).',
+      entetesDerog: ['ID CIS', 'Contrôle', 'Statut constaté à cet audit', 'Risque assumé', 'Motif de la dérogation', 'Acceptée par', 'Date', 'À réviser le', 'Observation'],
+      nonEvalue: 'non évalué à cet audit',
+      derogConforme: 'Contrôle désormais conforme — dérogation à clore.',
+      derogDepassee: 'DATE DE RÉVISION DÉPASSÉE — à réexaminer.',
+      permanente: 'permanente',
+      aucuneDerog: 'Aucune dérogation enregistrée.',
+      entetesPolitiques: ['Type de réglage', 'Type de politique', 'Cible (policyQuery)', 'Valeur JSON']
+    }
+  },
+  en: {
+    statuts: {
+      'CONFORME': 'COMPLIANT',
+      'NON CONFORME': 'NON-COMPLIANT',
+      'ÉCART ACCEPTÉ': 'ACCEPTED DEVIATION',
+      'À VÉRIFIER': 'REVIEW REQUIRED',
+      'MANUEL': 'MANUAL',
+      'ERREUR': 'ERROR',
+      'HORS PROFIL': 'OUT OF PROFILE'
+    },
+    email: {
+      banniere: 'GOOGLE WORKSPACE SECURITY',
+      rapportTitre: 'CIS Foundations Benchmark v1.4 Audit Report',
+      confResiduelle: 'Residual Compliance (deviations excluded)',
+      confBrute: 'Raw Compliance',
+      ecartsCorriger: 'Non-Compliant Items to Remediate',
+      aucunEcart: '✅ No non-compliant items remaining (excluding active deviations).',
+      derogEnVigueur: 'formal deviation(s) currently active',
+      rapportGenere: 'Detailed Google Sheets Report Generated',
+      ouvrirRapport: '📊 Open Google Sheets Spreadsheet',
+      piedGenere: 'Generated by CIS Google Workspace Audit',
+      piedExec: ' — Executed by: ',
+      piedRef: ' — Reference: CIS Google Workspace Foundations Benchmark v1.4'
+    },
+    sheets: {
+      nomSynthese: 'Executive Summary',
+      nomDetail: 'Control Details',
+      nomPlan: 'Action Plan',
+      nomDerog: 'Deviation Register',
+      nomPolitiques: 'Raw Policies',
+      titreSynthese: 'CIS GOOGLE WORKSPACE FOUNDATIONS BENCHMARK v1.4 AUDIT',
+      dateExec: 'Execution Date',
+      execPar: 'Executed By',
+      profilAudite: 'Audited Profile',
+      profilL1: 'Level 1',
+      profilL2: 'Level 1 + Level 2',
+      versionOutil: 'Audit Tool Version',
+      referentiel: 'Benchmark Reference',
+      referentielDesc: 'CIS Google Workspace Foundations Benchmark v1.4 — Official document: cisecurity.org/benchmark/google_workspace',
+      domaines: 'Tenant Domains',
+      nd: 'n/a',
+      policiesLues: 'Cloud Identity Policies Queried',
+      scoreResiduel: 'Residual Compliance Score (deviations excluded)',
+      scoreBrut: 'Raw Compliance Score (deviations counted as non-compliant)',
+      avertCollecte: 'Collection Warnings',
+      entetesDetail: ['CIS ID', 'Level', 'Control', 'Status', 'Observed Finding / Value', 'Remediation (Console)'],
+      derogationPrefix: 'DEVIATION — Accepted by ',
+      derogationLe: ' on ',
+      derogationRev: ' (review by ',
+      derogationPerm: ' (permanent)',
+      derogationMotif: '. Reason: ',
+      derogationConstat: ' | Finding: ',
+      entetesPlan: ['Priority', 'CIS ID', 'Control', 'Finding', 'Recommended Action', 'Covered Risk', 'Owner', 'Due Date', 'Status'],
+      prioHaute: 'P1 — High',
+      prioMoyenne: 'P2 — Medium',
+      cible: ' Target: ',
+      aFaire: 'To Do',
+      aucuneAction: 'No actions required: no non-compliant findings remaining (excluding deviations).',
+      entetesDerog: ['CIS ID', 'Control', 'Audit Status', 'Assumed Risk', 'Deviation Reason', 'Accepted By', 'Date', 'Review By', 'Notes'],
+      nonEvalue: 'not evaluated in this audit',
+      derogConforme: 'Control now compliant — deviation can be closed.',
+      derogDepassee: 'REVIEW DATE OVERDUE — re-evaluation required.',
+      permanente: 'permanent',
+      aucuneDerog: 'No deviations registered.',
+      entetesPolitiques: ['Setting Type', 'Policy Type', 'Target (policyQuery)', 'JSON Value']
+    }
+  }
+};
 
 // ---------------------------------------------------------------------------
 // WEBAPP — EXÉCUTION PROGRESSIVE AVEC RETOUR D'AVANCEMENT EN TEMPS RÉEL
@@ -348,7 +494,14 @@ function demarrerSession(niveauProfil) {
     },
     derogations: listerDerogations(),
     controles: DEFINITION_CONTROLES.map(function (c) {
-      return { id: c.id, level: c.level, titre: c.titre };
+      return {
+        id: c.id,
+        level: c.level,
+        titre: c.titre,
+        titreEn: c.titreEn || c.titre,
+        remediation: c.remediation || '',
+        remediationEn: c.remediationEn || ''
+      };
     }),
     etapes: [
       { cle: 'domaines',     libelle: 'Domaines du tenant' },
@@ -608,7 +761,7 @@ function executerControles(token, ids, niveauProfil) {
   DEFINITION_CONTROLES.forEach(function (c) { parId[c.id] = c; });
   return ids.map(function (id) {
     const ctrl = parId[id];
-    if (!ctrl) return { id: id, statut: STATUT.ERROR, detail: 'Contrôle inconnu.', titre: '', level: '', remediation: '' };
+    if (!ctrl) return { id: id, statut: STATUT.ERROR, detail: 'Contrôle inconnu.', titre: '', titreEn: '', level: '', remediation: '', remediationEn: '' };
     let res;
     if (ctrl.level === 'L2' && CONFIG.NIVEAU_PROFIL === 'L1') {
       res = { statut: STATUT.SKIP, detail: 'Contrôle L2 exclu du profil L1.' };
@@ -620,22 +773,30 @@ function executerControles(token, ids, niveauProfil) {
       }
     }
     return {
-      id: ctrl.id, level: ctrl.level, titre: ctrl.titre,
-      statut: res.statut, detail: res.detail || '', remediation: ctrl.remediation || '',
-      risque: risquePour_(ctrl.id)
+      id: ctrl.id,
+      level: ctrl.level,
+      titre: ctrl.titre,
+      titreEn: ctrl.titreEn || ctrl.titre,
+      statut: res.statut,
+      detail: res.detail || '',
+      remediation: ctrl.remediation || '',
+      remediationEn: ctrl.remediationEn || '',
+      risque: risquePour_(ctrl.id),
+      risqueEn: risquePourEn_(ctrl.id)
     };
   });
 }
 
 /** Génère le rapport Google Sheets à partir des résultats accumulés. */
-function genererRapportSheets(token, resultats) {
+function genererRapportSheets(token, resultats, lang) {
+  lang = (lang === 'en') ? 'en' : (CONFIG.LANGUE || 'fr');
   let ctx;
   try {
     ctx = chargerContexte_(token);
   } catch (e) {
     ctx = { domaines: [], policies: [], policyIndex: {}, erreurs: ['Contexte expiré — onglet Politiques (brut) non disponible.'] };
   }
-  return ecrireRapport_(resultats, ctx, new Date());
+  return ecrireRapport_(resultats, ctx, new Date(), lang);
 }
 
 
@@ -643,8 +804,9 @@ function genererRapportSheets(token, resultats) {
 // ---------------------------------------------------------------------------
 // ENVOI DU RAPPORT PAR E-MAIL
 // ---------------------------------------------------------------------------
-function envoyerRapportEmail(token, resultats, options) {
+function envoyerRapportEmail(token, resultats, options, lang) {
   options = options || {};
+  lang = (lang === 'en') ? 'en' : ((options && options.lang === 'en') ? 'en' : (CONFIG.LANGUE || 'fr'));
   const dests = String(options.destinataires || '')
     .split(/[;,\n]/).map(function (s) { return s.trim(); }).filter(Boolean);
   if (!dests.length) throw new Error('Au moins un destinataire est requis.');
@@ -667,7 +829,7 @@ function envoyerRapportEmail(token, resultats, options) {
 
   // Rapport Sheets joint en lien (généré maintenant, avec ses 5 onglets)
   let url = null;
-  if (options.joindreLien) url = genererRapportSheets(token, resultats);
+  if (options.joindreLien) url = genererRapportSheets(token, resultats, lang);
 
   const dateFr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm');
   const objet = options.objet ||
@@ -1139,33 +1301,52 @@ const DEFINITION_CONTROLES = [
   // ===== SECTION 1 — COMPTES ================================================
   {
     id: '1.1.1', level: 'L1',
-    titre: 'Plus d\'un compte Super Admin existe', titreEn: 'Ensure that between two and four global admins are designated',
-    remediation: 'Admin > Annuaire > Utilisateurs — attribuer le rôle Super Admin à un second compte dédié.', remediationEn: 'Create at least one additional account with a Super Admin role if there is only 1 Super Admin account. If more that 4 accounts with Super Admin access, reduce the number of accounts with a Super Admin role. NOTE: A new account should be created vs adding this role to an existing account since Administration tasks should be done through separate Admin accounts.',
+    titre: 'Entre 2 et 4 comptes Super Admin désignés', titreEn: 'Ensure that between two and four global admins are designated',
+    remediation: 'Admin > Annuaire > Utilisateurs — Maintenir entre 2 et 4 comptes Super Admin dédiés.', remediationEn: 'Create at least one additional account with a Super Admin role if there is only 1 Super Admin account. If more than 4 accounts with Super Admin access, reduce the number of accounts with a Super Admin role. NOTE: A new account should be created vs adding this role to an existing account since Administration tasks should be done through separate Admin accounts.',
     check: function (ctx) {
       if (!ctx.superAdmins) return { statut: STATUT.ERROR, detail: 'Directory API indisponible.' };
       const n = ctx.superAdmins.length;
+      if (n < 2) {
+        return {
+          statut: STATUT.FAIL,
+          detail: n + ' super admin actif : au moins 2 comptes sont requis pour éviter un point unique de défaillance (' + ctx.superAdmins.map(function (u) { return u.primaryEmail; }).join(', ') + ').'
+        };
+      }
+      if (n > 4) {
+        return {
+          statut: STATUT.FAIL,
+          detail: n + ' super admins actifs : maximum 4 autorisé par le benchmark pour limiter la surface d\'attaque (' + ctx.superAdmins.map(function (u) { return u.primaryEmail; }).join(', ') + ').'
+        };
+      }
       return {
-        statut: n > 1 ? STATUT.PASS : STATUT.FAIL,
-        detail: n + ' super admin(s) actif(s) : ' + ctx.superAdmins.map(function (u) { return u.primaryEmail; }).join(', ')
+        statut: STATUT.PASS,
+        detail: n + ' super admins actifs : ' + ctx.superAdmins.map(function (u) { return u.primaryEmail; }).join(', ')
       };
     }
   },
   {
     id: '1.1.2', level: 'L1',
-    titre: 'Au maximum 4 comptes Super Admin', titreEn: 'Ensure super admin accounts are used only for super admin activities',
-    remediation: 'Réduire le nombre de super admins à 4 maximum (2 à 4 recommandé).', remediationEn: 'For every Super admin that is also a Delegated admin account, either create a Delegated admin account for the user of elevate or their existing non-admin account to a Delegated admin account.',
+    titre: 'Comptes super admin non cumulés avec un rôle d\'administrateur délégué', titreEn: 'Ensure super admin accounts are used only for super admin activities',
+    remediation: 'Séparer les privilèges : un super administrateur ne doit pas cumuler de rôle d\'administrateur délégué (Admin > Annuaire > Utilisateurs > Rôles d\'administrateur).', remediationEn: 'For every Super admin that is also a Delegated admin account, separate duties: remove delegated admin roles from Super admin accounts and use separate dedicated accounts.',
     check: function (ctx) {
       if (!ctx.superAdmins) return { statut: STATUT.ERROR, detail: 'Directory API indisponible.' };
-      const n = ctx.superAdmins.length;
+      const cumuls = ctx.superAdmins.filter(function (u) { return u.isDelegatedAdmin; });
+      if (cumuls.length > 0) {
+        return {
+          statut: STATUT.FAIL,
+          detail: cumuls.length + ' super admin(s) cumulant également un rôle d\'administrateur délégué : ' +
+            cumuls.map(function (u) { return u.primaryEmail; }).join(', ')
+        };
+      }
       return {
-        statut: n <= 4 ? STATUT.PASS : STATUT.FAIL,
-        detail: n + ' super admin(s) actif(s).'
+        statut: STATUT.PASS,
+        detail: 'Aucun super administrateur ne cumule de rôle d\'administrateur délégué (' + ctx.superAdmins.length + ' vérifiés).'
       };
     }
   },
   {
     id: '1.1.3', level: 'L1',
-    titre: 'Comptes super admin dédiés aux seules tâches d\'administration', titreEn: 'Ensure super admin accounts are dedicated exclusively to administration tasks',
+    titre: 'Comptes super admin dédiés aux seules tâches d\'administration (bonus)', titreEn: 'Ensure super admin accounts are dedicated exclusively to administration tasks (bonus)',
     remediation: 'Chaque admin doit posséder un compte nominatif standard distinct pour l\'usage quotidien.', remediationEn: 'Each admin should have a separate regular account for daily activities.',
     check: function (ctx) {
       if (!ctx.superAdmins) return { statut: STATUT.ERROR, detail: 'Directory API indisponible.' };
@@ -1183,7 +1364,7 @@ const DEFINITION_CONTROLES = [
   {
     id: '1.2.1.1', level: 'L1',
     titre: 'Accès externe aux données de l\'annuaire restreint', titreEn: 'Ensure directory data access is externally restricted',
-    remediation: 'Admin > Annuaire > Paramètres de l\'annuaire > Paramètres de partage > Contacts externes.', remediationEn: 'To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Open the collapsed menu via "hamburger button \ 3 horizontal lines" 3. Under Directory, select Directory settings 4. Under Sharing settings, select External Directory sharing 5. Select Authenticated user basic profile fields',
+    remediation: 'Admin > Annuaire > Paramètres de l\'annuaire > Paramètres de partage > Contacts externes.', remediationEn: 'To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Open the collapsed menu via "hamburger button \\ 3 horizontal lines" 3. Under Directory, select Directory settings 4. Under Sharing settings, select External Directory sharing 5. Select Authenticated user basic profile fields',
     check: controlePolitique_('directory.external_directory_access',
       function (v) {
         const s = champ_(v, ['externalDirectoryAccess', 'sharingSetting', 'state']);
@@ -1208,15 +1389,15 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.1.1.2', level: 'L2',
-    titre: 'Partage interne des agendas principaux configuré', titreEn: 'Ensure internal sharing options for primary calendars are configured',
-    remediation: 'Agenda > Paramètres de partage > Partage interne — limiter aux disponibilités si politique stricte.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Sharing settings, select Internal sharing options for primary',
+    titre: 'Partage interne des agendas principaux limité aux disponibilités', titreEn: 'Ensure internal sharing options for primary calendars are configured',
+    remediation: 'Agenda > Paramètres de partage > Options de partage interne des agendas principaux : sélectionner "Afficher uniquement les disponibilités (masquer les détails des événements)".', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Sharing settings, select Internal sharing options for primary calendars 6. Select Only free/busy information (hide event details)',
     check: controlePolitique_('calendar.primary_calendar_internal_sharing',
       function (v) {
-        const s = champ_(v, ['internalSharing', 'defaultInternalSharing', 'sharingOption']);
+        const s = champ_(v, ['internalSharing', 'defaultInternalSharing', 'sharingOption', 'primaryCalendarInternalSharing']);
         if (s === undefined) return null;
-        return !/ALL_INFO_EDIT|MANAGE/i.test(String(s));
+        return /FREE_BUSY|ONLY_FREE_BUSY|HIDE_DETAILS|HIDE_EVENT_DETAILS|NO_SHARING|NONE/i.test(String(s));
       },
-      'partage interne au maximum en lecture des détails (pas de modification par défaut)')
+      'partage interne limité aux disponibilités uniquement (free/busy)')
   },
   {
     id: '3.1.1.1.3', level: 'L1',
@@ -1243,15 +1424,15 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.1.2.2', level: 'L2',
-    titre: 'Partage interne des agendas secondaires configuré', titreEn: 'Ensure internal sharing options for secondary calendars are configured',
-    remediation: 'Agenda > Paramètres généraux > Agendas secondaires (partage interne).', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under General settings, select Internal sharing options for',
+    titre: 'Partage interne des agendas secondaires limité aux disponibilités', titreEn: 'Ensure internal sharing options for secondary calendars are configured',
+    remediation: 'Agenda > Paramètres généraux > Options de partage interne des agendas secondaires : sélectionner "Afficher uniquement les disponibilités (masquer les détails des événements)".', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under General settings, select Internal sharing options for secondary calendars 6. Select Only free/busy information (hide event details)',
     check: controlePolitique_('calendar.secondary_calendar_internal_sharing',
       function (v) {
-        const s = champ_(v, ['internalSharing', 'defaultInternalSharing']);
+        const s = champ_(v, ['internalSharing', 'defaultInternalSharing', 'secondaryCalendarInternalSharing']);
         if (s === undefined) return null;
-        return !/ALL_INFO_EDIT|MANAGE/i.test(String(s));
+        return /FREE_BUSY|ONLY_FREE_BUSY|HIDE_DETAILS|HIDE_EVENT_DETAILS|NO_SHARING|NONE/i.test(String(s));
       },
-      'partage interne des agendas secondaires limité (pas de modification par défaut)')
+      'partage interne des agendas secondaires limité aux disponibilités uniquement (free/busy)')
   },
   {
     id: '3.1.1.3.1', level: 'L2',
@@ -1312,15 +1493,15 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.2.1.1.5', level: 'L1',
-    titre: 'Access Checker limité (destinataires uniquement / domaine)', titreEn: 'Ensure Access Checker is configured to limit file access',
-    remediation: 'Drive et Docs > Paramètres de partage > Access Checker.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Drive and Docs 4. Select Sharing Settings 5. Select Sharing Options',
+    titre: 'Access Checker configuré sur "Destinataires uniquement"', titreEn: 'Ensure Access Checker is configured to limit file access',
+    remediation: 'Drive et Docs > Paramètres de partage > Access Checker : sélectionner "Destinataires uniquement (sans suggestion d\'élargissement)".', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Sharing Settings 6. Under Access Checker, select Recipients only',
     check: controlePolitique_('drive_and_docs.external_sharing',
       function (v) {
         const a = champ_(v, ['accessCheckerSuggestions', 'accessChecker']);
         if (a === undefined) return null;
-        return !/PUBLIC|ANYONE/i.test(String(a));
+        return /RECIPIENT|RECIPIENTS_ONLY|ONLY_RECIPIENTS/i.test(String(a)) && !/AUDIENCE|DOMAIN|PUBLIC|ANYONE/i.test(String(a));
       },
-      'Access Checker sans option "public sur le web"')
+      'Access Checker configuré sur "Destinataires uniquement" (Recipients only)')
   },
   {
     id: '3.1.2.1.1.6', level: 'L1',
@@ -1637,15 +1818,15 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.4.1.2', level: 'L2',
-    titre: 'Partage de fichiers interne dans Chat restreint', titreEn: 'Ensure internal filesharing in Google Chat and Hangouts is disabled',
-    remediation: 'Google Chat > Partage de fichiers (interne).', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat File Sharing 5. Under Setting, set Internal filesharing to No files',
+    titre: 'Partage de fichiers interne dans Chat désactivé (NO_FILES)', titreEn: 'Ensure internal filesharing in Google Chat and Hangouts is disabled',
+    remediation: 'Google Chat > Partage de fichiers : définir le partage de fichiers interne sur "Aucun fichier" (No files).', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat File Sharing 5. Under Setting, set Internal filesharing to No files',
     check: controlePolitique_('chat.chat_file_sharing',
       function (v) {
         const s = champ_(v, ['internalFileSharing', 'internalChatFileSharing']);
         if (s === undefined) return null;
-        return /NO_FILES|IMAGES_ONLY|DISABLED/i.test(String(s));
+        return /NO_FILES|DISABLED/i.test(String(s)) && !/IMAGES_ONLY|ALL_FILES/i.test(String(s));
       },
-      'partage interne limité (NO_FILES ou images uniquement)')
+      'partage interne de fichiers dans Chat désactivé (NO_FILES)')
   },
   {
     id: '3.1.4.2.1', level: 'L1',
@@ -1726,15 +1907,21 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '3.1.6.2', level: 'L1',
-    titre: 'Création de groupes restreinte', titreEn: 'Ensure creating groups is restricted',
-    remediation: 'Groups for Business > Paramètres de partage : création réservée aux admins (ou au domaine).', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Creating groups',
+    titre: 'Création de groupes restreinte aux administrateurs', titreEn: 'Ensure creating groups is restricted',
+    remediation: 'Groups for Business > Paramètres de partage : sélectionner "Seuls les administrateurs peuvent créer des groupes" et décocher les options permettant aux propriétaires d\'autoriser des membres/expéditeurs externes.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Under Creating groups, select Only admins can create groups, and uncheck Group owners can allow incoming email from outside and allow members outside',
     check: controlePolitique_('groups_for_business.groups_sharing',
       function (v) {
-        const s = champ_(v, ['createGroupsAccessLevel', 'whoCanCreateGroups', 'createGroups']);
-        if (s === undefined) return null;
-        return /ADMIN_ONLY|ADMINS/i.test(String(s));
+        const create = champ_(v, ['createGroupsAccessLevel', 'whoCanCreateGroups', 'createGroups']);
+        if (create === undefined) return null;
+        const adminOnly = /ADMIN_ONLY|ADMINS|ADMIN/i.test(String(create)) && !/ANYONE|ALL_IN_DOMAIN|DOMAIN/i.test(String(create));
+        if (!adminOnly) return false;
+        const extMembers = champ_(v, ['allowExternalMembers', 'allowExternalMembersInGroup', 'ownersCanAllowExternalMembers']);
+        if (extMembers !== undefined && extMembers === true) return false;
+        const extSenders = champ_(v, ['allowIncomingExternalMail', 'allowExternalSenders', 'ownersCanAllowIncomingExternalMail', 'allowExternalPost']);
+        if (extSenders !== undefined && extSenders === true) return false;
+        return true;
       },
-      'création de groupes réservée aux administrateurs')
+      'création de groupes réservée aux administrateurs ET sous-réglages externes (membres/mails externes) désactivés')
   },
   {
     id: '3.1.6.3', level: 'L1',
@@ -1878,22 +2065,26 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '4.1.5.1', level: 'L1',
-    titre: 'Politique de mots de passe renforcée', titreEn: 'Ensure password policy is configured for enhanced security',
-    remediation: 'Sécurité > Authentification > Gestion des mots de passe : force obligatoire, longueur >= 12 (CIS), réutilisation interdite, expiration selon politique.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Password management 4. Under Strength, set Enforce strong passwords to checked 5. Under Length, set Minimum Length to 14 or greater',
+    titre: 'Politique de mots de passe renforcée (longueur >= 14, complexité, expiration)', titreEn: 'Ensure password policy is configured for enhanced security',
+    remediation: 'Sécurité > Authentification > Gestion des mots de passe : force obligatoire, longueur >= 14 (CIS), réutilisation interdite, application à la prochaine connexion, expiration <= 365 j.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Authentication 4. Select Password management 5. Under Strength, set Enforce strong passwords to checked 6. Under Length, set Minimum Length to 14 or greater 7. Check Enforce password policy at next sign-in 8. Uncheck Allow password reuse',
     check: controlePolitique_('security.password',
       function (v) {
-        const longueur = champ_(v, ['minimumLength', 'minLength']);
-        const force = champ_(v, ['enforceRequirementsAtLogin', 'enforceStrongPassword', 'allowedStrength']);
-        const reuse = champ_(v, ['allowReuse', 'allowPasswordReuse']);
+        const longueur = champ_(v, ['minimumLength', 'minLength', 'passwordMinLength']);
+        const force = champ_(v, ['enforceStrongPassword', 'enforceRequirementsAtLogin', 'allowedStrength', 'strength']);
+        const reuse = champ_(v, ['allowReuse', 'allowPasswordReuse', 'allowOldPassword']);
+        const nextLogin = champ_(v, ['enforceAtNextLogin', 'enforceOnNextLogin', 'enforceRequirementsAtNextLogin']);
+        const expiration = champ_(v, ['expirationDurationDays', 'passwordExpirationDays', 'expirationDays']);
         if (longueur === undefined && force === undefined) return null;
         let ok = true;
-        if (longueur !== undefined && Number(longueur) < 12) ok = false;
+        if (longueur !== undefined && Number(longueur) < 14) ok = false;
         if (reuse === true) ok = false;
         if (typeof force === 'string' && /WEAK/i.test(force)) ok = false;
         if (force === false) ok = false;
+        if (nextLogin !== undefined && nextLogin === false) ok = false;
+        if (expiration !== undefined && Number(expiration) > 365) ok = false;
         return ok;
       },
-      'longueur min >= 12, mot de passe fort exigé, réutilisation interdite')
+      'longueur min >= 14, mot de passe fort exigé, réutilisation interdite, application à la prochaine connexion')
   },
 
   // ===== SECTION 4.2 — CONTRÔLES D'ACCÈS ====================================
@@ -1978,8 +2169,8 @@ const DEFINITION_CONTROLES = [
   },
   {
     id: '4.2.4.1', level: 'L1',
-    titre: 'Contrôle de session Google configuré (durée limitée)', titreEn: 'Ensure Google session control is configured',
-    remediation: 'Sécurité > Contrôle des sessions Google : durée <= 8 h recommandée par profil strict.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Google session control 5. Set Web session duration to 12 hours or less',
+    titre: 'Contrôle de session Google configuré (durée web <= 12 h)', titreEn: 'Ensure Google session control is configured',
+    remediation: 'Sécurité > Contrôle des accès et des données > Contrôle des sessions Google : définir la durée de session web à 12 heures ou moins.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Google session control 5. Set Web session duration to 12 hours or less',
     check: controlePolitique_('security.session_controls',
       function (v) {
         const d = champ_(v, ['webSessionDuration', 'sessionDuration', 'duration']);
@@ -1988,9 +2179,9 @@ const DEFINITION_CONTROLES = [
         if (!m) return null;
         let heures = Number(m[1]);
         if (/s$/.test(String(d))) heures = heures / 3600; // durées au format "43200s"
-        return heures > 0 && heures <= 24; // non "jamais expirer" ; ajuster à 8 si politique stricte
+        return heures > 0 && heures <= 12; // CIS v1.4 : <= 12 heures
       },
-      'durée de session définie (pas de session infinie ; <= 24 h, idéalement <= 8 h)')
+      'durée de session web configurée à 12 heures ou moins')
   },
   {
     id: '4.2.5.1', level: 'L2',
@@ -2065,9 +2256,12 @@ const DEFINITION_CONTROLES = [
 // ---------------------------------------------------------------------------
 // GÉNÉRATION DU RAPPORT GOOGLE SHEETS
 // ---------------------------------------------------------------------------
-function ecrireRapport_(resultats, ctx, debut) {
-  const ss = SpreadsheetApp.create(CONFIG.NOM_RAPPORT + ' — ' +
-    Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm'));
+function ecrireRapport_(resultats, ctx, debut, lang) {
+  lang = (lang === 'en') ? 'en' : (CONFIG.LANGUE || 'fr');
+  const t = TRADUCTIONS_SERVEUR[lang] || TRADUCTIONS_SERVEUR.fr;
+  const nomRapport = (lang === 'en' ? 'CIS Google Workspace Audit Report' : CONFIG.NOM_RAPPORT) + ' — ' +
+    Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+  const ss = SpreadsheetApp.create(nomRapport);
 
   // --- Dérogations : statut effectif = ÉCART ACCEPTÉ pour les NON CONFORME
   //     couverts par une acceptation formelle du registre.
@@ -2090,32 +2284,33 @@ function ecrireRapport_(resultats, ctx, debut) {
   const evaluablesBrut = evaluables + nAcceptes;
   const scoreBrut = evaluablesBrut > 0 ? Math.round(100 * compte[STATUT.PASS] / evaluablesBrut) : 0;
 
-  const sh1 = ss.getSheets()[0].setName('Synthèse');
+  const sh1 = ss.getSheets()[0].setName(t.sheets.nomSynthese);
+  const profilLibelle = CONFIG.NIVEAU_PROFIL === 'L1' ? t.sheets.profilL1 : t.sheets.profilL2;
   const lignesSynthese = [
-    ['AUDIT CIS GOOGLE WORKSPACE FOUNDATIONS BENCHMARK v1.4', ''],
+    [t.sheets.titreSynthese, ''],
     ['', ''],
-    ['Date d\'exécution', Utilities.formatDate(debut, Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm')],
-    ['Exécuté par', Session.getActiveUser().getEmail()],
-    ['Profil audité', CONFIG.NIVEAU_PROFIL === 'L1' ? 'Niveau 1' : 'Niveaux 1 + 2'],
-    ['Version de l\'outil d\'audit', 'v' + CONFIG.VERSION],
-    ['Référentiel', 'CIS Google Workspace Foundations Benchmark v1.4 — document officiel : cisecurity.org/benchmark/google_workspace'],
-    ['Domaines', (ctx.domaines || []).join(', ') || 'n/d'],
-    ['Politiques Cloud Identity lues', String((ctx.policies || []).length)],
+    [t.sheets.dateExec, Utilities.formatDate(debut, Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm')],
+    [t.sheets.execPar, Session.getActiveUser().getEmail()],
+    [t.sheets.profilAudite, profilLibelle],
+    [t.sheets.versionOutil, 'v' + CONFIG.VERSION],
+    [t.sheets.referentiel, t.sheets.referentielDesc],
+    [t.sheets.domaines, (ctx.domaines || []).join(', ') || t.sheets.nd],
+    [t.sheets.policiesLues, String((ctx.policies || []).length)],
     ['', ''],
-    ['Score de conformité résiduel (écarts acceptés exclus)', scorePct + ' %'],
-    ['Score de conformité brut (écarts acceptés comptés non conformes)', scoreBrut + ' %'],
+    [t.sheets.scoreResiduel, scorePct + ' %'],
+    [t.sheets.scoreBrut, scoreBrut + ' %'],
     ['', ''],
-    ['CONFORME', String(compte[STATUT.PASS] || 0)],
-    ['NON CONFORME (à corriger)', String(compte[STATUT.FAIL] || 0)],
-    ['ÉCART ACCEPTÉ (dérogation formelle)', String(nAcceptes)],
-    ['À VÉRIFIER', String(compte[STATUT.REVIEW] || 0)],
-    ['MANUEL', String(compte[STATUT.MANUAL] || 0)],
-    ['ERREUR', String(compte[STATUT.ERROR] || 0)],
-    ['HORS PROFIL', String(compte[STATUT.SKIP] || 0)]
+    [t.statuts[STATUT.PASS], String(compte[STATUT.PASS] || 0)],
+    [t.statuts[STATUT.FAIL] + (lang === 'en' ? ' (to remediate)' : ' (à corriger)'), String(compte[STATUT.FAIL] || 0)],
+    [t.statuts[STATUT.ACCEPTED] + (lang === 'en' ? ' (formal deviation)' : ' (dérogation formelle)'), String(nAcceptes)],
+    [t.statuts[STATUT.REVIEW], String(compte[STATUT.REVIEW] || 0)],
+    [t.statuts[STATUT.MANUAL], String(compte[STATUT.MANUAL] || 0)],
+    [t.statuts[STATUT.ERROR], String(compte[STATUT.ERROR] || 0)],
+    [t.statuts[STATUT.SKIP], String(compte[STATUT.SKIP] || 0)]
   ];
-  if (ctx.erreurs.length) {
+  if (ctx.erreurs && ctx.erreurs.length) {
     lignesSynthese.push(['', '']);
-    lignesSynthese.push(['Avertissements de collecte', ctx.erreurs.join(' | ')]);
+    lignesSynthese.push([t.sheets.avertCollecte, ctx.erreurs.join(' | ')]);
   }
   sh1.getRange(1, 1, lignesSynthese.length, 2).setValues(lignesSynthese);
   sh1.getRange('A1').setFontSize(14).setFontWeight('bold');
@@ -2124,54 +2319,60 @@ function ecrireRapport_(resultats, ctx, debut) {
   sh1.getRange('A12:B12').setBackground('#f4cccc');
   sh1.getRange('A13:B13').setBackground('#fce5cd');
   sh1.getRange('A14:B14').setBackground('#d9d9d9');
-  sh1.setColumnWidth(1, 340).setColumnWidth(2, 620);
+  sh1.setColumnWidth(1, 360).setColumnWidth(2, 620);
 
   // --- Onglet Détail --------------------------------------------------------
-  const sh2 = ss.insertSheet('Détail des contrôles');
-  const entetes = ['ID CIS', 'Niveau', 'Contrôle', 'Statut', 'Constat / valeur relevée', 'Remédiation (console)'];
+  const sh2 = ss.insertSheet(t.sheets.nomDetail);
+  const entetes = t.sheets.entetesDetail;
   const donnees = resultats.map(function (r) {
     let constat = r.detail;
     if (r.statutEffectif === STATUT.ACCEPTED && r.derogation) {
-      constat = 'DÉROGATION — acceptée par ' + r.derogation.par + ' le ' + r.derogation.date +
-        (r.derogation.revision ? ' (à réviser le ' + r.derogation.revision + ')' : ' (permanente)') +
-        '. Motif : ' + r.derogation.motif + ' | Constat : ' + r.detail;
+      constat = t.sheets.derogationPrefix + r.derogation.par + t.sheets.derogationLe + r.derogation.date +
+        (r.derogation.revision ? (t.sheets.derogationRev + r.derogation.revision + ')') : t.sheets.derogationPerm) +
+        t.sheets.derogationMotif + r.derogation.motif + t.sheets.derogationConstat + r.detail;
     }
-    return [r.id, r.level, r.titre, r.statutEffectif, constat, r.remediation];
+    const titreAffiche = (lang === 'en' && r.titreEn) ? r.titreEn : r.titre;
+    const remedeAffiche = (lang === 'en' && r.remediationEn) ? r.remediationEn : r.remediation;
+    const statutAffiche = t.statuts[r.statutEffectif] || r.statutEffectif;
+    return [r.id, r.level, titreAffiche, statutAffiche, constat, remedeAffiche];
   });
   sh2.getRange(1, 1, 1, entetes.length).setValues([entetes])
     .setFontWeight('bold').setBackground('#1a73e8').setFontColor('#ffffff');
   if (donnees.length) sh2.getRange(2, 1, donnees.length, entetes.length).setValues(donnees);
   sh2.setFrozenRows(1);
   sh2.setColumnWidth(1, 90).setColumnWidth(2, 60).setColumnWidth(3, 360)
-    .setColumnWidth(4, 120).setColumnWidth(5, 520).setColumnWidth(6, 420);
+    .setColumnWidth(4, 130).setColumnWidth(5, 520).setColumnWidth(6, 420);
   sh2.getRange(2, 5, Math.max(donnees.length, 1), 2).setWrap(true);
 
   const couleurs = {};
-  couleurs[STATUT.PASS] = '#d9ead3';
-  couleurs[STATUT.FAIL] = '#f4cccc';
-  couleurs[STATUT.REVIEW] = '#fce5cd';
-  couleurs[STATUT.MANUAL] = '#d9d9d9';
-  couleurs[STATUT.ERROR] = '#ead1dc';
-  couleurs[STATUT.SKIP] = '#f3f3f3';
-  couleurs[STATUT.ACCEPTED] = '#dbe5f1';
+  couleurs[t.statuts[STATUT.PASS] || STATUT.PASS] = '#d9ead3';
+  couleurs[t.statuts[STATUT.FAIL] || STATUT.FAIL] = '#f4cccc';
+  couleurs[t.statuts[STATUT.REVIEW] || STATUT.REVIEW] = '#fce5cd';
+  couleurs[t.statuts[STATUT.MANUAL] || STATUT.MANUAL] = '#d9d9d9';
+  couleurs[t.statuts[STATUT.ERROR] || STATUT.ERROR] = '#ead1dc';
+  couleurs[t.statuts[STATUT.SKIP] || STATUT.SKIP] = '#f3f3f3';
+  couleurs[t.statuts[STATUT.ACCEPTED] || STATUT.ACCEPTED] = '#dbe5f1';
   donnees.forEach(function (l, i) {
     const c = couleurs[l[3]];
     if (c) sh2.getRange(i + 2, 4).setBackground(c);
   });
 
   // --- Onglet Plan d'actions ------------------------------------------------
-  const sh4 = ss.insertSheet("Plan d'actions");
-  const entetesPlan = ['Priorité', 'ID CIS', 'Contrôle', 'Constat', 'Action recommandée', 'Risque couvert', 'Responsable', 'Échéance', 'État'];
+  const sh4 = ss.insertSheet(t.sheets.nomPlan);
+  const entetesPlan = t.sheets.entetesPlan;
   const lignesPlan = resultats
     .filter(function (r) { return r.statutEffectif === STATUT.FAIL; })
     .map(function (r) {
       const attendu = (r.detail.match(/Attendu : ([^|]+)/) || [])[1] || '';
+      const titreAffiche = (lang === 'en' && r.titreEn) ? r.titreEn : r.titre;
+      const remedeAffiche = (lang === 'en' && r.remediationEn) ? r.remediationEn : (r.remediation || '');
+      const risqueAffiche = (lang === 'en') ? risquePourEn_(r.id) : risquePour_(r.id);
       return [
-        r.level === 'L1' ? 'P1 — Haute' : 'P2 — Moyenne',
-        r.id, r.titre, r.detail,
-        (r.remediation || '') + (attendu ? ' Cible : ' + attendu.trim() : ''),
-        risquePour_(r.id),
-        '', '', 'À faire'
+        r.level === 'L1' ? t.sheets.prioHaute : t.sheets.prioMoyenne,
+        r.id, titreAffiche, r.detail,
+        remedeAffiche + (attendu ? t.sheets.cible + attendu.trim() : ''),
+        risqueAffiche,
+        '', '', t.sheets.aFaire
       ];
     })
     .sort(function (a, b) { return a[0] === b[0] ? String(a[1]).localeCompare(String(b[1])) : String(a[0]).localeCompare(String(b[0])); });
@@ -2184,25 +2385,27 @@ function ecrireRapport_(resultats, ctx, debut) {
       sh4.getRange(i + 2, 1).setBackground(l[0].indexOf('P1') === 0 ? '#f4cccc' : '#fce5cd');
     });
   } else {
-    sh4.getRange(2, 1).setValue('Aucune action : aucun écart non conforme restant (hors dérogations).');
+    sh4.getRange(2, 1).setValue(t.sheets.aucuneAction);
   }
   sh4.setFrozenRows(1);
-  sh4.setColumnWidth(1, 100).setColumnWidth(2, 90).setColumnWidth(3, 300).setColumnWidth(4, 380)
+  sh4.setColumnWidth(1, 110).setColumnWidth(2, 90).setColumnWidth(3, 300).setColumnWidth(4, 380)
     .setColumnWidth(5, 380).setColumnWidth(6, 340).setColumnWidth(7, 140).setColumnWidth(8, 100).setColumnWidth(9, 90);
 
   // --- Onglet Registre des dérogations -------------------------------------
-  const sh5 = ss.insertSheet('Registre des dérogations');
-  const entetesDer = ['ID CIS', 'Contrôle', 'Statut constaté à cet audit', 'Risque assumé', 'Motif de la dérogation', 'Acceptée par', 'Date', 'À réviser le', 'Observation'];
+  const sh5 = ss.insertSheet(t.sheets.nomDerog);
+  const entetesDer = t.sheets.entetesDerog;
   const parId = {};
   resultats.forEach(function (r) { parId[r.id] = r; });
   const lignesDer = Object.keys(derogations).sort().map(function (id) {
     const d = derogations[id];
     const r = parId[id];
-    const statutConstate = r ? r.statut : 'non évalué à cet audit';
+    const statutConstate = r ? (t.statuts[r.statut] || r.statut) : t.sheets.nonEvalue;
+    const titreAffiche = (r && lang === 'en' && r.titreEn) ? r.titreEn : (r ? r.titre : '');
+    const risqueAffiche = (lang === 'en') ? risquePourEn_(id) : risquePour_(id);
     let obs = '';
-    if (r && r.statut === STATUT.PASS) obs = 'Contrôle désormais conforme — dérogation à clore.';
-    else if (d.revision && d.revision < Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd')) obs = 'DATE DE RÉVISION DÉPASSÉE — à réexaminer.';
-    return [id, r ? r.titre : '', statutConstate, risquePour_(id), d.motif, d.par, d.date, d.revision || 'permanente', obs];
+    if (r && r.statut === STATUT.PASS) obs = t.sheets.derogConforme;
+    else if (d.revision && d.revision < Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd')) obs = t.sheets.derogDepassee;
+    return [id, titreAffiche, statutConstate, risqueAffiche, d.motif, d.par, d.date, d.revision || t.sheets.permanente, obs];
   });
   sh5.getRange(1, 1, 1, entetesDer.length).setValues([entetesDer])
     .setFontWeight('bold').setBackground('#1a73e8').setFontColor('#ffffff');
@@ -2213,15 +2416,15 @@ function ecrireRapport_(resultats, ctx, debut) {
       if (l[8]) sh5.getRange(i + 2, 9).setBackground('#fce5cd').setFontWeight('bold');
     });
   } else {
-    sh5.getRange(2, 1).setValue('Aucune dérogation enregistrée.');
+    sh5.getRange(2, 1).setValue(t.sheets.aucuneDerog);
   }
   sh5.setFrozenRows(1);
   sh5.setColumnWidth(1, 90).setColumnWidth(2, 300).setColumnWidth(3, 160).setColumnWidth(4, 330)
     .setColumnWidth(5, 330).setColumnWidth(6, 210).setColumnWidth(7, 90).setColumnWidth(8, 110).setColumnWidth(9, 240);
 
   // --- Onglet Politiques (brut) — pour validation empirique des mappings ----
-  const sh3 = ss.insertSheet('Politiques (brut)');
-  sh3.getRange(1, 1, 1, 4).setValues([['Type de réglage', 'Type de politique', 'Cible (policyQuery)', 'Valeur JSON']])
+  const sh3 = ss.insertSheet(t.sheets.nomPolitiques);
+  sh3.getRange(1, 1, 1, 4).setValues([t.sheets.entetesPolitiques])
     .setFontWeight('bold').setBackground('#1a73e8').setFontColor('#ffffff');
   const lignesPol = (ctx.policies || []).map(function (p) {
     return [
