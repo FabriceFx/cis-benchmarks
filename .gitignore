@@ -14,3 +14,7 @@ Thumbs.db
 *.log
 scratch/
 node_modules/
+
+# Documents officiels propriétaires (redistribution interdite par le CIS)
+CIS_*.pdf
+*.pdf
