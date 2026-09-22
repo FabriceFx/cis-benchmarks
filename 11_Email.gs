@@ -124,6 +124,13 @@ function envoyerRapportEmail(token, options, lang) {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d)) throw new Error('Adresse invalide : ' + d);
   });
 
+  const quota = MailApp.getRemainingDailyQuota();
+  if (typeof quota === 'number' && quota < dests.length) {
+    throw new Error(lang === 'en'
+      ? 'Daily email quota insufficient (' + quota + ' remaining, ' + dests.length + ' requested).'
+      : 'Quota quotidien d\'envoi d\'e-mails insuffisant (' + quota + ' restant(s), ' + dests.length + ' demandé(s)).');
+  }
+
   // Un rapport d'audit décrit la posture de sécurité complète du tenant : sa
   // diffusion hors du domaine doit être un choix explicite, pas un défaut.
   const autorises = domainesDestinatairesAutorises_(token, appelant);

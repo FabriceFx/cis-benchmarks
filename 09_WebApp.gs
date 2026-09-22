@@ -114,6 +114,12 @@ function executerControles(token, ids, niveauProfil) {
   });
 }
 
+/** Consolide les résultats de session sous une seule partition gzippée (phase 2 terminée). */
+function consoliderResultats(token) {
+  exigerSuperAdmin_();
+  return consoliderResultats_(token);
+}
+
 // ---------------------------------------------------------------------------
 // POINT D'ENTRÉE PRINCIPAL
 // ---------------------------------------------------------------------------

@@ -341,8 +341,8 @@
       </div>
 
       <div class="avancement" id="scoreBrut" style="text-align:center;margin:-10px 0 10px"></div>
-      <div class="barre" aria-hidden="true"><i id="barreAv"></i></div>
-      <div class="avancement" id="txtAv" data-i18n="attenteLancement">En attente de lancement</div>
+      <div class="barre" id="barreAvConteneur" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-describedby="txtAv"><i id="barreAv"></i></div>
+      <div class="avancement" id="txtAv" data-i18n="attenteLancement" role="status">En attente de lancement</div>
       <div class="chrono" id="chrono"><span data-i18n="chronoEcoule">Écoulé</span> : <b id="chronoVal">00:00</b> · <span data-i18n="chronoBattement">dernier retour serveur il y a</span> <b id="battement">0 s</b></div>
 
       <div class="compteurs" id="compteurs" role="group" aria-label="Filtrer par statut"></div>
@@ -382,7 +382,7 @@
       </div>
     </div>
 
-    <table id="tableau" aria-live="polite">
+    <table id="tableau">
       <thead><tr>
         <th data-i18n="thId">ID</th>
         <th data-i18n="thNiv">Niv.</th>
@@ -1015,6 +1015,9 @@
     demanderWakeLock();
     journal(langActuelle === 'en' ? 'Opening audit session (profile ' + profil + ')…' : 'Ouverture de la session d\'audit (profil ' + profil + ')…');
     const barre = document.getElementById('barreAv');
+    barre.style.width = '0%';
+    const conteneurBarre = document.getElementById('barreAvConteneur');
+    if (conteneurBarre) conteneurBarre.setAttribute('aria-valuenow', '0');
     barre.parentElement.classList.add('indeterminee');
     document.getElementById('txtAv').textContent = langActuelle === 'en' ? 'Opening session…' : 'Ouverture de la session…';
     google.script.run
@@ -1302,6 +1305,8 @@
     const barre = document.getElementById('barreAv');
     barre.parentElement.classList.remove('indeterminee');
     barre.style.width = '0%';
+    const conteneurBarre = document.getElementById('barreAvConteneur');
+    if (conteneurBarre) conteneurBarre.setAttribute('aria-valuenow', '0');
     majCompteurs();
 
     file = [];
@@ -1430,7 +1435,10 @@
     compte[eff] = (compte[eff] || 0) + 1;
     majCompteurs();
     majScore();
-    document.getElementById('barreAv').style.width = Math.round(100 * faits / total) + '%';
+    const pctAv = Math.round(100 * faits / total);
+    document.getElementById('barreAv').style.width = pctAv + '%';
+    const conteneurBarre = document.getElementById('barreAvConteneur');
+    if (conteneurBarre) conteneurBarre.setAttribute('aria-valuenow', String(pctAv));
     document.getElementById('txtAv').textContent = 'Phase 2 — ' + faits + ' / ' + total + ' ' + t('controlesTerminesTxt');
   }
 
@@ -1620,12 +1628,24 @@
     document.getElementById('btnReinit').style.display = 'block';
     arreterChrono();
     const s = Math.floor((Date.now()-tDebut)/1000);
+    const barre = document.getElementById('barreAv');
+    if (barre) {
+      barre.style.width = '100%';
+      const conteneurBarre = document.getElementById('barreAvConteneur');
+      if (conteneurBarre) {
+        conteneurBarre.setAttribute('aria-valuenow', '100');
+        conteneurBarre.classList.remove('indeterminee');
+      }
+    }
     document.getElementById('txtAv').textContent = (langActuelle === 'en' ? 'Audit completed — ' : 'Audit terminé — ') + total + ' ' + (langActuelle === 'en' ? 'controls in ' : 'contrôles en ') + Math.floor(s/60) + ' min ' + (s%60) + ' s';
     journal((langActuelle === 'en' ? 'Audit completed (' : 'Audit terminé (') + Math.floor(s/60) + ' min ' + (s%60) + ' s).', 'ok');
     document.getElementById('btnExport').style.display = 'block';
     document.getElementById('btnEmail').style.display = 'block';
     document.getElementById('btnLancer').disabled = false;
     document.getElementById('btnLancer').textContent = t('btnRelancer');
+    if (token && typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.consoliderResultats(token);
+    }
   }
 
   function exporterSheets(){
@@ -1710,9 +1730,30 @@
   function ligne(id){ return document.getElementById('ctrl-' + id.replace(/\./g,'-')); }
   function echapper(t){ const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
 
-  // Initialisation de la langue au chargement
+  // Initialisation de la langue et des écouteurs au chargement
   document.addEventListener('DOMContentLoaded', () => {
     changerLangue(langActuelle);
+
+    // Fermeture des modales au clic sur le fond (backdrop)
+    ['modalAPropos', 'modalGuide', 'modalEmail', 'modalDerog'].forEach(id => {
+      const d = document.getElementById(id);
+      if (d) {
+        d.addEventListener('click', e => {
+          if (e.target === d) {
+            const rect = d.getBoundingClientRect();
+            const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height
+              && rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
+            if (!isInDialog) {
+              if (id === 'modalDerog') fermerModale();
+              else if (id === 'modalGuide') fermerGuide();
+              else if (id === 'modalAPropos') fermerAPropos();
+              else if (id === 'modalEmail') fermerEmail();
+              else d.close();
+            }
+          }
+        });
+      }
+    });
   });
 </script>
 </body>

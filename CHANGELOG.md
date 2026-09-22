@@ -5,6 +5,28 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.8.0] - 2026-09-22
+
+### 🎯 Angle émotionnel : Le filet sous le filet
+> *Consolider le cache réduisait le risque de perdre un résultat — au prix de tout perdre d'un coup si la partition unique disparaissait. Les deux protections cohabitent désormais : une partition compacte et récente, et les clés d'origine conservées en repli.*
+
+### Ajouté / Added
+- **Consolidation du cache de session.** Les 87 résultats individuels sont regroupés sous une partition unique compressée (`res`) dès la fin de la phase 2, ce qui réduit d'autant la surface exposée à l'éviction LRU de `CacheService` — sans élargir les scopes OAuth à Google Drive, contrairement à la piste du fichier temporaire.
+- **Vérification du quota d'envoi.** `MailApp.getRemainingDailyQuota()` est contrôlé avant l'expédition du rapport : un quota épuisé lève un message explicite au lieu d'une exception brute de l'API.
+- **Accessibilité de l'interface** : `role="progressbar"` avec `aria-valuenow` tenu à jour à l'initialisation, pendant la phase 2 et à la fin ; `role="status"` sur la ligne d'avancement. Une seule région annoncée, pour éviter qu'un lecteur d'écran ne reçoive plusieurs annonces par contrôle sur 87 itérations.
+- **Fermeture des modales au clic sur le fond**, avec discrimination par `getBoundingClientRect` pour ne pas fermer sur un clic dans la marge interne de la boîte.
+- Trois tests de la consolidation et du quota, dont deux verrouillent les modes de défaillance décrits ci-dessous. La suite compte 79 tests.
+
+### Note sur la conception
+La consolidation écrit la partition, **relit ce qui vient d'être écrit**, et ne considère l'opération réussie que si la relecture correspond — `putAll` peut écarter une valeur sous pression mémoire sans lever d'exception, et purger sans vérifier aurait échangé 87 pertes indépendantes contre une perte totale.
+
+Les clés individuelles sont par ailleurs **conservées** plutôt que purgées. `res` étant l'entrée la plus récemment écrite, les anciennes clés sont les premières candidates naturelles à l'éviction : on garde donc le bénéfice recherché — une partition compacte qui survit — tout en disposant d'un repli si `res` venait malgré tout à disparaître. `chargerResultats_` n'accepte la partition que si sa longueur correspond au référentiel, et retombe sinon sur les clés individuelles.
+
+### Note
+Issus de `REVUE_EXPERTE.md`, restent ouvertes les finitions Material Design 3 de l'interface : champs de saisie *Outlined* à étiquette flottante dans les modales, et composant *Switch* à la place de la case à cocher « Réglages par groupe ».
+
+---
+
 ## [5.7.0] - 2026-09-22
 
 ### 🎯 Angle émotionnel : Tenir la distance

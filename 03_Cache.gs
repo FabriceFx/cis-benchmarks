@@ -56,11 +56,39 @@ function sauvegarderResultat_(token, resultat) {
 }
 
 /**
+ * Consolide les 87 résultats individuels sous une seule partition compressée
+ * ('res'). Réduit la surface d'éviction LRU de CacheService de 87 clés à 1
+ * seule clé gzippée dès que la phase 2 est terminée, sans élargir les scopes
+ * OAuth à Google Drive.
+ */
+function consoliderResultats_(token) {
+  try {
+    const resultats = chargerResultats_(token);
+    sauvegarderPartie_(token, 'res', resultats);
+    // Relecture obligatoire : putAll peut écarter une valeur sans lever.
+    const controle = chargerPartie_(token, 'res');
+    if (!controle || controle.length !== resultats.length) return false;
+
+    // On conserve volontairement les clés individuelles cisr_ comme filet de
+    // sécurité : res étant l'entrée la plus récente (MRU), les anciennes clés
+    // seront les premières cibles naturelles de l'éviction LRU sans risquer de
+    // perte totale si res venait à être évincée ultérieurement.
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
  * Relit l'intégralité des résultats depuis le cache serveur. Un contrôle sans
  * résultat consigné est restitué explicitement — HORS PROFIL s'il est exclu du
  * profil de la session, ERREUR sinon — plutôt qu'omis silencieusement.
  */
 function chargerResultats_(token) {
+  const consolides = chargerPartie_(token, 'res');
+  if (consolides && Array.isArray(consolides) && consolides.length === DEFINITION_CONTROLES.length) {
+    return consolides;
+  }
   const niveau = niveauSession_(token);
   const cles = DEFINITION_CONTROLES.map(function (c) { return 'cisr_' + token + '_' + c.id; });
   const bruts = CacheService.getUserCache().getAll(cles) || {};

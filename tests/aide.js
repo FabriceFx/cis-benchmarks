@@ -24,9 +24,14 @@ var UrlFetchApp = { fetch: function (url) {
 // __google.reglages répond (ou lève) pour chaque groupe, et __google.appels
 // compte les lectures réellement effectuées.
 var __google = { groupes: [], reglages: null, appels: 0, pause: 0 };
-var AdminDirectory = { Groups: { list: function () {
-  return { groups: __google.groupes.slice(), nextPageToken: null };
-} } };
+var AdminDirectory = {
+  Users: {
+    get: function (email) { return { primaryEmail: email, isAdmin: true }; }
+  },
+  Groups: { list: function () {
+    return { groups: __google.groupes.slice(), nextPageToken: null };
+  } }
+};
 var GroupsSettings = { Groups: { get: function (email) {
   __google.appels++;
   if (typeof __google.reglages === 'function') return __google.reglages(email);
@@ -55,6 +60,7 @@ var CacheService = { getUserCache: function () { return {
   put: function (k, v) { __cache[k] = v; },
   putAll: function (o) { Object.keys(o).forEach(function (k) { __cache[k] = o[k]; }); },
   remove: function (k) { delete __cache[k]; },
+  removeAll: function (cles) { cles.forEach(function (k) { delete __cache[k]; }); },
   getAll: function (cles) {
     var r = {};
     cles.forEach(function (k) { if (Object.prototype.hasOwnProperty.call(__cache, k)) r[k] = __cache[k]; });
@@ -139,7 +145,12 @@ var SpreadsheetApp = { create: function (nom) {
   __classeurs.push(ss);
   return ss;
 } };
-var MailApp = null, HtmlService = null;
+var __mail = { quota: 1500, envois: [] };
+var MailApp = {
+  getRemainingDailyQuota: function () { return __mail.quota; },
+  sendEmail: function (opts) { __mail.envois.push(opts); }
+};
+var HtmlService = null;
 
 `;
 
@@ -147,7 +158,7 @@ function charger(exports) {
   const src = fs.readdirSync(RACINE).filter(f => f.endsWith('.gs')).sort()
     .map(f => fs.readFileSync(path.join(RACINE, f), 'utf8')).join('\n');
   return new Function(DOUBLURES + src +
-    '\n; return { ' + exports.concat(['__cache', '__props', '__classeurs', '__dns', '__google']).join(', ') + ' };')();
+    '\n; return { ' + exports.concat(['__cache', '__props', '__classeurs', '__dns', '__google', '__mail']).join(', ') + ' };')();
 }
 
 // Micro-harnais : pas de dépendance, sortie lisible, code de sortie exploitable en CI.

@@ -1,6 +1,6 @@
 {
   "name": "cis-google-workspace-audit",
-  "version": "5.7.0",
+  "version": "5.8.0",
   "description": "Audit automatisé d'un tenant Google Workspace contre le CIS Google Workspace Foundations Benchmark v1.4",
   "private": true,
   "license": "MIT",

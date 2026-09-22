@@ -8,7 +8,9 @@ const { charger, suite } = require('./aide.js');
 const t = suite();
 
 const api = charger([
-  'sauvegarderPartie_', 'chargerPartie_', 'chargerContexte_', 'niveauSession_', 'CONFIG'
+  'sauvegarderPartie_', 'chargerPartie_', 'chargerContexte_', 'niveauSession_', 'CONFIG',
+  'consoliderResultats_', 'chargerResultats_', 'sauvegarderResultat_', 'envoyerRapportEmail',
+  'DEFINITION_CONTROLES', 'STATUT'
 ]);
 const JETON = 'jeton-test';
 
@@ -86,6 +88,76 @@ t('le niveau de profil de la session fait foi', () => {
   poser({ dom: ['a.test'], pol: [], cfg: { niveau: 'L1' } });
   if (api.niveauSession_(JETON) !== 'L1') throw new Error(api.niveauSession_(JETON));
   if (api.chargerContexte_(JETON).niveau !== 'L1') throw new Error('non propagé au contexte');
+});
+
+t('consolidation du cache : la partition compacte est créée et les clés individuelles restent en filet de sécurité', () => {
+  poser({ cfg: { niveau: 'L1' } });
+  api.sauvegarderResultat_(JETON, { id: '1.1.1', level: 'L1', statut: 'CONFORME', detail: 'OK' });
+  const cleIndiv = 'cisr_' + JETON + '_1.1.1';
+  if (!api.__cache[cleIndiv]) throw new Error('clé individuelle non présente');
+
+  const ok = api.consoliderResultats_(JETON);
+  if (!ok) throw new Error('consoliderResultats_ a échoué');
+  if (!api.__cache[cleIndiv]) throw new Error('la clé individuelle doit être conservée comme filet de sécurité');
+
+  const relu = api.chargerResultats_(JETON);
+  if (!Array.isArray(relu) || relu.length !== api.DEFINITION_CONTROLES.length) {
+    throw new Error('résultats incomplets après consolidation : ' + (relu && relu.length));
+  }
+  const ctrl111 = relu.find(r => r.id === '1.1.1');
+  if (!ctrl111 || ctrl111.statut !== 'CONFORME') throw new Error('statut 1.1.1 corrompu après consolidation');
+});
+
+t('consolidation résiliente : un échec de relecture préserve les clés individuelles', () => {
+  poser({ cfg: { niveau: 'L1' } });
+  api.sauvegarderResultat_(JETON, { id: '1.1.1', level: 'L1', statut: 'CONFORME', detail: 'OK' });
+  const cleIndiv = 'cisr_' + JETON + '_1.1.1';
+
+  // Partition consolidée incomplète (longueur != DEFINITION_CONTROLES.length)
+  api.sauvegarderPartie_(JETON, 'res', [{ id: '1.1.1', statut: 'CONFORME' }]);
+  // chargerResultats_ refuse la partition tronquée et retombe sur les clés individuelles
+  const relu = api.chargerResultats_(JETON);
+  if (relu.length !== api.DEFINITION_CONTROLES.length) throw new Error('la partition tronquée a été acceptée à tort');
+  if (!api.__cache[cleIndiv]) throw new Error('clé individuelle perdue');
+});
+
+t('consolidation : une éviction ultérieure de la partition retombe sur les clés individuelles', () => {
+  // Le mode de défaillance que la conservation des clés individuelles écarte :
+  // la partition consolidée est écrite correctement, puis évincée plus tard
+  // dans la session. Sans filet, l'export échouait sans recours.
+  poser({ cfg: { niveau: 'L1' } });
+  api.sauvegarderResultat_(JETON, { id: '1.1.1', level: 'L1', statut: 'CONFORME', detail: 'OK' });
+  api.sauvegarderResultat_(JETON, { id: '1.1.2', level: 'L1', statut: 'NON CONFORME', detail: 'écart' });
+  if (!api.consoliderResultats_(JETON)) throw new Error('consolidation échouée');
+
+  Object.keys(api.__cache).filter(k => /_res_/.test(k)).forEach(k => delete api.__cache[k]);
+
+  const relu = api.chargerResultats_(JETON);
+  if (relu.length !== api.DEFINITION_CONTROLES.length) throw new Error('repli incomplet : ' + relu.length);
+  if (relu.find(r => r.id === '1.1.1').statut !== 'CONFORME') throw new Error('1.1.1 perdu');
+  if (relu.find(r => r.id === '1.1.2').statut !== 'NON CONFORME') throw new Error('1.1.2 perdu');
+});
+
+t('envoi e-mail : un quota quotidien insuffisant bloque l\'envoi avec message explicite', () => {
+  poser({ dom: ['example.test'], cfg: { niveau: 'L1' } });
+  api.sauvegarderResultat_(JETON, { id: '1.1.1', level: 'L1', statut: 'CONFORME', detail: 'OK' });
+  api.consoliderResultats_(JETON);
+
+  api.__mail.quota = 0;
+  let leve = false;
+  try {
+    api.envoyerRapportEmail(JETON, { destinataires: 'admin@example.test' }, 'fr');
+  } catch (e) {
+    leve = /quota quotidien d'envoi d'e-mails insuffisant/i.test(e.message);
+  }
+  if (!leve) throw new Error('aucune exception explicite levée sur quota 0');
+
+  // Quota suffisant => l'e-mail part
+  api.__mail.quota = 1500;
+  api.__mail.envois = [];
+  const rep = api.envoyerRapportEmail(JETON, { destinataires: 'admin@example.test' }, 'fr');
+  if (!rep || rep.destinataires !== 'admin@example.test') throw new Error('envoi échoué malgré quota');
+  if (api.__mail.envois.length !== 1) throw new Error('aucun e-mail consigné dans le mock');
 });
 
 t.bilan();
