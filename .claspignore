@@ -1,0 +1,7 @@
+# Ignorer tous les fichiers par défaut
+**/**
+
+# Fichiers à pousser dans Google Apps Script
+!appsscript.json
+!*.gs
+!*.html
