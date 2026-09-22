@@ -9,16 +9,31 @@ const path = require('path');
 const RACINE = path.join(__dirname, '..');
 
 const DOUBLURES = `
-var __appelsDns = [];
+// Réseau simulé. __dns.appels enregistre chaque requête — ce qui permet de
+// vérifier qu'une résolution n'a PAS eu lieu — et __dns.reponse permet au test
+// de scénariser SERVFAIL, NXDOMAIN ou une réponse valide.
+var __dns = { appels: [], reponse: null };
 var UrlFetchApp = { fetch: function (url) {
-  __appelsDns.push(url);
-  var rep = (typeof __reponseDns === 'function') ? __reponseDns(url) : { Status: 0, Answer: [] };
+  __dns.appels.push(url);
+  var rep = (typeof __dns.reponse === 'function') ? __dns.reponse(url) : { Status: 0, Answer: [] };
   return { getResponseCode: function () { return rep.__code || 200; },
            getContentText: function () { return JSON.stringify(rep); } };
 } };
-var __reponseDns = null;
+
+// Services Admin SDK scénarisables : __google.groupes fournit la liste,
+// __google.reglages répond (ou lève) pour chaque groupe, et __google.appels
+// compte les lectures réellement effectuées.
+var __google = { groupes: [], reglages: null, appels: 0, pause: 0 };
+var AdminDirectory = { Groups: { list: function () {
+  return { groups: __google.groupes.slice(), nextPageToken: null };
+} } };
+var GroupsSettings = { Groups: { get: function (email) {
+  __google.appels++;
+  if (typeof __google.reglages === 'function') return __google.reglages(email);
+  return { whoCanViewGroup: 'ALL_MEMBERS_CAN_VIEW' };
+} } };
 var Utilities = {
-  sleep: function () {}, getUuid: function () { return 'jeton-test'; },
+  sleep: function (ms) { __google.pause += ms; }, getUuid: function () { return 'jeton-test'; },
   formatDate: function () { return '2026-01-01'; },
   gzip: function (b) { return b; }, ungzip: function (b) { return b; },
   newBlob: function (c) { return { getBytes: function () { return c; },
@@ -125,14 +140,14 @@ var SpreadsheetApp = { create: function (nom) {
   return ss;
 } };
 var MailApp = null, HtmlService = null;
-var AdminDirectory = null, GroupsSettings = null;
+
 `;
 
 function charger(exports) {
   const src = fs.readdirSync(RACINE).filter(f => f.endsWith('.gs')).sort()
     .map(f => fs.readFileSync(path.join(RACINE, f), 'utf8')).join('\n');
   return new Function(DOUBLURES + src +
-    '\n; return { ' + exports.concat(['__cache', '__props', '__classeurs']).join(', ') + ' };')();
+    '\n; return { ' + exports.concat(['__cache', '__props', '__classeurs', '__dns', '__google']).join(', ') + ' };')();
 }
 
 // Micro-harnais : pas de dépendance, sortie lisible, code de sortie exploitable en CI.

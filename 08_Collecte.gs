@@ -18,6 +18,28 @@
  * Une étape en échec est journalisée puis considérée terminée : l'audit
  * continue, les contrôles dépendants remonteront ERREUR avec la cause.
  */
+/** Reconnaît une erreur de quota ou de limitation de débit, quelle qu'en soit la forme. */
+function estErreurQuota_(e) {
+  return /429|RESOURCE_EXHAUSTED|quota|rate ?limit/i.test(String((e && e.message) || e));
+}
+
+/**
+ * Exécute une opération en la réessayant sur quota, avec temporisation
+ * croissante. Utilisé là où le client ne peut pas reprendre la main — la boucle
+ * synchrone du mode batch notamment, qui n'avait aucune gestion du 429.
+ */
+function avecReessaiQuota_(operation, tentatives) {
+  const n = tentatives || 3;
+  for (let i = 0; i < n; i++) {
+    try {
+      return operation();
+    } catch (e) {
+      if (i === n - 1 || !estErreurQuota_(e)) throw e;
+      Utilities.sleep(1000 * Math.pow(2, i)); // 1 s puis 2 s
+    }
+  }
+}
+
 function collecterEtape(token, etape, curseur) {
   try {
     switch (etape) {
@@ -28,6 +50,26 @@ function collecterEtape(token, etape, curseur) {
         sauvegarderPartie_(token, 'dom', doms);
         return { termine: true, fait: doms.length, total: doms.length,
                  info: doms.length + ' domaine(s) : ' + doms.join(', ') };
+      }
+
+      case 'dns': {
+        // Résolution en phase 1, une seule fois par domaine. Les trois
+        // contrôles DNS s'exécutant en parallèle en phase 2, ils lançaient
+        // auparavant jusqu'à quatre requêtes par domaine chacun, sans cache
+        // partagé, en bloquant l'appel serveur le temps de la résolution.
+        const doms = chargerPartie_(token, 'dom') || [];
+        if (!doms.length) {
+          return { termine: true, fait: 0, total: 0, info: 'aucun domaine à résoudre' };
+        }
+        const depart = Number(curseur) || 0;
+        const jusqua = Math.min(depart + CONFIG.DOMAINES_PAR_APPEL, doms.length);
+        const releve = depart ? (chargerPartie_(token, 'dns') || {}) : {};
+        for (let i = depart; i < jusqua; i++) releve[doms[i]] = resoudreDomaine_(doms[i]);
+        sauvegarderPartie_(token, 'dns', releve);
+        const fini = jusqua >= doms.length;
+        return { termine: fini, curseur: fini ? null : String(jusqua),
+                 fait: jusqua, total: doms.length,
+                 info: jusqua + ' / ' + doms.length + ' domaine(s) résolu(s) (SPF, DKIM, DMARC)' };
       }
 
       case 'unites': {
@@ -138,7 +180,7 @@ function collecterEtape(token, etape, curseur) {
               fields: 'nextPageToken,users(primaryEmail,isAdmin,isDelegatedAdmin,suspended,isEnrolledIn2Sv,isEnforcedIn2Sv,lastLoginTime)'
             });
           } catch (e) {
-            if (/429|RESOURCE_EXHAUSTED|quota|rate ?limit/i.test(String(e.message))) {
+            if (estErreurQuota_(e)) {
               sauvegarderPartie_(token, 'usr', existant);
               return { termine: false, curseur: pageToken || '@debut', attente: 30,
                        fait: existant.length, total: null,
@@ -172,7 +214,7 @@ function collecterEtape(token, etape, curseur) {
               fields: 'nextPageToken,groups(email,name)'
             });
           } catch (e) {
-            if (/429|RESOURCE_EXHAUSTED|quota|rate ?limit/i.test(String(e.message))) {
+            if (estErreurQuota_(e)) {
               sauvegarderPartie_(token, 'grp', existant);
               return { termine: false, curseur: pageToken || '@debut', attente: 30,
                        fait: existant.length, total: null,
@@ -230,7 +272,7 @@ function collecterReglagesTranche(token, debut) {
           whoCanJoin: s.whoCanJoin
         });
       } catch (e) {
-        if (/429|RESOURCE_EXHAUSTED|quota|rate ?limit/i.test(String(e.message))) {
+        if (estErreurQuota_(e)) {
           throw new Error('QUOTA — ' + e.message); // remonte pour attente programmée (pas de null silencieux)
         }
         tranche.push(null);
@@ -306,9 +348,19 @@ function construireContexte_() {
     ctx.erreurs.push('Directory API (domains) : ' + e.message);
   }
 
+  // --- Relevé DNS (SPF / DKIM / DMARC), une passe par domaine ---------------
+  ctx.dns = {};
+  ctx.domaines.forEach(function (d) {
+    try {
+      ctx.dns[d] = resoudreDomaine_(d);
+    } catch (e) {
+      ctx.erreurs.push('Résolution DNS de ' + d + ' : ' + e.message);
+    }
+  });
+
   // --- Groupes + réglages ---------------------------------------------------
   try {
-    ctx.groupes = recupererGroupesAvecReglages_();
+    ctx.groupes = recupererGroupesAvecReglages_(ctx);
   } catch (e) {
     ctx.groupes = null;
     ctx.erreurs.push('Groups Settings API : ' + e.message);
@@ -383,32 +435,61 @@ function recupererUtilisateurs_() {
   return utilisateurs;
 }
 
-function recupererGroupesAvecReglages_() {
+/**
+ * Recense les groupes et, si CONFIG.GROUPES_DETAILLES_BATCH le demande, lit
+ * leurs réglages de confidentialité — sous budget de temps.
+ *
+ * La lecture groupe par groupe coûte 150 à 250 ms l'unité : à 2 500 groupes,
+ * la boucle dépassait la limite d'exécution de 6 minutes et le script était
+ * stoppé sans produire aucun rapport. Elle est donc désactivée par défaut, et
+ * bornée par un budget quand elle est activée. Toute troncature est signalée
+ * dans les avertissements de collecte du rapport plutôt que subie.
+ */
+function recupererGroupesAvecReglages_(ctx) {
+  const avertir = function (m) { if (ctx && ctx.erreurs) ctx.erreurs.push(m); };
   const groupes = [];
   let pageToken = null;
   do {
-    const rep = AdminDirectory.Groups.list({
-      customer: 'my_customer', maxResults: 200, pageToken: pageToken,
-      fields: 'nextPageToken,groups(email,name)'
+    const rep = avecReessaiQuota_(function () {
+      return AdminDirectory.Groups.list({
+        customer: 'my_customer', maxResults: 200, pageToken: pageToken,
+        fields: 'nextPageToken,groups(email,name)'
+      });
     });
     (rep.groups || []).forEach(function (g) { groupes.push(g); });
     pageToken = rep.nextPageToken;
   } while (pageToken && groupes.length < CONFIG.MAX_GROUPES);
 
-  groupes.forEach(function (g) {
+  if (!CONFIG.GROUPES_DETAILLES_BATCH) {
+    avertir('Réglages individuels des groupes non collectés en mode batch ' +
+      '(CONFIG.GROUPES_DETAILLES_BATCH = false, pour écarter la limite des 6 minutes). ' +
+      'Les contrôles concernés s\'appuient sur la Policy API ; à défaut, ils remontent À VÉRIFIER.');
+    return groupes;
+  }
+
+  const echeance = Date.now() + CONFIG.BUDGET_GROUPES_MS;
+  let lus = 0;
+  for (let i = 0; i < groupes.length; i++) {
+    if (Date.now() > echeance) {
+      avertir('Budget de lecture des réglages de groupes épuisé après ' + lus + ' groupe(s) sur ' +
+        groupes.length + ' : échantillon tronqué. Augmenter CONFIG.BUDGET_GROUPES_MS, ' +
+        'ou passer par l\'application web qui répartit la collecte sur plusieurs appels.');
+      break;
+    }
     try {
-      const s = GroupsSettings.Groups.get(g.email);
+      const s = avecReessaiQuota_(function () { return GroupsSettings.Groups.get(groupes[i].email); });
       // Seuls les champs utiles aux contrôles sont conservés (contexte mis en cache).
-      g.settings = {
+      groupes[i].settings = {
         whoCanViewGroup: s.whoCanViewGroup,
         whoCanPostMessage: s.whoCanPostMessage,
         whoCanViewTopics: s.whoCanViewTopics,
         whoCanJoin: s.whoCanJoin
       };
+      lus++;
     } catch (e) {
-      g.settings = null;
-      g.erreur = e.message;
+      groupes[i].settings = null;
+      groupes[i].erreur = e.message;
     }
-  });
+  }
   return groupes;
 }

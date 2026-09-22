@@ -331,47 +331,19 @@ const DEFINITION_CONTROLES = [
     id: '3.1.3.2.1', level: 'L1',
     titre: 'DKIM activé pour tous les domaines de messagerie', titreEn: 'Ensure that DKIM is enabled for all mail enabled domains',
     remediation: 'Gmail > Authentification des e-mails : générer et publier la clé DKIM, puis activer la signature.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Authenticate email, select - Generate new record',
-    check: function (ctx) {
-      return verifierDnsParDomaine_(ctx, function (d) {
-        let echecResolution = '';
-        for (let i = 0; i < CONFIG.SELECTEURS_DKIM.length; i++) {
-          const r = resoudreTXT_(CONFIG.SELECTEURS_DKIM[i] + '._domainkey.' + d);
-          if (!r.resolu) { echecResolution = r.cause; continue; }
-          const hit = r.enregistrements.find(function (t) { return /v=DKIM1/i.test(t); });
-          if (hit) return { ok: true, info: 'sélecteur ' + CONFIG.SELECTEURS_DKIM[i] };
-        }
-        if (echecResolution) return { indetermine: true, info: 'résolution DNS en échec : ' + echecResolution };
-        return { ok: false, info: 'aucun enregistrement DKIM trouvé (sélecteurs testés : ' + CONFIG.SELECTEURS_DKIM.join(', ') + ')' };
-      }, 'DKIM');
-    }
+    check: function (ctx) { return verifierDns_(ctx, 'dkim', 'DKIM'); }
   },
   {
     id: '3.1.3.2.2', level: 'L1',
     titre: 'Enregistrement SPF configuré pour tous les domaines', titreEn: 'Ensure the SPF record is configured for all mail enabled domains',
     remediation: 'Publier un TXT "v=spf1 include:_spf.google.com ~all" (adapter aux émetteurs légitimes).', remediationEn: 'Configure the DNS record for each domain. • If all email in your domain is sent from and received by Google Gmail, add the following TXT record for each domain: v=spf1 include:_spf.google.com ~all NOTE: This will likely need to be configured at your domain registrar (Godaddy, etc.).',
-    check: function (ctx) {
-      return verifierDnsParDomaine_(ctx, function (d) {
-        const r = resoudreTXT_(d);
-        if (!r.resolu) return { indetermine: true, info: 'résolution DNS en échec : ' + r.cause };
-        const spf = r.enregistrements.find(function (t) { return /^v=spf1/i.test(t); });
-        return spf ? { ok: true, info: spf.slice(0, 80) } : { ok: false };
-      }, 'SPF');
-    }
+    check: function (ctx) { return verifierDns_(ctx, 'spf', 'SPF'); }
   },
   {
     id: '3.1.3.2.3', level: 'L1',
     titre: 'Enregistrement DMARC configuré pour tous les domaines', titreEn: 'Ensure the DMARC record is configured for all mail enabled domains',
     remediation: 'Publier un TXT _dmarc.<domaine> "v=DMARC1; p=quarantine|reject; rua=..." (p=none insuffisant à terme).', remediationEn: 'Configure the DNS record for each domain. 1. If all email in your domain is sent from and received by Google Gmail, add the following TXT record for the domain: v=DMARC1; p=none; rua=mailto:<report@domain1.com> NOTE: This will likely need to be configured at your domain registrar (Godaddy, etc.).',
-    check: function (ctx) {
-      return verifierDnsParDomaine_(ctx, function (d) {
-        const r = resoudreTXT_('_dmarc.' + d);
-        if (!r.resolu) return { indetermine: true, info: 'résolution DNS en échec : ' + r.cause };
-        const rec = r.enregistrements.find(function (t) { return /^v=DMARC1/i.test(t); });
-        if (!rec) return { ok: false };
-        const pNone = /p=none/i.test(rec);
-        return { ok: true, info: rec.slice(0, 100) + (pNone ? ' — ATTENTION p=none (protection faible)' : '') };
-      }, 'DMARC');
-    }
+    check: function (ctx) { return verifierDns_(ctx, 'dmarc', 'DMARC'); }
   },
   {
     id: '3.1.3.3.1', level: 'L1',

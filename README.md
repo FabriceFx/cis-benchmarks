@@ -142,9 +142,12 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 
 | Clé | Valeur par défaut | Description |
 |---|---|---|
-| `VERSION` | `5.6.0` | Version de l'application (affichée dans l'UI et le rapport). |
+| `VERSION` | `5.7.0` | Version de l'application (affichée dans l'UI et le rapport). |
 | `DOMAINES_DESTINATAIRES` | `[]` | Domaines autorisés **en plus** de ceux du tenant pour l'envoi du rapport par e-mail. Vide = diffusion interne uniquement. |
 | `PAGES_PAR_APPEL` | `4` | Pages d'API lues au maximum par appel serveur (écarte la limite des 6 minutes). |
+| `GROUPES_DETAILLES_BATCH` | `false` | Mode batch : lire les réglages groupe par groupe. Désactivé par défaut — à 2 500 groupes la boucle dépasse les 6 minutes. |
+| `BUDGET_GROUPES_MS` | `180000` | Budget de cette lecture détaillée quand elle est activée. Au-delà, arrêt propre et troncature signalée. |
+| `DOMAINES_PAR_APPEL` | `3` | Domaines résolus par appel serveur lors de la pré-collecte DNS. |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` pour les contrôles de base, `'L2'` pour les profils renforcés L1 + L2. |
 | `MAX_UTILISATEURS` | `12000` | Plafond d'utilisateurs audités pour les vérifications individuelles (2SV, tokens). |
 | `MAX_GROUPES` | `3000` | Plafond de groupes audités via la Groups Settings API. |
@@ -171,7 +174,7 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 ## 🧪 Développement
 
 ```bash
-npm test        # 62 tests, aucune dépendance requise
+npm test        # 75 tests, aucune dépendance requise
 npm run lint    # ESLint (npm install au préalable)
 ```
 
@@ -183,6 +186,7 @@ npm run lint    # ESLint (npm install au préalable)
 | `tests/manifeste.test.js` | Scopes OAuth, services avancés, modèle de déploiement |
 | `tests/contexte.test.js` | Persistance de session, recensement des super administrateurs |
 | `tests/rapport.test.js` | Restitution Sheets : mise en forme, couverture, journal |
+| `tests/collecte.test.js` | Pré-collecte DNS, garde-fous du mode batch, réessais sur quota |
 
 Les tests chargent le code Apps Script dans Node en doublant les services Google : aucun appel réseau, aucune API Google sollicitée. Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour l'ajout d'un contrôle et la checklist de publication, et [SECURITY.md](SECURITY.md) pour le modèle de sécurité.
 
@@ -338,7 +342,7 @@ Key settings can be updated in `CONFIG` in `Code.gs`:
 
 | Key | Default | Description |
 |---|---|---|
-| `VERSION` | `5.6.0` | Application version. |
+| `VERSION` | `5.7.0` | Application version. |
 | `DOMAINES_DESTINATAIRES` | `[]` | Domains allowed **in addition to** the tenant's own for emailing the report. Empty = internal distribution only. |
 | `PAGES_PAR_APPEL` | `4` | Maximum API pages read per server call (keeps each call clear of the 6-minute limit). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` for Level 1 only, `'L2'` for full Level 1 + Level 2 audit. |

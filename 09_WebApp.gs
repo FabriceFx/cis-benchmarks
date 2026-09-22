@@ -64,6 +64,7 @@ function demarrerSession(niveauProfil) {
     }),
     etapes: [
       { cle: 'domaines',     libelle: 'Domaines du tenant' },
+      { cle: 'dns',          libelle: 'Enregistrements DNS (SPF, DKIM, DMARC)' },
       { cle: 'unites',       libelle: 'Unités organisationnelles' },
       { cle: 'admins',       libelle: 'Super administrateurs' },
       { cle: 'politiques',   libelle: 'Politiques Cloud Identity (réglages console)' },

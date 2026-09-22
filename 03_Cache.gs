@@ -142,7 +142,8 @@ function chargerContexte_(token) {
     erreurs: err,
     niveau: niveauSession_(token),
     unites: {},
-    unitesCollectees: false
+    unitesCollectees: false,
+    dns: chargerPartie_(token, 'dns') || {}
   };
   const uo = chargerPartie_(token, 'uo');
   if (uo && uo.ok) { ctx.unites = uo.table || {}; ctx.unitesCollectees = true; }

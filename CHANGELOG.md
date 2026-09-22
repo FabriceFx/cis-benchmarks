@@ -5,6 +5,27 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.7.0] - 2026-09-22
+
+### 🎯 Angle émotionnel : Tenir la distance
+> *Un audit qui meurt à la sixième minute sans rien produire, ou qui bloque ses appels serveur le temps de résoudre quarante requêtes DNS, n'a pas de problème de justesse — il a un problème d'endurance. La 5.7.0 traite les deux derniers points d'infrastructure de la revue.*
+
+### Corrigé / Fixed
+- **Timeout du mode batch sur la lecture des groupes.** `recupererGroupesAvecReglages_()` parcourait tous les groupes en boucle synchrone, à 150-250 ms l'appel : au-delà d'environ 1 500 groupes, l'exécution dépassait la limite des 6 minutes et le script était tué **sans produire aucun rapport**. Cette lecture détaillée devient optionnelle (`CONFIG.GROUPES_DETAILLES_BATCH`, désactivée par défaut — l'application web en faisait déjà une case à cocher) et, lorsqu'elle est activée, bornée par un budget de temps (`CONFIG.BUDGET_GROUPES_MS`). Toute troncature est signalée dans les avertissements de collecte du rapport plutôt que subie.
+- **Absence de gestion du quota en mode batch.** La boucle n'avait aucun réessai sur HTTP 429. `avecReessaiQuota_()` couvre désormais la pagination des groupes et chaque lecture de réglages, avec temporisation croissante. Les trois tests de quota répartis dans `08_Collecte.gs` sont remplacés par un `estErreurQuota_()` unique.
+
+### Modifié / Changed
+- **Résolution DNS déplacée en phase 1.** Les contrôles `3.1.3.2.1` (DKIM), `3.1.3.2.2` (SPF) et `3.1.3.2.3` (DMARC) résolvaient leurs enregistrements pendant la phase 2, où ils s'exécutent **en parallèle** : chaque appel serveur restait bloqué le temps de la résolution, sans relevé partagé, et un contrôle rejoué après échec relançait tout. Une étape de collecte dédiée résout SPF, DKIM et DMARC une fois par domaine, par tranches de `CONFIG.DOMAINES_PAR_APPEL`, et dépose le relevé dans le contexte. Les trois contrôles deviennent des lectures en mémoire. Le nombre total de résolutions est inchangé ; ce qui change, c'est qu'elles ne bloquent plus la phase 2, ne se chevauchent plus et ne sont plus répétées lors d'un réessai.
+- `verifierDnsParDomaine_()` laisse place à `verifierDns_()` et à trois testeurs unitaires (`testerSpf_`, `testerDkim_`, `testerDmarc_`), réutilisables aussi bien pour la pré-collecte que pour le repli à la volée si le relevé manque — session expirée, ou mode batch.
+
+### Ajouté / Added
+- **`tests/collecte.test.js`** : treize tests. Le harnais gagne un réseau et un Admin SDK scénarisables, ce qui permet de vérifier des choses jusque-là invérifiables — qu'un `SERVFAIL` est bien réessayé quand un `NXDOMAIN` ne l'est pas, qu'une chaîne `CNAME` n'est pas prise pour un enregistrement TXT, que la phase 2 **n'émet aucune requête** quand le relevé est présent, et que la boucle batch s'arrête au budget sans lire un seul groupe de trop. La suite compte 75 tests.
+
+### Note
+Les points 1 et 2 de `REVUE_EXPERTE.md` — styles de l'onglet Synthèse et vectorisation des écritures — ont été traités en 5.6.0. Le document décrit l'état de la 5.4.0 et n'a pas été mis à jour depuis. Restent ouvertes la fragilité du cache de session face à l'éviction LRU, la vérification du quota `MailApp`, et les finitions Material Design 3 / accessibilité de l'interface.
+
+---
+
 ## [5.6.0] - 2026-09-22
 
 ### 🎯 Angle émotionnel : Dire ce qu'on sait, et ce qu'on ne sait pas

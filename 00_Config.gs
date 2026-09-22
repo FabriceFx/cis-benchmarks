@@ -62,7 +62,7 @@ const CONFIG = {
   // Affichée dans le footer de la WebApp (injectée par doGet), dans le journal
   // et dans la synthèse du rapport : si le footer n'affiche pas la version
   // attendue après une mise à jour, le redéploiement n'a pas été fait.
-  VERSION: '5.6.0',
+  VERSION: '5.7.0',
   // 'L1' = contrôles de niveau 1 uniquement, 'L2' = niveaux 1 + 2
   NIVEAU_PROFIL: 'L2',
   // Langue par défaut du script
@@ -84,6 +84,20 @@ const CONFIG = {
   SELECTEURS_DKIM: ['google', 'default', 'selector1', 'selector2'],
   // Nom du classeur de rapport
   NOM_RAPPORT: 'Audit CIS Google Workspace v1.4',
+  // Mode batch : interroger la Groups Settings API groupe par groupe.
+  // Désactivé par défaut. L'application web en fait une option explicite
+  // (case « Réglages par groupe ») parce que l'appel coûte 150 à 250 ms par
+  // groupe : à 2 500 groupes, la boucle dépasse la limite d'exécution de
+  // 6 minutes et le script est stoppé sans produire de rapport. Les contrôles
+  // concernés s'appuient d'abord sur la Policy API, qui répond pour tout le
+  // tenant en un appel ; le détail par groupe n'est qu'un repli.
+  GROUPES_DETAILLES_BATCH: false,
+  // Budget de temps alloué à cette collecte détaillée quand elle est activée.
+  // Au-delà, la lecture s'arrête proprement et la troncature est signalée dans
+  // le rapport, plutôt que de laisser l'exécution être tuée à 6 minutes.
+  BUDGET_GROUPES_MS: 180000,
+  // Domaines résolus par appel serveur lors de la pré-collecte DNS.
+  DOMAINES_PAR_APPEL: 3,
   // Domaines autorisés EN PLUS de ceux du tenant pour l'envoi du rapport.
   // Un rapport d'audit décrit la posture de sécurité complète du tenant :
   // sa diffusion hors du domaine doit être un choix explicite et tracé.

@@ -56,15 +56,63 @@ function resoudreTXT_(nom) {
   return { resolu: false, enregistrements: [], cause: cause || 'résolution impossible' };
 }
 
-function verifierDnsParDomaine_(ctx, testeur, libelle) {
+/**
+ * Testeurs unitaires, un par enregistrement. Chacun retourne
+ * { ok } | { ok: false } | { indetermine: true }, plus un libellé explicatif.
+ */
+function testerDkim_(domaine) {
+  let echecResolution = '';
+  for (let i = 0; i < CONFIG.SELECTEURS_DKIM.length; i++) {
+    const r = resoudreTXT_(CONFIG.SELECTEURS_DKIM[i] + '._domainkey.' + domaine);
+    if (!r.resolu) { echecResolution = r.cause; continue; }
+    const hit = r.enregistrements.find(function (t) { return /v=DKIM1/i.test(t); });
+    if (hit) return { ok: true, info: 'sélecteur ' + CONFIG.SELECTEURS_DKIM[i] };
+  }
+  if (echecResolution) return { indetermine: true, info: 'résolution DNS en échec : ' + echecResolution };
+  return { ok: false, info: 'aucun enregistrement DKIM trouvé (sélecteurs testés : ' +
+    CONFIG.SELECTEURS_DKIM.join(', ') + ')' };
+}
+
+function testerSpf_(domaine) {
+  const r = resoudreTXT_(domaine);
+  if (!r.resolu) return { indetermine: true, info: 'résolution DNS en échec : ' + r.cause };
+  const spf = r.enregistrements.find(function (t) { return /^v=spf1/i.test(t); });
+  return spf ? { ok: true, info: spf.slice(0, 80) } : { ok: false };
+}
+
+function testerDmarc_(domaine) {
+  const r = resoudreTXT_('_dmarc.' + domaine);
+  if (!r.resolu) return { indetermine: true, info: 'résolution DNS en échec : ' + r.cause };
+  const rec = r.enregistrements.find(function (t) { return /^v=DMARC1/i.test(t); });
+  if (!rec) return { ok: false };
+  const pNone = /p=none/i.test(rec);
+  return { ok: true, info: rec.slice(0, 100) + (pNone ? ' — ATTENTION p=none (protection faible)' : '') };
+}
+
+const TESTEURS_DNS = { spf: testerSpf_, dkim: testerDkim_, dmarc: testerDmarc_ };
+
+/** Résout les trois enregistrements d'un domaine en une passe. */
+function resoudreDomaine_(domaine) {
+  return { spf: testerSpf_(domaine), dkim: testerDkim_(domaine), dmarc: testerDmarc_(domaine) };
+}
+
+/**
+ * Agrège le verdict d'un enregistrement sur tous les domaines du tenant.
+ *
+ * La résolution a lieu en phase 1 et le relevé vit dans le contexte : les trois
+ * contrôles DNS s'exécutant en parallèle en phase 2, ils lançaient auparavant
+ * jusqu'à quatre requêtes par domaine chacun, sans cache partagé, en bloquant
+ * l'appel serveur. Si le relevé manque — session expirée, mode batch sans la
+ * pré-collecte — la résolution se fait à la volée, en repli.
+ */
+function verifierDns_(ctx, cle, libelle) {
   if (!ctx.domaines || ctx.domaines.length === 0) {
     return { statut: STATUT.ERROR, detail: 'Liste des domaines indisponible.' };
   }
-  const echecs = [];
-  const indetermines = [];
-  const details = [];
+  const releve = ctx.dns || {};
+  const echecs = [], indetermines = [], details = [];
   ctx.domaines.forEach(function (d) {
-    const r = testeur(d);
+    const r = (releve[d] && releve[d][cle]) || TESTEURS_DNS[cle](d);
     let marque;
     if (r.indetermine) { marque = 'INDÉTERMINÉ'; indetermines.push(d); }
     else if (r.ok) { marque = 'OK'; }
@@ -77,3 +125,4 @@ function verifierDnsParDomaine_(ctx, testeur, libelle) {
     : (indetermines.length ? STATUT.REVIEW : STATUT.PASS);
   return { statut: statut, detail: libelle + ' — ' + details.join(' ; ') };
 }
+
