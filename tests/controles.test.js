@@ -37,16 +37,29 @@ const politique = (type, ou, valeur, genre) => ({
   setting: { type: 'settings/' + type, value: valeur }
 });
 
-const contexte = pol => {
-  const ctx = { policies: pol, domaines: ['example.test'], unites: { ou_prod: '/Production' }, erreurs: [] };
+const contexte = (pol, collectees) => {
+  const ctx = { policies: pol, domaines: ['example.test'], unites: { ou_prod: '/Production' },
+                unitesCollectees: collectees !== false, erreurs: [] };
   ctx.policyIndex = api.indexerPolitiques_(pol);
+  return ctx;
+};
+
+const ANNUAIRE = ctx => {
+  ctx.utilisateurs = [
+    { primaryEmail: 'a@example.test', isAdmin: true, isEnrolledIn2Sv: true, isEnforcedIn2Sv: true },
+    { primaryEmail: 'b@example.test', isAdmin: true, isEnrolledIn2Sv: true, isEnforcedIn2Sv: true }
+  ];
+  ctx.superAdmins = ctx.utilisateurs.slice();
+  ctx.superAdminsExhaustifs = true;
+  ctx.groupes = [{ email: 'g@example.test', settings: { whoCanViewGroup: 'ALL_MEMBERS_CAN_VIEW' } }];
+  ctx.reglagesGroupesCollectes = true;
   return ctx;
 };
 
 const SCENARIOS = {
   // Aucune donnée : le cas d'une collecte totalement en échec.
   'contexte-vide': (() => {
-    const ctx = contexte([]);
+    const ctx = contexte([], false);
     ctx.domaines = []; ctx.utilisateurs = null; ctx.groupes = null;
     ctx.reglagesGroupesCollectes = false;
     return ctx;
@@ -64,6 +77,31 @@ const SCENARIOS = {
     ctx.reglagesGroupesCollectes = true;
     return ctx;
   })(),
+  // LE cas que la revue experte a mis en évidence, et que les scénarios
+  // précédents ne pouvaient pas voir : aucun d'eux ne contenait de politique
+  // SYSTEM. Une dérogation posée uniquement sur une sous-UO laisse le reste du
+  // tenant sur le défaut Google ; si ce défaut est permissif, l'ignorer
+  // revenait à déclarer conforme un tenant qui ne l'est pas.
+  'defaut-herite-permissif': (() => {
+    const pol = [];
+    TYPES.forEach(ty => {
+      pol.push(politique(ty, 'ou_prod', { enabled: false, state: 'DISABLED' }));
+      pol.push(politique(ty, 'defaut', { enabled: true, state: 'ENABLED' }, 'SYSTEM'));
+    });
+    return ANNUAIRE(contexte(pol));
+  })(),
+  // Même tenant, table des UO non collectée : la racine n'est plus
+  // identifiable, donc le défaut hérité doit rester indéterminé — À VÉRIFIER,
+  // jamais un écart prononcé sur une hypothèse invérifiable.
+  'unites-non-collectees': (() => {
+    const pol = [];
+    TYPES.forEach(ty => {
+      pol.push(politique(ty, 'racine', { enabled: false, state: 'DISABLED' }));
+      pol.push(politique(ty, 'defaut', { enabled: true, state: 'ENABLED' }, 'SYSTEM'));
+    });
+    return ANNUAIRE(contexte(pol, false));
+  })(),
+
   // Mêmes réglages, plus une UO fille permissive : vérifie que l'évaluation
   // par périmètre reste stable sur l'ensemble du référentiel.
   'ou-fille-permissive': (() => {

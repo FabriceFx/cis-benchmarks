@@ -141,8 +141,11 @@ function chargerContexte_(token) {
     groupes: grp,
     erreurs: err,
     niveau: niveauSession_(token),
-    unites: chargerPartie_(token, 'uo') || {}
+    unites: {},
+    unitesCollectees: false
   };
+  const uo = chargerPartie_(token, 'uo');
+  if (uo && uo.ok) { ctx.unites = uo.table || {}; ctx.unitesCollectees = true; }
   // Assemblage des tranches de réglages de groupes (clés déterministes)
   if (ctx.groupes && ctx.groupes.length) {
     const borne = Math.min(ctx.groupes.length, CONFIG.MAX_GROUPES);
@@ -160,9 +163,26 @@ function chargerContexte_(token) {
   } else {
     ctx.reglagesGroupesCollectes = false;
   }
-  ctx.superAdmins = ctx.utilisateurs
-    ? ctx.utilisateurs.filter(function (u) { return u.isAdmin && !u.suspended; })
-    : null;
+  // Les super admins proviennent d'une requête ciblée « isAdmin=true », donc
+  // exhaustive. Le filtrage de la liste plafonnée à MAX_UTILISATEURS ne sert
+  // plus que de repli si cette étape a échoué, et le constat doit alors rester
+  // prudent : c'est ce que signale superAdminsExhaustifs.
+  const adm = chargerPartie_(token, 'adm');
+  if (adm && adm.ok) {
+    ctx.superAdmins = (adm.liste || []).filter(function (u) { return !u.suspended; });
+    ctx.superAdminsExhaustifs = true;
+  } else {
+    ctx.superAdmins = ctx.utilisateurs
+      ? ctx.utilisateurs.filter(function (u) { return u.isAdmin && !u.suspended; })
+      : null;
+    ctx.superAdminsExhaustifs = false;
+    if (ctx.superAdmins) {
+      ctx.erreurs.push('Recensement ciblé des super administrateurs indisponible : ' +
+        'la liste est déduite des ' + ctx.utilisateurs.length + ' premiers utilisateurs ' +
+        '(plafond MAX_UTILISATEURS = ' + CONFIG.MAX_UTILISATEURS + '). Les contrôles ' +
+        '1.1.1, 1.1.2, 1.1.3 et 4.1.1.1 peuvent être incomplets.');
+    }
+  }
   ctx.policyIndex = indexerPolitiques_(ctx.policies);
   return ctx;
 }

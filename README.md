@@ -142,7 +142,7 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 
 | Clé | Valeur par défaut | Description |
 |---|---|---|
-| `VERSION` | `5.4.0` | Version de l'application (affichée dans l'UI et le rapport). |
+| `VERSION` | `5.5.0` | Version de l'application (affichée dans l'UI et le rapport). |
 | `DOMAINES_DESTINATAIRES` | `[]` | Domaines autorisés **en plus** de ceux du tenant pour l'envoi du rapport par e-mail. Vide = diffusion interne uniquement. |
 | `PAGES_PAR_APPEL` | `4` | Pages d'API lues au maximum par appel serveur (écarte la limite des 6 minutes). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` pour les contrôles de base, `'L2'` pour les profils renforcés L1 + L2. |
@@ -171,7 +171,7 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 ## 🧪 Développement
 
 ```bash
-npm test        # 35 tests, aucune dépendance requise
+npm test        # 51 tests, aucune dépendance requise
 npm run lint    # ESLint (npm install au préalable)
 ```
 
@@ -181,6 +181,7 @@ npm run lint    # ESLint (npm install au préalable)
 | `tests/i18n.test.js` | Cohérence bilingue FR/EN, détection des copier-collés de remédiation |
 | `tests/controles.test.js` | Exécution des 87 contrôles, référence figée des verdicts |
 | `tests/manifeste.test.js` | Scopes OAuth, services avancés, modèle de déploiement |
+| `tests/contexte.test.js` | Persistance de session, recensement des super administrateurs |
 
 Les tests chargent le code Apps Script dans Node en doublant les services Google : aucun appel réseau, aucune API Google sollicitée. Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour l'ajout d'un contrôle et la checklist de publication, et [SECURITY.md](SECURITY.md) pour le modèle de sécurité.
 
@@ -190,7 +191,7 @@ Les tests chargent le code Apps Script dans Node en doublant les services Google
 
 Un outil de conformité vaut par la lucidité sur ce qu'il ne couvre pas. Les limites actuelles :
 
-- **Héritage des unités organisationnelles.** Depuis la version 5.2.0, tous les périmètres où un réglage est explicitement défini sont évalués et le pire statut l'emporte — un réglage permissif sur une UO fille rend le contrôle `NON CONFORME`, et l'UO est nommée dans le constat. Les UO absentes de la réponse de la Policy API héritent de leur parent : un audit ne « voit » donc que les réglages explicitement posés.
+- **Héritage des unités organisationnelles.** Tous les périmètres où un réglage est explicitement défini sont évalués et le pire statut l'emporte — un réglage permissif sur une UO fille rend le contrôle `NON CONFORME`, et l'UO est nommée dans le constat. Depuis la 5.5.0, lorsqu'aucune politique ne cible la racine, le **défaut Google hérité par le reste du tenant** est évalué comme un périmètre à part entière. Si la table des unités organisationnelles n'a pas pu être collectée, ce périmètre hérité reste `À VÉRIFIER` plutôt que tranché sur une hypothèse invérifiable.
 - **Correspondance des champs de la Policy API.** Les noms de champs sont résolus par une liste d'alias. Si Google fait évoluer le schéma, le contrôle remonte `À VÉRIFIER` plutôt qu'un verdict erroné — mais il faut alors mettre l'outil à jour.
 - **16 contrôles sur 87 restent manuels**, faute d'exposition par les API Google (règles d'alerte, quarantaines, etc.).
 - **Accès super administrateur obligatoire.** Depuis la version 5.1.0, toutes les fonctions exposées le vérifient côté serveur.
@@ -336,7 +337,7 @@ Key settings can be updated in `CONFIG` in `Code.gs`:
 
 | Key | Default | Description |
 |---|---|---|
-| `VERSION` | `5.4.0` | Application version. |
+| `VERSION` | `5.5.0` | Application version. |
 | `DOMAINES_DESTINATAIRES` | `[]` | Domains allowed **in addition to** the tenant's own for emailing the report. Empty = internal distribution only. |
 | `PAGES_PAR_APPEL` | `4` | Maximum API pages read per server call (keeps each call clear of the 6-minute limit). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` for Level 1 only, `'L2'` for full Level 1 + Level 2 audit. |
@@ -366,7 +367,7 @@ Key settings can be updated in `CONFIG` in `Code.gs`:
 
 A compliance tool is only as good as its honesty about what it does not cover. Current limitations:
 
-- **Organizational unit inheritance.** Since version 5.2.0 every scope where a setting is explicitly defined is evaluated and the worst status wins — a permissive setting on a child OU makes the control `NON CONFORME`, and the OU is named in the finding. OUs absent from the Policy API response inherit from their parent, so an audit only ever "sees" explicitly configured settings.
+- **Organizational unit inheritance.** Every scope where a setting is explicitly defined is evaluated and the worst status wins — a permissive setting on a child OU makes the control `NON CONFORME`, and the OU is named in the finding. Since 5.5.0, when no policy targets the root, the **Google default inherited by the rest of the tenant** is evaluated as a scope in its own right. If the organizational-unit table could not be collected, that inherited scope stays `À VÉRIFIER` rather than being decided on an unverifiable assumption.
 - **Policy API field mapping.** Field names are resolved through an alias list. If Google changes the schema, the control reports `À VÉRIFIER` rather than a wrong verdict — but the tool then needs updating.
 - **16 of the 87 controls remain manual**, as they are not exposed by Google APIs (alert rules, quarantines, etc.).
 - **Super Admin access is mandatory.** Since version 5.1.0 every exposed function enforces this server-side.

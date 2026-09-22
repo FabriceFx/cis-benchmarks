@@ -34,6 +34,7 @@ référence manquante.
 | `tests/i18n.test.js` | Cohérence bilingue FR/EN, détection des copier-collés |
 | `tests/controles.test.js` | Exécution des 87 contrôles, référence figée des statuts |
 | `tests/manifeste.test.js` | Scopes OAuth, services avancés, modèle de déploiement |
+| `tests/contexte.test.js` | Persistance de session, recensement des super administrateurs |
 
 `tests/controles.test.js` compare les statuts obtenus sur trois contextes
 simulés à `tests/fixtures/etats.json`. Une modification volontaire du moteur

@@ -32,9 +32,19 @@ var Session = {
   getActiveUser: function () { return { getEmail: function () { return 'admin@example.test'; } }; }
 };
 var Logger = { log: function () {} };
+// Cache réellement fonctionnel, en mémoire : permet de tester la couche de
+// persistance de session (sauvegarderPartie_ / chargerContexte_) telle quelle.
+var __cache = {};
 var CacheService = { getUserCache: function () { return {
-  get: function () { return null; }, put: function () {},
-  putAll: function () {}, getAll: function () { return {}; } }; } };
+  get: function (k) { return Object.prototype.hasOwnProperty.call(__cache, k) ? __cache[k] : null; },
+  put: function (k, v) { __cache[k] = v; },
+  putAll: function (o) { Object.keys(o).forEach(function (k) { __cache[k] = o[k]; }); },
+  remove: function (k) { delete __cache[k]; },
+  getAll: function (cles) {
+    var r = {};
+    cles.forEach(function (k) { if (Object.prototype.hasOwnProperty.call(__cache, k)) r[k] = __cache[k]; });
+    return r;
+  } }; } };
 var PropertiesService = { getScriptProperties: function () { return {
   getProperties: function () { return {}; }, getProperty: function () { return null; },
   setProperty: function () {}, deleteProperty: function () {} }; } };
@@ -48,7 +58,8 @@ var AdminDirectory = null, GroupsSettings = null;
 function charger(exports) {
   const src = fs.readdirSync(RACINE).filter(f => f.endsWith('.gs')).sort()
     .map(f => fs.readFileSync(path.join(RACINE, f), 'utf8')).join('\n');
-  return new Function(DOUBLURES + src + '\n; return { ' + exports.join(', ') + ' };')();
+  return new Function(DOUBLURES + src +
+    '\n; return { ' + exports.concat(['__cache']).join(', ') + ' };')();
 }
 
 // Micro-harnais : pas de dépendance, sortie lisible, code de sortie exploitable en CI.

@@ -38,12 +38,68 @@ function indexerPolitiques_(politiques) {
  * politique SYSTEM (valeur par défaut Google) : dès qu'il en existe une, la
  * valeur par défaut n'est plus appliquée nulle part.
  */
+/** La table des UO a-t-elle bien été collectée (et non simplement vide) ? */
+function unitesConnues_(ctx) {
+  return ctx.unitesCollectees === true;
+}
+
+/**
+ * Vrai si la politique cible l'unité organisationnelle racine.
+ * Orgunits.list ne retourne jamais la racine : un identifiant absent de la
+ * table de correspondance la désigne donc. À n'appeler que lorsque la table a
+ * effectivement été collectée — voir unitesConnues_.
+ */
+function cibleRacine_(ctx, p) {
+  const q = p.policyQuery || {};
+  if (!q.orgUnit || q.query) return false; // ciblage par groupe : pas la racine
+  const id = String(q.orgUnit).replace(/^orgUnits\//, '').replace(/^id:/, '');
+  return !(ctx.unites || {})[id];
+}
+
+/**
+ * Périmètres à évaluer pour un réglage, ou null s'il est absent de la réponse.
+ * Retour : { source, perimetres: [{ politique, herite, indetermine }] }
+ *
+ * Une politique ADMIN ciblant la racine remplace le défaut Google pour tout le
+ * tenant : SYSTEM ne s'applique alors nulle part. Mais si l'administrateur n'a
+ * configuré QUE des sous-UO — une dérogation sur /Marketing, la racine laissée
+ * telle quelle — le reste de l'organisation continue d'hériter de SYSTEM.
+ * Ne retenir que les politiques ADMIN reviendrait alors à n'auditer que
+ * /Marketing et à déclarer conforme un tenant dont le défaut est permissif.
+ *
+ * Sans la table des UO, la racine n'est pas identifiable : le défaut hérité est
+ * alors ajouté comme périmètre INDÉTERMINÉ, pour remonter À VÉRIFIER plutôt
+ * qu'un verdict fondé sur une hypothèse invérifiable.
+ */
 function lirePolitiques_(ctx, type) {
   const entree = ctx.policyIndex[type];
   if (!entree) return null;
-  if (entree.admin.length) return { source: 'ADMIN', politiques: entree.admin };
-  if (entree.system.length) return { source: 'SYSTEM (défaut Google)', politiques: entree.system };
-  return null;
+  if (!entree.admin.length) {
+    if (!entree.system.length) return null;
+    return {
+      source: 'SYSTEM (défaut Google)',
+      perimetres: [{ politique: entree.system[0], herite: true, indetermine: false }]
+    };
+  }
+  const perimetres = entree.admin.map(function (p) {
+    return { politique: p, herite: false, indetermine: false };
+  });
+  if (entree.system.length) {
+    if (!unitesConnues_(ctx)) {
+      perimetres.push({ politique: entree.system[0], herite: true, indetermine: true });
+    } else if (!entree.admin.some(function (p) { return cibleRacine_(ctx, p); })) {
+      perimetres.push({ politique: entree.system[0], herite: true, indetermine: false });
+    }
+  }
+  return { source: 'ADMIN', perimetres: perimetres };
+}
+
+/** Étiquette d'un périmètre, qu'il soit explicite ou hérité du défaut Google. */
+function etiquettePerimetre_(ctx, entree) {
+  if (!entree.herite) return libellePerimetre_(ctx, entree.politique);
+  return entree.indetermine
+    ? 'reste du tenant (héritage indéterminé — unités organisationnelles non collectées)'
+    : 'reste du tenant (défaut Google hérité, racine non configurée)';
 }
 
 /**
@@ -89,16 +145,20 @@ function evaluerParPerimetre_(ctx, type, evaluateur, descriptionAttendue) {
   const lot = lirePolitiques_(ctx, type);
   if (!lot) return null;
   const conformes = [], ecarts = [], indetermines = [];
-  lot.politiques.forEach(function (p) {
-    const valeur = (p.setting && p.setting.value) || {};
-    const trace = libellePerimetre_(ctx, p) + ' : ' + JSON.stringify(valeur);
+  lot.perimetres.forEach(function (e) {
+    const valeur = (e.politique.setting && e.politique.setting.value) || {};
+    const trace = etiquettePerimetre_(ctx, e) + ' : ' + JSON.stringify(valeur);
     let verdict;
-    try { verdict = evaluateur(valeur); } catch (e) { verdict = null; }
+    if (e.indetermine) {
+      verdict = null; // applicabilité du défaut non vérifiable
+    } else {
+      try { verdict = evaluateur(valeur); } catch (err) { verdict = null; }
+    }
     if (verdict === true) conformes.push(trace);
     else if (verdict === false) ecarts.push(trace);
     else indetermines.push(trace);
   });
-  const total = lot.politiques.length;
+  const total = lot.perimetres.length;
   // Un écart avéré sur un seul périmètre suffit à rendre le contrôle non
   // conforme : c'est la surface d'attaque réelle qui compte, pas la racine.
   const statut = ecarts.length ? STATUT.FAIL
@@ -119,8 +179,9 @@ function evaluerParPerimetre_(ctx, type, evaluateur, descriptionAttendue) {
 function resumePerimetres_(ctx, type) {
   const lot = lirePolitiques_(ctx, type);
   if (!lot) return '';
-  return ' | [' + lot.source + '] ' + listerPerimetres_(lot.politiques.map(function (p) {
-    return libellePerimetre_(ctx, p) + ' : ' + JSON.stringify((p.setting && p.setting.value) || {});
+  return ' | [' + lot.source + '] ' + listerPerimetres_(lot.perimetres.map(function (e) {
+    return etiquettePerimetre_(ctx, e) + ' : ' +
+      JSON.stringify((e.politique.setting && e.politique.setting.value) || {});
   }));
 }
 

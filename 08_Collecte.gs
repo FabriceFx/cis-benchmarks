@@ -41,7 +41,10 @@ function collecterEtape(token, etape, curseur) {
         (rep.organizationUnits || []).forEach(function (o) {
           table[String(o.orgUnitId).replace(/^id:/, '')] = o.orgUnitPath;
         });
-        sauvegarderPartie_(token, 'uo', table);
+        // ok: true distingue « aucune sous-UO » de « collecte en échec » —
+        // sans quoi un tenant sans sous-UO serait traité comme un tenant dont
+        // la table est inconnue, et tous ses contrôles passeraient À VÉRIFIER.
+        sauvegarderPartie_(token, 'uo', { ok: true, table: table });
         const n = Object.keys(table).length;
         return { termine: true, fait: n, total: n,
                  info: n + ' unité(s) organisationnelle(s) recensée(s), hors racine' };
@@ -99,6 +102,28 @@ function collecterEtape(token, etape, curseur) {
         return { termine: !pageToken, curseur: pageToken || null,
                  fait: existant.length, total: null,
                  info: existant.length + ' politique(s) lue(s)' + (pageToken ? ' — suite en cours' : '') };
+      }
+
+      case 'admins': {
+        // Requête ciblée : « isAdmin=true » retourne 100 % des super
+        // administrateurs en un appel, quel que soit l'effectif du tenant.
+        // Les déduire de la liste des utilisateurs plafonnée à
+        // MAX_UTILISATEURS laissait échapper tout super admin situé au-delà du
+        // plafond, faussant les contrôles 1.1.1, 1.1.2, 1.1.3 et 4.1.1.1.
+        const admins = [];
+        let pageAdm = null;
+        do {
+          const rep = AdminDirectory.Users.list({
+            customer: 'my_customer', query: 'isAdmin=true', maxResults: 500,
+            pageToken: pageAdm, projection: 'basic',
+            fields: 'nextPageToken,users(primaryEmail,isAdmin,isDelegatedAdmin,suspended,isEnrolledIn2Sv,isEnforcedIn2Sv,lastLoginTime)'
+          });
+          (rep.users || []).forEach(function (u) { admins.push(u); });
+          pageAdm = rep.nextPageToken;
+        } while (pageAdm);
+        sauvegarderPartie_(token, 'adm', { ok: true, liste: admins });
+        return { termine: true, fait: admins.length, total: admins.length,
+                 info: admins.length + ' super administrateur(s) recensé(s)' };
       }
 
       case 'utilisateurs': {
@@ -227,7 +252,7 @@ function collecterReglagesTranche(token, debut) {
 // CONSTRUCTION DU CONTEXTE (collecte des données une seule fois)
 // ---------------------------------------------------------------------------
 function construireContexte_() {
-  const ctx = { erreurs: [], niveau: CONFIG.NIVEAU_PROFIL, unites: {} };
+  const ctx = { erreurs: [], niveau: CONFIG.NIVEAU_PROFIL, unites: {}, unitesCollectees: false };
 
   // --- Unités organisationnelles (libellés des périmètres) -----------------
   try {
@@ -237,6 +262,7 @@ function construireContexte_() {
     (repUo.organizationUnits || []).forEach(function (o) {
       ctx.unites[String(o.orgUnitId).replace(/^id:/, '')] = o.orgUnitPath;
     });
+    ctx.unitesCollectees = true;
   } catch (e) {
     ctx.erreurs.push('Unités organisationnelles illisibles : ' + e.message +
       ' — les périmètres seront restitués sous forme d\'identifiants.');
@@ -253,14 +279,22 @@ function construireContexte_() {
       ' — Vérifier que le compte est super admin et que Cloud Identity API est activée sur le projet GCP.');
   }
 
-  // --- Utilisateurs (super admins, 2SV) ------------------------------------
+  // --- Utilisateurs (2SV, jetons) ------------------------------------------
   try {
     ctx.utilisateurs = recupererUtilisateurs_();
-    ctx.superAdmins = ctx.utilisateurs.filter(function (u) { return u.isAdmin && !u.suspended; });
   } catch (e) {
     ctx.utilisateurs = null;
-    ctx.superAdmins = null;
     ctx.erreurs.push('Directory API (users) : ' + e.message);
+  }
+
+  // --- Super administrateurs (requête ciblée, jamais un filtrage plafonné) --
+  try {
+    ctx.superAdmins = recupererSuperAdmins_().filter(function (u) { return !u.suspended; });
+    ctx.superAdminsExhaustifs = true;
+  } catch (e) {
+    ctx.superAdmins = null;
+    ctx.superAdminsExhaustifs = false;
+    ctx.erreurs.push('Directory API (super admins) : ' + e.message);
   }
 
   // --- Domaines -------------------------------------------------------------
@@ -311,6 +345,27 @@ function recupererPolitiques_() {
 // ---------------------------------------------------------------------------
 // ADMIN SDK — UTILISATEURS / GROUPES
 // ---------------------------------------------------------------------------
+/**
+ * Super administrateurs du tenant, par requête ciblée.
+ * « isAdmin=true » est évalué côté Google : le résultat est exhaustif quel que
+ * soit l'effectif, là où un filtrage de la liste des utilisateurs dépendait du
+ * plafond MAX_UTILISATEURS et pouvait manquer des comptes.
+ */
+function recupererSuperAdmins_() {
+  const admins = [];
+  let pageToken = null;
+  do {
+    const rep = AdminDirectory.Users.list({
+      customer: 'my_customer', query: 'isAdmin=true', maxResults: 500,
+      pageToken: pageToken, projection: 'basic',
+      fields: 'nextPageToken,users(primaryEmail,isAdmin,isDelegatedAdmin,suspended,isEnrolledIn2Sv,isEnforcedIn2Sv,lastLoginTime)'
+    });
+    (rep.users || []).forEach(function (u) { admins.push(u); });
+    pageToken = rep.nextPageToken;
+  } while (pageToken);
+  return admins;
+}
+
 function recupererUtilisateurs_() {
   const utilisateurs = [];
   let pageToken = null;

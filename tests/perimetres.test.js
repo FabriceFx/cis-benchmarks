@@ -15,8 +15,12 @@ const { STATUT, evaluerParPerimetre_, indexerPolitiques_ } = api;
 
 const P = (ou, val, type) => ({ type: type || 'ADMIN', policyQuery: { orgUnit: 'orgUnits/' + ou },
                                 setting: { type: 'settings/drive.ext', value: val } });
-const ctx = (pols, unites) => ({ policies: pols, policyIndex: indexerPolitiques_(pols),
-                                 unites: unites || { 'ou_prod': '/Production', 'ou_it': '/IT' } });
+// unitesCollectees distingue « aucune sous-UO » de « collecte en échec ».
+const ctx = (pols, unites, collectees) => ({
+  policies: pols, policyIndex: indexerPolitiques_(pols),
+  unites: unites || { 'ou_prod': '/Production', 'ou_it': '/IT' },
+  unitesCollectees: collectees !== false
+});
 const EV = v => v.partage === undefined ? null : v.partage === 'OFF';
 const T = [];
 const t = (nom, fn) => { try { fn(); T.push(['ok  ', nom]); } catch (e) { T.push(['KO  ', nom + ' → ' + e.message]); } };
@@ -42,9 +46,44 @@ t('un écart prime sur un indéterminé => NON CONFORME', () => {
 t('réglage absent => null (le contrôle remontera À VÉRIFIER)', () => {
   if (evaluerParPerimetre_(ctx([]), 'drive.ext', EV, 'x') !== null) throw new Error('non null');
 });
-t('ADMIN prime sur SYSTEM', () => {
+t('ADMIN sur la racine => le défaut SYSTEM ne s\'applique plus nulle part', () => {
   const r = evaluerParPerimetre_(ctx([P('racine123',{partage:'ON'}), P('sys',{partage:'OFF'},'SYSTEM')]), 'drive.ext', EV, 'x');
   eq(r.source, 'ADMIN', 'source'); eq(r.total, 1, 'total'); eq(r.statut, STATUT.FAIL, 'statut');
+});
+
+// Le défaut corrigé : une dérogation posée UNIQUEMENT sur une sous-UO laisse
+// le reste du tenant sur le défaut Google. N'évaluer que la sous-UO déclarait
+// conforme un tenant dont le défaut est permissif.
+t('ADMIN seulement sur une UO fille => le défaut hérité reste évalué', () => {
+  const r = evaluerParPerimetre_(
+    ctx([P('ou_prod',{partage:'OFF'}), P('sys',{partage:'ON'},'SYSTEM')]), 'drive.ext', EV, 'x');
+  eq(r.total, 2, 'total');
+  eq(r.statut, STATUT.FAIL, 'statut');
+  if (!/défaut Google hérité/.test(r.detail)) throw new Error('héritage non étiqueté : ' + r.detail);
+});
+
+t('UO fille conforme et défaut hérité conforme => CONFORME', () => {
+  const r = evaluerParPerimetre_(
+    ctx([P('ou_prod',{partage:'OFF'}), P('sys',{partage:'OFF'},'SYSTEM')]), 'drive.ext', EV, 'x');
+  eq(r.total, 2, 'total'); eq(r.statut, STATUT.PASS, 'statut');
+});
+
+// Le piège évité : un tenant sans sous-UO a une table vide mais collectée.
+// Le confondre avec un échec de collecte aurait fait basculer tout le
+// référentiel en À VÉRIFIER pour le cas le plus courant.
+t('tenant sans sous-UO : la racine reste identifiable, aucun faux indéterminé', () => {
+  const r = evaluerParPerimetre_(
+    ctx([P('racine123',{partage:'OFF'}), P('sys',{partage:'ON'},'SYSTEM')], {}, true), 'drive.ext', EV, 'x');
+  eq(r.total, 1, 'total'); eq(r.statut, STATUT.PASS, 'statut');
+});
+
+t('UO non collectées : le défaut hérité est indéterminé, jamais tranché', () => {
+  const r = evaluerParPerimetre_(
+    ctx([P('racine123',{partage:'OFF'}), P('sys',{partage:'ON'},'SYSTEM')], {}, false), 'drive.ext', EV, 'x');
+  eq(r.total, 2, 'total');
+  eq(r.statut, STATUT.REVIEW, 'statut');          // et surtout pas FAIL
+  eq(r.ecarts.length, 0, 'aucun écart prononcé');
+  if (!/héritage indéterminé/.test(r.detail)) throw new Error('non signalé : ' + r.detail);
 });
 t('sans ADMIN, le défaut SYSTEM est évalué', () => {
   const r = evaluerParPerimetre_(ctx([P('sys',{partage:'ON'},'SYSTEM')]), 'drive.ext', EV, 'x');

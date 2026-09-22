@@ -5,6 +5,25 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.5.0] - 2026-09-22
+
+### 🎯 Angle émotionnel : L'angle mort de l'angle mort
+> *La 5.2.0 avait fermé le faux négatif multi-UO. Une revue externe a montré qu'il en restait un cran plus loin, invisible à mes propres tests : quand aucune politique ne cible la racine, le reste du tenant continue d'hériter du défaut Google — et ce défaut n'était pas audité. Mesure faite sur les 87 contrôles : 13 d'entre eux répondaient `CONFORME` à un tenant dont le défaut est permissif.*
+
+### Corrigé / Fixed
+- **Le défaut Google hérité n'était plus évalué dès qu'une politique ADMIN existait**, y compris lorsque cette politique ne ciblait qu'une sous-UO. Concrètement : une dérogation posée sur `/Marketing` faisait sortir tout le reste de l'organisation du périmètre d'audit. `lirePolitiques_()` retourne désormais des **périmètres** plutôt qu'une liste brute, et réintroduit le défaut hérité — étiqueté « reste du tenant (défaut Google hérité, racine non configurée) » — quand aucune politique ADMIN ne cible la racine. Sur un tenant type, l'écart mesuré est de **16 `CONFORME` / 12 `NON CONFORME` avant, contre 3 / 25 après**.
+- **Les super administrateurs étaient déduits d'une liste plafonnée.** `ctx.superAdmins` était filtré depuis les `MAX_UTILISATEURS` premiers comptes (12 000 par défaut) : sur un tenant plus grand, tout super admin situé au-delà du plafond était invisible, faussant les contrôles `1.1.1`, `1.1.2`, `1.1.3` et `4.1.1.1`. Une étape de collecte dédiée interroge maintenant l'Admin SDK avec `query: 'isAdmin=true'`, exhaustif en un appel quel que soit l'effectif. Le filtrage plafonné ne subsiste qu'en repli, et ce repli est **signalé dans les avertissements de collecte du rapport**.
+
+### Ajouté / Added
+- **Distinction « aucune sous-UO » / « collecte en échec ».** Les deux produisent une table d'unités organisationnelles vide. Les confondre aurait fait basculer tout le référentiel en `À VÉRIFIER` pour le cas le plus courant — un tenant à UO unique. Un marqueur explicite (`unitesCollectees`) tranche ; sans table collectée, le défaut hérité est évalué comme **indéterminé**, jamais comme un écart.
+- **`tests/contexte.test.js`** : huit tests de la couche de persistance de session, jusqu'ici non couverte. Le harnais fournit désormais un `CacheService` réellement fonctionnel en mémoire, ce qui permet d'exercer `sauvegarderPartie_` et `chargerContexte_` telles quelles.
+- Deux scénarios dans `tests/controles.test.js` — `defaut-herite-permissif` et `unites-non-collectees` — et cinq tests dans `tests/perimetres.test.js`. **Aucun scénario existant ne contenait de politique `SYSTEM`** : la suite était structurellement aveugle à ce défaut, ce qui explique que 35 tests verts ne l'aient pas vu. La suite compte désormais 51 tests.
+
+### Note
+Ce correctif provient d'une revue de code externe (`REVUE_EXPERTE.md`). Les autres points qu'elle soulève — styles codés en dur de l'onglet Synthèse, vectorisation des `setBackground`, timeout du mode batch, éviction du cache, pré-collecte DNS, journal des dérogations inaccessible — restent à traiter.
+
+---
+
 ## [5.4.0] - 2026-09-22
 
 ### 🎯 Angle émotionnel : Filet

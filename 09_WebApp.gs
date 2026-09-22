@@ -65,6 +65,7 @@ function demarrerSession(niveauProfil) {
     etapes: [
       { cle: 'domaines',     libelle: 'Domaines du tenant' },
       { cle: 'unites',       libelle: 'Unités organisationnelles' },
+      { cle: 'admins',       libelle: 'Super administrateurs' },
       { cle: 'politiques',   libelle: 'Politiques Cloud Identity (réglages console)' },
       { cle: 'utilisateurs', libelle: 'Utilisateurs (admins, état 2SV)' },
       { cle: 'groupes',      libelle: 'Liste des groupes' },
