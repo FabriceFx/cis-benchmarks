@@ -1626,7 +1626,6 @@
     const btn = document.getElementById('btnExport');
     btn.disabled = true; btn.textContent = langActuelle === 'en' ? 'Generating report…' : 'Génération du rapport…';
     journal(langActuelle === 'en' ? 'Generating Google Sheets report…' : 'Génération du rapport Google Sheets…');
-    const liste = controles.map(c => resultats[c.id]).filter(Boolean);
     google.script.run
       .withSuccessHandler(url => {
         btn.disabled = false; btn.textContent = t('btnExport');
@@ -1640,7 +1639,7 @@
         journal('Export failed: ' + e.message, 'err');
         afficherAvert('Export failed: ' + e.message);
       })
-      .genererRapportSheets(token, liste, langActuelle);
+      .genererRapportSheets(token, langActuelle);
   }
 
   // ---------- Envoi par e-mail ----------
@@ -1672,7 +1671,6 @@
     const btn = document.getElementById('emailEnvoyer');
     btn.disabled = true;
     btn.textContent = langActuelle === 'en' ? 'Sending…' : 'Envoi…';
-    const liste = controles.map(c => resultats[c.id]).filter(Boolean);
     google.script.run
       .withSuccessHandler(r => {
         fermerEmail();
@@ -1689,7 +1687,7 @@
         err.textContent = msgErreur(e);
         err.style.display = 'inline';
       })
-      .envoyerRapportEmail(token, liste, {
+      .envoyerRapportEmail(token, {
         destinataires: dest,
         objet: document.getElementById('emailObjet').value.trim(),
         message: document.getElementById('emailMessage').value,

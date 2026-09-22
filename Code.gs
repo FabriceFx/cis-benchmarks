@@ -78,7 +78,12 @@ const CONFIG = {
   // Sélecteurs DKIM testés sur chaque domaine
   SELECTEURS_DKIM: ['google', 'default', 'selector1', 'selector2'],
   // Nom du classeur de rapport
-  NOM_RAPPORT: 'Audit CIS Google Workspace v1.4'
+  NOM_RAPPORT: 'Audit CIS Google Workspace v1.4',
+  // Domaines autorisés EN PLUS de ceux du tenant pour l'envoi du rapport.
+  // Un rapport d'audit décrit la posture de sécurité complète du tenant :
+  // sa diffusion hors du domaine doit être un choix explicite et tracé.
+  // Exemple : ['cabinet-audit.example'].
+  DOMAINES_DESTINATAIRES: []
 };
 
 const STATUT = {
@@ -92,9 +97,72 @@ const STATUT = {
 };
 
 // ---------------------------------------------------------------------------
+// CONTRÔLE D'ACCÈS
+// ---------------------------------------------------------------------------
+// L'application web est déployée en USER_ACCESSING / DOMAIN : toute fonction
+// publique (sans suffixe « _ ») est appelable par n'importe quel utilisateur du
+// domaine via google.script.run. Les actions qui écrivent dans un état PARTAGÉ
+// (registre des dérogations, dans les ScriptProperties) ou qui diffusent des
+// données d'audit doivent donc vérifier le rôle côté serveur.
+// ---------------------------------------------------------------------------
+
+/**
+ * Vérifie que l'appelant est super administrateur du tenant, sinon lève.
+ * Retourne son adresse, à des fins de journalisation.
+ */
+function exigerSuperAdmin_() {
+  const email = Session.getEffectiveUser().getEmail();
+  if (!email) throw new Error('Utilisateur non identifiable — action refusée.');
+  let u;
+  try {
+    u = AdminDirectory.Users.get(email, { fields: 'isAdmin' });
+  } catch (e) {
+    throw new Error('Vérification du rôle impossible (' + e.message + ') — action refusée.');
+  }
+  if (!u || !u.isAdmin) {
+    throw new Error('Action réservée aux super administrateurs du tenant (' + email + ').');
+  }
+  return email;
+}
+
+/**
+ * Sérialise une opération sur un état partagé. Le registre des dérogations
+ * subit un lire-modifier-écrire : sans verrou, deux acceptations simultanées
+ * se perdent mutuellement.
+ */
+function avecVerrou_(operation) {
+  const verrou = LockService.getScriptLock();
+  if (!verrou.tryLock(15000)) {
+    throw new Error('Registre des dérogations momentanément occupé — réessayer dans un instant.');
+  }
+  try {
+    return operation();
+  } finally {
+    verrou.releaseLock();
+  }
+}
+
+/** Journal d'audit borné des mouvements du registre des dérogations. */
+function journaliserDerogation_(action, id, email, details) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const brut = props.getProperty('cis_journal_derog');
+    const journal = brut ? JSON.parse(brut) : [];
+    journal.push({
+      action: action, id: id, par: email, details: String(details || '').slice(0, 300),
+      horodatage: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss')
+    });
+    // Une valeur de ScriptProperties plafonne à 9 Ko : on purge les plus anciennes.
+    while (JSON.stringify(journal).length > 8000 && journal.length > 1) journal.shift();
+    props.setProperty('cis_journal_derog', JSON.stringify(journal));
+  } catch (e) { /* meilleur effort : ne jamais faire échouer l'opération métier */ }
+}
+
+// ---------------------------------------------------------------------------
 // POINT D'ENTRÉE PRINCIPAL
 // ---------------------------------------------------------------------------
 function lancerAuditCIS() {
+  exigerSuperAdmin_();
   const debut = new Date();
   const ctx = construireContexte_();
   const resultats = [];
@@ -484,6 +552,7 @@ function doGet() {
 
 /** Ouvre une session d'audit : immédiat (aucune collecte), retourne le plan. */
 function demarrerSession(niveauProfil) {
+  const appelant = exigerSuperAdmin_();
   if (niveauProfil === 'L1' || niveauProfil === 'L2') CONFIG.NIVEAU_PROFIL = niveauProfil;
   const token = Utilities.getUuid();
   sauvegarderPartie_(token, 'err', []);
@@ -494,14 +563,14 @@ function demarrerSession(niveauProfil) {
   return {
     token: token,
     niveau: CONFIG.NIVEAU_PROFIL,
-    compte: Session.getActiveUser().getEmail(),
+    compte: appelant,
     version: CONFIG.VERSION,
     config: {
       maxUtilisateurs: CONFIG.MAX_UTILISATEURS,
       maxGroupes: CONFIG.MAX_GROUPES,
       groupesParAppel: CONFIG.GROUPES_PAR_APPEL
     },
-    derogations: listerDerogations(),
+    derogations: listerDerogations_(),
     controles: DEFINITION_CONTROLES.map(function (c) {
       return {
         id: c.id,
@@ -731,18 +800,25 @@ function collecterReglagesTranche(token, debut) {
 // Stockage : ScriptProperties => durable (pas de TTL) et partagé entre les
 // administrateurs qui utilisent la WebApp.
 // ---------------------------------------------------------------------------
-function listerDerogations() {
+/** Lecture interne, sans contrôle de rôle : réservée aux appelants déjà gardés. */
+function listerDerogations_() {
   const props = PropertiesService.getScriptProperties().getProperties();
   const map = {};
   Object.keys(props).forEach(function (k) {
-    if (k.indexOf('derog_') === 0) {
-      try { map[k.substring(6)] = JSON.parse(props[k]); } catch (e) { /* entrée corrompue : ignorée */ }
-    }
+    if (k.indexOf('derog_') !== 0) return;
+    try { map[k.substring(6)] = JSON.parse(props[k]); } catch (e) { /* entrée corrompue : ignorée */ }
   });
   return map;
 }
 
+/** Point d'entrée public : expose qui a accepté quoi, donc réservé aux admins. */
+function listerDerogations() {
+  exigerSuperAdmin_();
+  return listerDerogations_();
+}
+
 function enregistrerDerogation(id, motif, dureeMois) {
+  const appelant = exigerSuperAdmin_();
   if (!motif || !String(motif).trim()) {
     throw new Error('Un motif est obligatoire pour accepter un écart.');
   }
@@ -752,19 +828,28 @@ function enregistrerDerogation(id, motif, dureeMois) {
   const entree = {
     id: id,
     motif: String(motif).trim().slice(0, 1000),
-    par: Session.getActiveUser().getEmail(),
+    par: appelant,
     date: Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd'),
     revision: (dureeMois && Number(dureeMois) > 0)
       ? Utilities.formatDate(new Date(Date.now() + Number(dureeMois) * 30.44 * 86400000), tz, 'yyyy-MM-dd')
       : null // null = permanente (revue au prochain audit tout de même)
   };
-  PropertiesService.getScriptProperties().setProperty('derog_' + id, JSON.stringify(entree));
-  return entree;
+  return avecVerrou_(function () {
+    PropertiesService.getScriptProperties().setProperty('derog_' + id, JSON.stringify(entree));
+    journaliserDerogation_('ACCEPTATION', id, appelant, entree.motif);
+    return entree;
+  });
 }
 
 function revoquerDerogation(id) {
-  PropertiesService.getScriptProperties().deleteProperty('derog_' + id);
-  return true;
+  const appelant = exigerSuperAdmin_();
+  return avecVerrou_(function () {
+    const props = PropertiesService.getScriptProperties();
+    const avant = props.getProperty('derog_' + id);
+    props.deleteProperty('derog_' + id);
+    journaliserDerogation_('RÉVOCATION', id, appelant, avant || '');
+    return true;
+  });
 }
 
 /** Exécute un ou plusieurs contrôles sur le contexte collecté. */
@@ -789,7 +874,7 @@ function executerControles(token, ids, niveauProfil) {
         res = { statut: STATUT.ERROR, detail: 'Exception : ' + e.message };
       }
     }
-    return {
+    const sortie = {
       id: ctrl.id,
       level: ctrl.level,
       titre: ctrl.titre,
@@ -801,12 +886,16 @@ function executerControles(token, ids, niveauProfil) {
       risque: risquePour_(ctrl.id),
       risqueEn: risquePourEn_(ctrl.id)
     };
+    sauvegarderResultat_(token, sortie); // le serveur garde l'original
+    return sortie;
   });
 }
 
 /** Génère le rapport Google Sheets à partir des résultats accumulés. */
-function genererRapportSheets(token, resultats, lang) {
+function genererRapportSheets(token, lang) {
+  exigerSuperAdmin_();
   lang = (lang === 'en') ? 'en' : (CONFIG.LANGUE || 'fr');
+  const resultats = chargerResultats_(token); // jamais le tableau du navigateur
   let ctx;
   try {
     ctx = chargerContexte_(token);
@@ -822,7 +911,19 @@ function genererRapportSheets(token, resultats, lang) {
 // ---------------------------------------------------------------------------
 // ENVOI DU RAPPORT PAR E-MAIL
 // ---------------------------------------------------------------------------
-function envoyerRapportEmail(token, resultats, options, lang) {
+/** Domaines vers lesquels la diffusion du rapport est autorisée. */
+function domainesDestinatairesAutorises_(token, appelant) {
+  const liste = [];
+  try {
+    (chargerPartie_(token, 'dom') || []).forEach(function (d) { liste.push(String(d).toLowerCase()); });
+  } catch (e) { /* collecte des domaines indisponible */ }
+  if (!liste.length && appelant) liste.push(String(appelant).split('@').pop().toLowerCase());
+  (CONFIG.DOMAINES_DESTINATAIRES || []).forEach(function (d) { liste.push(String(d).toLowerCase()); });
+  return liste;
+}
+
+function envoyerRapportEmail(token, options, lang) {
+  const appelant = exigerSuperAdmin_();
   options = options || {};
   lang = (lang === 'en') ? 'en' : ((options && options.lang === 'en') ? 'en' : (CONFIG.LANGUE || 'fr'));
   const dests = String(options.destinataires || '')
@@ -832,8 +933,22 @@ function envoyerRapportEmail(token, resultats, options, lang) {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d)) throw new Error('Adresse invalide : ' + d);
   });
 
+  // Un rapport d'audit décrit la posture de sécurité complète du tenant : sa
+  // diffusion hors du domaine doit être un choix explicite, pas un défaut.
+  const autorises = domainesDestinatairesAutorises_(token, appelant);
+  const refuses = dests.filter(function (d) {
+    return autorises.indexOf(d.split('@').pop().toLowerCase()) === -1;
+  });
+  if (refuses.length) {
+    throw new Error('Diffusion hors périmètre refusée pour : ' + refuses.join(', ') +
+      '. Domaines autorisés : ' + autorises.join(', ') +
+      '. Pour ouvrir à un destinataire externe, ajouter son domaine à CONFIG.DOMAINES_DESTINATAIRES.');
+  }
+
+  const resultats = chargerResultats_(token); // jamais le tableau du navigateur
+
   // Statut effectif (dérogations appliquées) + décomptes
-  const derog = listerDerogations();
+  const derog = listerDerogations_();
   const enrichis = resultats.map(function (r) {
     return Object.assign({}, r, {
       statutEffectif: (r.statut === STATUT.FAIL && derog[r.id]) ? STATUT.ACCEPTED : r.statut
@@ -847,7 +962,7 @@ function envoyerRapportEmail(token, resultats, options, lang) {
 
   // Rapport Sheets joint en lien (généré maintenant, avec ses 5 onglets)
   let url = null;
-  if (options.joindreLien) url = genererRapportSheets(token, resultats, lang);
+  if (options.joindreLien) url = genererRapportSheets(token, lang);
 
   const dateFr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm');
   const objet = options.objet ||
@@ -979,6 +1094,54 @@ function chargerSnapshotPolitiques_() {
     }
     return JSON.parse(Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(b64), 'application/x-gzip')).getDataAsString());
   } catch (e) { return null; }
+}
+
+// --- Résultats de contrôle : le serveur fait autorité -----------------------
+// Le rapport et l'e-mail ne doivent jamais être construits à partir d'un
+// tableau de résultats fourni par le navigateur : il serait trivial d'émettre
+// un rapport « 100 % conforme » portant la signature de l'outil. Chaque
+// contrôle exécuté est donc consigné sous sa propre clé, déterministe, ce qui
+// évite tout écrasement entre les exécutions parallèles de la phase 2.
+function sauvegarderResultat_(token, resultat) {
+  try {
+    CacheService.getUserCache().put(
+      'cisr_' + token + '_' + resultat.id, JSON.stringify(resultat), 21600);
+  } catch (e) { /* un résultat non consigné réapparaîtra en « non exécuté » */ }
+}
+
+/**
+ * Relit l'intégralité des résultats depuis le cache serveur. Un contrôle sans
+ * résultat consigné est restitué explicitement — HORS PROFIL s'il est exclu du
+ * profil de la session, ERREUR sinon — plutôt qu'omis silencieusement.
+ */
+function chargerResultats_(token) {
+  const niveau = niveauSession_(token);
+  const cles = DEFINITION_CONTROLES.map(function (c) { return 'cisr_' + token + '_' + c.id; });
+  const bruts = CacheService.getUserCache().getAll(cles) || {};
+  let consignes = 0;
+  const resultats = DEFINITION_CONTROLES.map(function (c) {
+    const brut = bruts['cisr_' + token + '_' + c.id];
+    if (brut) {
+      try {
+        const r = JSON.parse(brut);
+        consignes++;
+        return r;
+      } catch (e) { /* entrée illisible : traitée comme non exécutée */ }
+    }
+    const exclu = (c.level === 'L2' && niveau === 'L1');
+    return {
+      id: c.id, level: c.level, titre: c.titre, titreEn: c.titreEn || c.titre,
+      statut: exclu ? STATUT.SKIP : STATUT.ERROR,
+      detail: exclu ? 'Contrôle L2 exclu du profil L1.'
+                    : 'Contrôle non exécuté, ou résultat expiré du cache de session.',
+      remediation: c.remediation || '', remediationEn: c.remediationEn || '',
+      risque: risquePour_(c.id), risqueEn: risquePourEn_(c.id)
+    };
+  });
+  if (!consignes) {
+    throw new Error('Aucun résultat d\'audit en session — relancer l\'audit avant d\'exporter.');
+  }
+  return resultats;
 }
 
 // --- Cache par partie (gzip + fragments < 100 Ko, 6 h) ----------------------
@@ -2354,7 +2517,7 @@ function ecrireRapport_(resultats, ctx, debut, lang) {
 
   // --- Dérogations : statut effectif = ÉCART ACCEPTÉ pour les NON CONFORME
   //     couverts par une acceptation formelle du registre.
-  const derogations = listerDerogations();
+  const derogations = listerDerogations_();
   resultats = resultats.map(function (r) {
     const d = derogations[r.id];
     const effectif = (r.statut === STATUT.FAIL && d) ? STATUT.ACCEPTED : r.statut;
