@@ -41,6 +41,13 @@
  *   5.0.0  Alignement sur le benchmark CIS v1.4 : renumérotation Drive
  *          for desktop (3.1.2.3.1), retrait Add-Ons et LSA (supprimés du
  *          CIS v1.4), mise à jour de toutes les références textuelles
+ *   5.1.0  Contrôle d'accès super admin sur les fonctions exposées, résultats
+ *          d'audit faisant autorité côté serveur, verrouillage du registre
+ *          des dérogations, périmètre de diffusion du rapport, correction de
+ *          l'interprétation des libellés d'énumération et de la résolution DNS
+ *
+ *  NOTE : cet historique fait doublon avec CHANGELOG.md, qui reste la source
+ *  de vérité. Consolidation prévue au prochain découpage en modules.
  *
  *  POINTS D'ENTRÉE :
  *   - WebApp (progressif, contrôle par contrôle) : déployer en application web,
@@ -57,7 +64,7 @@ const CONFIG = {
   // Affichée dans le footer de la WebApp (injectée par doGet), dans le journal
   // et dans la synthèse du rapport : si le footer n'affiche pas la version
   // attendue après une mise à jour, le redéploiement n'a pas été fait.
-  VERSION: '5.0.1',
+  VERSION: '5.1.0',
   // 'L1' = contrôles de niveau 1 uniquement, 'L2' = niveaux 1 + 2
   NIVEAU_PROFIL: 'L2',
   // Langue par défaut du script

@@ -5,6 +5,37 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.1.0] - 2026-09-22
+
+### 🎯 Angle émotionnel : Confiance
+> *Un outil de conformité ne vaut que par la confiance qu'on peut placer dans son verdict. La version 5.1.0 s'attaque à ce qui l'entamait : les valeurs mal interprétées, les pannes réseau prises pour des écarts, et le fait qu'un rapport pouvait être produit sans que le serveur ne l'ait vraiment calculé.*
+
+### Sécurité / Security
+- **Contrôle d'accès sur les fonctions exposées** : l'application web étant déployée en `USER_ACCESSING` / `DOMAIN`, toute fonction publique est appelable par n'importe quel utilisateur du domaine via `google.script.run`. `exigerSuperAdmin_()` garde désormais `demarrerSession`, `lancerAuditCIS`, `listerDerogations`, `enregistrerDerogation`, `revoquerDerogation`, `genererRapportSheets` et `envoyerRapportEmail`. Un utilisateur ordinaire pouvait jusqu'ici révoquer une acceptation de risque ou lire les motifs de dérogation.
+- **Intégrité des rapports** : `genererRapportSheets` et `envoyerRapportEmail` recevaient les résultats depuis le navigateur — un rapport « 100 % conforme » pouvait être forgé puis diffusé sous la signature de l'outil. `executerControles` consigne désormais chaque résultat côté serveur sous une clé déterministe, et `chargerResultats_()` les relit. Un contrôle sans résultat consigné est restitué explicitement (`HORS PROFIL` s'il est exclu du profil, `ERREUR` sinon) au lieu d'être omis silencieusement.
+- **Périmètre de diffusion** : les destinataires du rapport doivent appartenir à un domaine du tenant, ou à un domaine listé dans la nouvelle clé `CONFIG.DOMAINES_DESTINATAIRES`. La transmission hors du domaine devient un choix explicite et tracé.
+- **Verrouillage du registre des dérogations** : `avecVerrou_()` (`LockService`) sérialise le lire-modifier-écrire des `ScriptProperties` ; deux acceptations simultanées se perdaient mutuellement.
+- **Journal d'audit** : acceptations et révocations sont tracées (auteur, horodatage, motif) dans un journal borné.
+
+### Corrigé / Fixed
+- **Interprétation des libellés d'énumération (`estDesactive_`)** : le test s'effectuait en sous-chaîne. `NONE_ALLOWED` et `SHARING_OFF_DOMAIN` étaient donc lus comme « désactivé ». Le jeton discriminant est désormais ancré en fin de libellé, et un libellé non reconnu remonte `À VÉRIFIER` plutôt qu'un verdict potentiellement faux. **Attention** : ce resserrement peut faire basculer en `À VÉRIFIER` des contrôles jusqu'ici tranchés à tort — c'est le comportement attendu.
+- **Niveau de profil perdu entre deux appels** : chaque `google.script.run` étant une exécution neuve, `CONFIG.NIVEAU_PROFIL` repartait de sa valeur par défaut. Le rapport Sheets et l'e-mail annonçaient toujours « L1 + L2 », même après un audit L1. Le niveau est désormais persisté dans la session.
+- **DNS (SPF / DKIM / DMARC)** : `resoudreTXT_()` remplace `requeteTXT_()` et distingue une absence certaine (`NOERROR` / `NXDOMAIN`) d'une résolution en échec (`SERVFAIL`, HTTP, réseau), avec trois tentatives et temporisation exponentielle. Une panne DNS transitoire remontait `NON CONFORME` ; elle remonte maintenant `À VÉRIFIER`. Seules les réponses de type 16 sont retenues : les chaînes `CNAME` des cibles DKIM étaient auparavant prises pour des enregistrements TXT.
+- **Pagination de l'étape « groupes »** : la boucle n'était pas bornée. À 3 000 groupes, elle enchaînait quinze appels Directory dans un seul appel serveur et pouvait approcher la limite des 6 minutes. Elle respecte désormais `CONFIG.PAGES_PAR_APPEL` et reprend proprement sur quota, comme les autres étapes.
+- **Traductions anglaises erronées** : les `remediationEn` des contrôles `6.1`, `6.2`, `6.3` et `6.8` étaient recopiées des chapitres Gmail et Groups. Elles pointent désormais la procédure des règles d'alerte.
+- **Troncature du constat (WebApp)** : le découpage s'appliquait après l'échappement HTML, ce qui pouvait couper une entité en deux (`&am`) et afficher « … » à tort. L'ordre est inversé.
+
+### Modifié / Changed
+- **Signatures serveur** : `genererRapportSheets(token, lang)` et `envoyerRapportEmail(token, options, lang)` — le tableau de résultats n'est plus transmis par le client.
+- Nouvelle clé `CONFIG.PAGES_PAR_APPEL` (défaut : `4`), appliquée uniformément aux étapes `politiques`, `utilisateurs` et `groupes`.
+- Nouvelle clé `CONFIG.DOMAINES_DESTINATAIRES` (défaut : `[]`, soit les domaines du tenant uniquement).
+
+### Supprimé / Removed
+- `case 'reglages'` de `collecterEtape()`, devenu code mort depuis le passage aux tranches parallèles de `collecterReglagesTranche()`.
+- `requeteTXT_()`, remplacée par `resoudreTXT_()`.
+
+---
+
 ## [5.0.1] - 2026-08-25
 
 ### 🎯 Angle émotionnel : Douleur

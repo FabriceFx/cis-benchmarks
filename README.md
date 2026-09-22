@@ -16,6 +16,7 @@ Outil d'audit automatisé et interactif qui vérifie la configuration d'un tenan
 - [Utilisation](#-utilisation)
 - [Configuration](#-configuration)
 - [Statuts de contrôle](#-statuts-de-contrôle)
+- [Limites connues](#-limites-connues)
 - [Licence](#-licence)
 - [Auteur](#-auteur)
 
@@ -109,7 +110,9 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 
 | Clé | Valeur par défaut | Description |
 |---|---|---|
-| `VERSION` | `5.0.0` | Version de l'application (affichée dans l'UI et le rapport). |
+| `VERSION` | `5.1.0` | Version de l'application (affichée dans l'UI et le rapport). |
+| `DOMAINES_DESTINATAIRES` | `[]` | Domaines autorisés **en plus** de ceux du tenant pour l'envoi du rapport par e-mail. Vide = diffusion interne uniquement. |
+| `PAGES_PAR_APPEL` | `4` | Pages d'API lues au maximum par appel serveur (écarte la limite des 6 minutes). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` pour les contrôles de base, `'L2'` pour les profils renforcés L1 + L2. |
 | `MAX_UTILISATEURS` | `12000` | Plafond d'utilisateurs audités pour les vérifications individuelles (2SV, tokens). |
 | `MAX_GROUPES` | `3000` | Plafond de groupes audités via la Groups Settings API. |
@@ -130,6 +133,18 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 | ⚠️ | **ERREUR** | Incident technique lors de l'interrogation de l'API. |
 | ⏭️ | **HORS PROFIL** | Contrôle L2 ignoré lors d'un audit ciblé profil L1. |
 | 🤝 | **ÉCART ACCEPTÉ** | Dérogation validée et tracée dans le registre des dérogations. |
+
+---
+
+## ⚠️ Limites connues
+
+Un outil de conformité vaut par la lucidité sur ce qu'il ne couvre pas. Les limites actuelles :
+
+- **Évaluation à l'échelle de l'unité organisationnelle racine.** Lorsqu'un réglage est défini différemment sur plusieurs UO, seule la politique de l'UO racine est évaluée ; les autres sont signalées dans le constat mais ne changent pas le statut. Un réglage permissif sur une UO fille peut donc remonter `CONFORME`.
+- **Correspondance des champs de la Policy API.** Les noms de champs sont résolus par une liste d'alias. Si Google fait évoluer le schéma, le contrôle remonte `À VÉRIFIER` plutôt qu'un verdict erroné — mais il faut alors mettre l'outil à jour.
+- **16 contrôles sur 87 restent manuels**, faute d'exposition par les API Google (règles d'alerte, quarantaines, etc.).
+- **Accès super administrateur obligatoire.** Depuis la version 5.1.0, toutes les fonctions exposées le vérifient côté serveur.
+- **Le document PDF officiel du CIS fait foi** pour toute interprétation d'une recommandation.
 
 ---
 
@@ -167,6 +182,7 @@ Automated and interactive audit tool that checks your Google Workspace tenant co
 - [Usage](#-usage-1)
 - [Configuration](#-configuration-1)
 - [Control Statuses](#-control-statuses-1)
+- [Known limitations](#-known-limitations)
 - [License](#-license-1)
 - [Author](#-author--credits)
 
@@ -260,7 +276,9 @@ Key settings can be updated in `CONFIG` in `Code.gs`:
 
 | Key | Default | Description |
 |---|---|---|
-| `VERSION` | `5.0.0` | Application version. |
+| `VERSION` | `5.1.0` | Application version. |
+| `DOMAINES_DESTINATAIRES` | `[]` | Domains allowed **in addition to** the tenant's own for emailing the report. Empty = internal distribution only. |
+| `PAGES_PAR_APPEL` | `4` | Maximum API pages read per server call (keeps each call clear of the 6-minute limit). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` for Level 1 only, `'L2'` for full Level 1 + Level 2 audit. |
 | `MAX_UTILISATEURS` | `12000` | Max users analyzed for per-user checks. |
 | `MAX_GROUPES` | `3000` | Max groups audited via Groups Settings API. |
@@ -281,6 +299,18 @@ Key settings can be updated in `CONFIG` in `Code.gs`:
 | ⚠️ | **ERREUR** | Technical failure during check execution. |
 | ⏭️ | **HORS PROFIL** | Level 2 control skipped during Level 1 audit. |
 | 🤝 | **ÉCART ACCEPTÉ** | Risk formally accepted in deviation register. |
+
+---
+
+## ⚠️ Known limitations
+
+A compliance tool is only as good as its honesty about what it does not cover. Current limitations:
+
+- **Evaluation at the root organizational unit.** When a setting is defined differently across several OUs, only the root OU policy is evaluated; the others are reported in the finding but do not change the status. A permissive setting on a child OU may therefore report `CONFORME`.
+- **Policy API field mapping.** Field names are resolved through an alias list. If Google changes the schema, the control reports `À VÉRIFIER` rather than a wrong verdict — but the tool then needs updating.
+- **16 of the 87 controls remain manual**, as they are not exposed by Google APIs (alert rules, quarantines, etc.).
+- **Super Admin access is mandatory.** Since version 5.1.0 every exposed function enforces this server-side.
+- **The official CIS PDF is authoritative** for interpreting any recommendation.
 
 ---
 
