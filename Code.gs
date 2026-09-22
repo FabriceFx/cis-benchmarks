@@ -45,6 +45,9 @@
  *          d'audit faisant autorité côté serveur, verrouillage du registre
  *          des dérogations, périmètre de diffusion du rapport, correction de
  *          l'interprétation des libellés d'énumération et de la résolution DNS
+ *   5.2.0  Évaluation par unité organisationnelle : tous les périmètres où un
+ *          réglage est explicitement défini sont évalués, le pire statut
+ *          l'emporte, et le constat nomme les UO en écart
  *
  *  NOTE : cet historique fait doublon avec CHANGELOG.md, qui reste la source
  *  de vérité. Consolidation prévue au prochain découpage en modules.
@@ -64,7 +67,7 @@ const CONFIG = {
   // Affichée dans le footer de la WebApp (injectée par doGet), dans le journal
   // et dans la synthèse du rapport : si le footer n'affiche pas la version
   // attendue après une mise à jour, le redéploiement n'a pas été fait.
-  VERSION: '5.1.0',
+  VERSION: '5.2.0',
   // 'L1' = contrôles de niveau 1 uniquement, 'L2' = niveaux 1 + 2
   NIVEAU_PROFIL: 'L2',
   // Langue par défaut du script
@@ -590,6 +593,7 @@ function demarrerSession(niveauProfil) {
     }),
     etapes: [
       { cle: 'domaines',     libelle: 'Domaines du tenant' },
+      { cle: 'unites',       libelle: 'Unités organisationnelles' },
       { cle: 'politiques',   libelle: 'Politiques Cloud Identity (réglages console)' },
       { cle: 'utilisateurs', libelle: 'Utilisateurs (admins, état 2SV)' },
       { cle: 'groupes',      libelle: 'Liste des groupes' },
@@ -623,6 +627,23 @@ function collecterEtape(token, etape, curseur) {
         sauvegarderPartie_(token, 'dom', doms);
         return { termine: true, fait: doms.length, total: doms.length,
                  info: doms.length + ' domaine(s) : ' + doms.join(', ') };
+      }
+
+      case 'unites': {
+        // Table de correspondance identifiant -> chemin d'UO. Sans elle, les
+        // écarts par périmètre seraient restitués sous forme d'identifiants
+        // opaques, inexploitables dans un plan d'actions.
+        const rep = AdminDirectory.Orgunits.list('my_customer', {
+          type: 'all', fields: 'organizationUnits(orgUnitId,orgUnitPath)'
+        });
+        const table = {};
+        (rep.organizationUnits || []).forEach(function (o) {
+          table[String(o.orgUnitId).replace(/^id:/, '')] = o.orgUnitPath;
+        });
+        sauvegarderPartie_(token, 'uo', table);
+        const n = Object.keys(table).length;
+        return { termine: true, fait: n, total: n,
+                 info: n + ' unité(s) organisationnelle(s) recensée(s), hors racine' };
       }
 
       case 'politiques': {
@@ -1201,7 +1222,8 @@ function chargerContexte_(token) {
     utilisateurs: usr,
     groupes: grp,
     erreurs: err,
-    niveau: niveauSession_(token)
+    niveau: niveauSession_(token),
+    unites: chargerPartie_(token, 'uo') || {}
   };
   // Assemblage des tranches de réglages de groupes (clés déterministes)
   if (ctx.groupes && ctx.groupes.length) {
@@ -1231,7 +1253,20 @@ function chargerContexte_(token) {
 // CONSTRUCTION DU CONTEXTE (collecte des données une seule fois)
 // ---------------------------------------------------------------------------
 function construireContexte_() {
-  const ctx = { erreurs: [], niveau: CONFIG.NIVEAU_PROFIL };
+  const ctx = { erreurs: [], niveau: CONFIG.NIVEAU_PROFIL, unites: {} };
+
+  // --- Unités organisationnelles (libellés des périmètres) -----------------
+  try {
+    const repUo = AdminDirectory.Orgunits.list('my_customer', {
+      type: 'all', fields: 'organizationUnits(orgUnitId,orgUnitPath)'
+    });
+    (repUo.organizationUnits || []).forEach(function (o) {
+      ctx.unites[String(o.orgUnitId).replace(/^id:/, '')] = o.orgUnitPath;
+    });
+  } catch (e) {
+    ctx.erreurs.push('Unités organisationnelles illisibles : ' + e.message +
+      ' — les périmètres seront restitués sous forme d\'identifiants.');
+  }
 
   // --- Politiques Cloud Identity -------------------------------------------
   try {
@@ -1320,60 +1355,116 @@ function indexerPolitiques_(politiques) {
 }
 
 /**
- * Retourne { valeur, source, multiples } pour un type de réglage donné,
- * ou null si absent.
+ * Toutes les politiques définissant un réglage, ou null si absent.
+ * Les politiques ADMIN (réglages explicites de la console) priment sur la
+ * politique SYSTEM (valeur par défaut Google) : dès qu'il en existe une, la
+ * valeur par défaut n'est plus appliquée nulle part.
  */
-function lirePolitique_(ctx, type) {
+function lirePolitiques_(ctx, type) {
   const entree = ctx.policyIndex[type];
   if (!entree) return null;
-  let choisi = null;
-  if (entree.admin.length > 0) {
-    choisi = entree.admin.find(function (p) {
-      const q = p.policyQuery || {};
-      return q.orgUnit && /orgUnits\//.test(q.orgUnit) && q.query === undefined;
-    }) || entree.admin[0];
-    return {
-      valeur: choisi.setting.value || {},
-      source: 'ADMIN',
-      multiples: entree.admin.length > 1,
-      brut: entree.admin
-    };
-  }
-  if (entree.system.length > 0) {
-    return {
-      valeur: entree.system[0].setting.value || {},
-      source: 'SYSTEM (défaut Google)',
-      multiples: false,
-      brut: entree.system
-    };
-  }
+  if (entree.admin.length) return { source: 'ADMIN', politiques: entree.admin };
+  if (entree.system.length) return { source: 'SYSTEM (défaut Google)', politiques: entree.system };
   return null;
+}
+
+/**
+ * Libellé lisible du périmètre d'une politique : chemin de l'unité
+ * organisationnelle quand il est connu, complété du ciblage par groupe.
+ */
+function libellePerimetre_(ctx, p) {
+  const q = p.policyQuery || {};
+  let libelle;
+  if (!q.orgUnit) {
+    libelle = 'périmètre non précisé';
+  } else {
+    const id = String(q.orgUnit).replace(/^orgUnits\//, '').replace(/^id:/, '');
+    // Orgunits.list ne retourne jamais l'UO racine : un identifiant absent de
+    // la table de correspondance la désigne donc.
+    libelle = (ctx.unites || {})[id] || '/ (racine)';
+  }
+  if (q.query) libelle += ' + ciblage par groupe';
+  return libelle;
+}
+
+/** Concatène une liste de périmètres en bornant la longueur du constat. */
+function listerPerimetres_(entrees, maximum) {
+  const cap = maximum || 10;
+  if (entrees.length <= cap) return entrees.join(' ; ');
+  return entrees.slice(0, cap).join(' ; ') + ' ; … et ' + (entrees.length - cap) + ' autre(s)';
+}
+
+/**
+ * Évalue un réglage sur TOUS les périmètres où il est explicitement défini.
+ *
+ * La conformité CIS s'apprécie unité organisationnelle par unité
+ * organisationnelle : un réglage permissif sur une UO fille est un écart réel,
+ * même si la racine est conforme. L'implémentation précédente ne retenait
+ * qu'une seule politique — celle de la racine — et ces écarts remontaient
+ * CONFORME. Les UO qui n'apparaissent pas ici héritent de leur parent : la
+ * Policy API ne retourne que les réglages explicitement définis.
+ *
+ * Retour : null si le réglage est absent de la réponse, sinon
+ * { statut, detail, source, total, conformes, ecarts, indetermines }.
+ */
+function evaluerParPerimetre_(ctx, type, evaluateur, descriptionAttendue) {
+  const lot = lirePolitiques_(ctx, type);
+  if (!lot) return null;
+  const conformes = [], ecarts = [], indetermines = [];
+  lot.politiques.forEach(function (p) {
+    const valeur = (p.setting && p.setting.value) || {};
+    const trace = libellePerimetre_(ctx, p) + ' : ' + JSON.stringify(valeur);
+    let verdict;
+    try { verdict = evaluateur(valeur); } catch (e) { verdict = null; }
+    if (verdict === true) conformes.push(trace);
+    else if (verdict === false) ecarts.push(trace);
+    else indetermines.push(trace);
+  });
+  const total = lot.politiques.length;
+  // Un écart avéré sur un seul périmètre suffit à rendre le contrôle non
+  // conforme : c'est la surface d'attaque réelle qui compte, pas la racine.
+  const statut = ecarts.length ? STATUT.FAIL
+    : (indetermines.length ? STATUT.REVIEW : STATUT.PASS);
+  const parties = [];
+  if (ecarts.length) parties.push('ÉCART sur ' + ecarts.length + '/' + total + ' : ' + listerPerimetres_(ecarts));
+  if (indetermines.length) parties.push('indéterminé sur ' + indetermines.length + '/' + total + ' : ' + listerPerimetres_(indetermines));
+  if (conformes.length) parties.push('conforme sur ' + conformes.length + '/' + total + ' : ' + listerPerimetres_(conformes));
+  return {
+    statut: statut, source: lot.source, total: total,
+    conformes: conformes, ecarts: ecarts, indetermines: indetermines,
+    detail: 'Attendu : ' + descriptionAttendue + ' | [' + lot.source + '] ' +
+      total + ' périmètre(s) évalué(s) — ' + parties.join(' | ')
+  };
+}
+
+/** Résumé purement informatif des valeurs d'un réglage, par périmètre. */
+function resumePerimetres_(ctx, type) {
+  const lot = lirePolitiques_(ctx, type);
+  if (!lot) return '';
+  return ' | [' + lot.source + '] ' + listerPerimetres_(lot.politiques.map(function (p) {
+    return libellePerimetre_(ctx, p) + ' : ' + JSON.stringify((p.setting && p.setting.value) || {});
+  }));
 }
 
 /**
  * Fabrique de contrôle basé sur la Policy API.
  * evaluateur(valeur) doit retourner true (conforme), false (non conforme)
- * ou null (indéterminé -> À VÉRIFIER).
+ * ou null (indéterminé -> À VÉRIFIER). Il est appliqué à CHAQUE périmètre.
  */
 function controlePolitique_(type, evaluateur, descriptionAttendue) {
   return function (ctx) {
     if (!ctx.policies || ctx.policies.length === 0) {
       return { statut: STATUT.ERROR, detail: 'Policy API indisponible.' };
     }
-    const pol = lirePolitique_(ctx, type);
-    if (!pol) {
+    const bilan = evaluerParPerimetre_(ctx, type, evaluateur, descriptionAttendue);
+    if (!bilan) {
       return {
         statut: STATUT.REVIEW,
         detail: 'Réglage "' + type + '" absent de la réponse Policy API. ' +
           'Attendu : ' + descriptionAttendue + '. Vérifier manuellement dans la console.'
       };
     }
-    const brut = JSON.stringify(pol.valeur);
-    const verdict = evaluateur(pol.valeur);
-    const suffixe = ' | Valeur [' + pol.source + (pol.multiples ? ', plusieurs OU — vérifier chaque OU' : '') + '] : ' + brut;
-    if (verdict === true) return { statut: STATUT.PASS, detail: 'Attendu : ' + descriptionAttendue + suffixe };
-    if (verdict === false) return { statut: STATUT.FAIL, detail: 'Attendu : ' + descriptionAttendue + suffixe };
-    return { statut: STATUT.REVIEW, detail: 'Interprétation incertaine. Attendu : ' + descriptionAttendue + suffixe };
+    return { statut: bilan.statut, detail: bilan.detail };
   };
 }
 
@@ -2136,16 +2227,16 @@ const DEFINITION_CONTROLES = [
     titre: 'Accès aux groupes depuis l\'extérieur : privé', titreEn: 'Ensure accessing groups from outside this organization is set to private',
     remediation: 'Admin > Applications > Groups for Business > Paramètres de partage : accès externe = privé.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Sharing options',
     check: function (ctx) {
-      const pol = lirePolitique_(ctx, 'groups_for_business.groups_sharing');
-      if (pol) {
-        const s = champ_(pol.valeur, ['collaborationCapability', 'accessLevel', 'outsideAccess']);
-        if (s !== undefined) {
-          const ok = !/ANYONE_CAN_ACCESS|PUBLIC/i.test(String(s));
-          return {
-            statut: ok ? STATUT.PASS : STATUT.FAIL,
-            detail: 'Politique groups_for_business.groups_sharing [' + pol.source + '] : ' + JSON.stringify(pol.valeur)
-          };
-        }
+      const bilan = evaluerParPerimetre_(ctx, 'groups_for_business.groups_sharing',
+        function (v) {
+          const s = champ_(v, ['collaborationCapability', 'accessLevel', 'outsideAccess']);
+          if (s === undefined) return null;
+          return !/ANYONE_CAN_ACCESS|PUBLIC/i.test(String(s));
+        },
+        'accès aux groupes depuis l\'extérieur restreint (non public)');
+      // Repli par groupe seulement si AUCUN périmètre n'a pu être tranché.
+      if (bilan && bilan.indetermines.length < bilan.total) {
+        return { statut: bilan.statut, detail: bilan.detail };
       }
       // Repli : analyse par groupe via Groups Settings
       if (!ctx.groupes) return { statut: STATUT.ERROR, detail: 'Ni Policy API ni Groups Settings disponibles.' };
@@ -2187,13 +2278,16 @@ const DEFINITION_CONTROLES = [
     titre: 'Permission par défaut de voir les conversations : restreinte', titreEn: 'Ensure default for permission to view conversations is restricted',
     remediation: 'Groups for Business > Autorisation par défaut d\'affichage des conversations.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Sharing options',
     check: function (ctx) {
-      const pol = lirePolitique_(ctx, 'groups_for_business.groups_sharing');
-      if (pol) {
-        const s = champ_(pol.valeur, ['viewTopicsDefaultAccessLevel', 'defaultViewTopicsAccessLevel']);
-        if (s !== undefined) {
-          const ok = !/ANYONE|PUBLIC/i.test(String(s));
-          return { statut: ok ? STATUT.PASS : STATUT.FAIL, detail: 'Valeur [' + pol.source + '] : ' + JSON.stringify(pol.valeur) };
-        }
+      const bilan = evaluerParPerimetre_(ctx, 'groups_for_business.groups_sharing',
+        function (v) {
+          const s = champ_(v, ['viewTopicsDefaultAccessLevel', 'defaultViewTopicsAccessLevel']);
+          if (s === undefined) return null;
+          return !/ANYONE|PUBLIC/i.test(String(s));
+        },
+        'permission par défaut d\'affichage des conversations restreinte');
+      // Repli par groupe seulement si AUCUN périmètre n'a pu être tranché.
+      if (bilan && bilan.indetermines.length < bilan.total) {
+        return { statut: bilan.statut, detail: bilan.detail };
       }
       if (!ctx.groupes) return { statut: STATUT.ERROR, detail: 'Données groupes indisponibles.' };
       if (ctx.reglagesGroupesCollectes === false) {
@@ -2280,8 +2374,7 @@ const DEFINITION_CONTROLES = [
       const actifs = ctx.utilisateurs.filter(function (u) { return !u.suspended; });
       const sans2sv = actifs.filter(function (u) { return !u.isEnrolledIn2Sv; });
       const nonForce = actifs.filter(function (u) { return !u.isEnforcedIn2Sv; });
-      const pol = lirePolitique_(ctx, 'security.two_step_verification_enforcement');
-      const polTxt = pol ? ' | Politique d\'application [' + pol.source + '] : ' + JSON.stringify(pol.valeur) : '';
+      const polTxt = resumePerimetres_(ctx, 'security.two_step_verification_enforcement');
       return {
         statut: sans2sv.length === 0 && nonForce.length === 0 ? STATUT.PASS : STATUT.FAIL,
         detail: actifs.length + ' utilisateurs actifs — ' + sans2sv.length + ' non enrôlés en 2SV, ' +

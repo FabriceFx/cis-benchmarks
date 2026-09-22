@@ -41,7 +41,7 @@ L'outil interroge **4 sources de données complémentaires** pour auditer le ten
 | Source | Usage |
 |---|---|
 | **Cloud Identity Policy API** | Lecture des politiques de sécurité de la console admin (Drive, Gmail, Agenda, Chat, Marketplace, 2SV, sessions…). |
-| **Admin SDK Directory API** | Analyse des super administrateurs, déploiement du 2SV par utilisateur, domaines et jetons OAuth tiers. |
+| **Admin SDK Directory API** | Analyse des super administrateurs, déploiement du 2SV par utilisateur, domaines, jetons OAuth tiers et **unités organisationnelles** (libellés des périmètres évalués). |
 | **Groups Settings API** | Analyse des règles de confidentialité et permissions de partage des groupes de discussion. |
 | **DNS public (dns.google)** | Vérification en direct des enregistrements SPF, DKIM et DMARC de chaque domaine du tenant. |
 
@@ -58,6 +58,8 @@ L'outil interroge **4 sources de données complémentaires** pour auditer le ten
    - `AdminDirectory`
    - `GroupsSettings`
 4. **Manifeste `appsscript.json`** configuré avec les scopes OAuth stricts nécessaires.
+
+> ⚠️ **Mise à jour depuis une version antérieure à 5.2.0** : le scope `admin.directory.orgunit.readonly` a été ajouté pour nommer les unités organisationnelles dans les constats. Après le déploiement, la première ouverture de l'application demandera une **nouvelle autorisation**.
 
 ---
 
@@ -110,7 +112,7 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 
 | Clé | Valeur par défaut | Description |
 |---|---|---|
-| `VERSION` | `5.1.0` | Version de l'application (affichée dans l'UI et le rapport). |
+| `VERSION` | `5.2.0` | Version de l'application (affichée dans l'UI et le rapport). |
 | `DOMAINES_DESTINATAIRES` | `[]` | Domaines autorisés **en plus** de ceux du tenant pour l'envoi du rapport par e-mail. Vide = diffusion interne uniquement. |
 | `PAGES_PAR_APPEL` | `4` | Pages d'API lues au maximum par appel serveur (écarte la limite des 6 minutes). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` pour les contrôles de base, `'L2'` pour les profils renforcés L1 + L2. |
@@ -140,7 +142,7 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 
 Un outil de conformité vaut par la lucidité sur ce qu'il ne couvre pas. Les limites actuelles :
 
-- **Évaluation à l'échelle de l'unité organisationnelle racine.** Lorsqu'un réglage est défini différemment sur plusieurs UO, seule la politique de l'UO racine est évaluée ; les autres sont signalées dans le constat mais ne changent pas le statut. Un réglage permissif sur une UO fille peut donc remonter `CONFORME`.
+- **Héritage des unités organisationnelles.** Depuis la version 5.2.0, tous les périmètres où un réglage est explicitement défini sont évalués et le pire statut l'emporte — un réglage permissif sur une UO fille rend le contrôle `NON CONFORME`, et l'UO est nommée dans le constat. Les UO absentes de la réponse de la Policy API héritent de leur parent : un audit ne « voit » donc que les réglages explicitement posés.
 - **Correspondance des champs de la Policy API.** Les noms de champs sont résolus par une liste d'alias. Si Google fait évoluer le schéma, le contrôle remonte `À VÉRIFIER` plutôt qu'un verdict erroné — mais il faut alors mettre l'outil à jour.
 - **16 contrôles sur 87 restent manuels**, faute d'exposition par les API Google (règles d'alerte, quarantaines, etc.).
 - **Accès super administrateur obligatoire.** Depuis la version 5.1.0, toutes les fonctions exposées le vérifient côté serveur.
@@ -207,7 +209,7 @@ The tool queries **4 complementary data sources**:
 | Source | Purpose |
 |---|---|
 | **Cloud Identity Policy API** | Read security policies across the Admin console (Drive, Gmail, Calendar, Chat, Marketplace, 2SV, sessions…). |
-| **Admin SDK Directory API** | Super admin accounts, user-level 2SV enforcement, domain inventory, OAuth third-party tokens. |
+| **Admin SDK Directory API** | Super admin accounts, user-level 2SV enforcement, domain inventory, OAuth third-party tokens, and **organizational units** (labels for the evaluated scopes). |
 | **Groups Settings API** | Group privacy configurations and sharing permissions. |
 | **Public DNS (dns.google)** | Live validation of SPF, DKIM, and DMARC records for all verified domains. |
 
@@ -224,6 +226,8 @@ The tool queries **4 complementary data sources**:
    - `AdminDirectory`
    - `GroupsSettings`
 4. **`appsscript.json` manifest** configured with minimal OAuth scopes.
+
+> ⚠️ **Upgrading from a version older than 5.2.0**: the `admin.directory.orgunit.readonly` scope was added so findings can name organizational units. After deploying, the first launch will prompt for **re-authorization**.
 
 ---
 
@@ -276,7 +280,7 @@ Key settings can be updated in `CONFIG` in `Code.gs`:
 
 | Key | Default | Description |
 |---|---|---|
-| `VERSION` | `5.1.0` | Application version. |
+| `VERSION` | `5.2.0` | Application version. |
 | `DOMAINES_DESTINATAIRES` | `[]` | Domains allowed **in addition to** the tenant's own for emailing the report. Empty = internal distribution only. |
 | `PAGES_PAR_APPEL` | `4` | Maximum API pages read per server call (keeps each call clear of the 6-minute limit). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` for Level 1 only, `'L2'` for full Level 1 + Level 2 audit. |
@@ -306,7 +310,7 @@ Key settings can be updated in `CONFIG` in `Code.gs`:
 
 A compliance tool is only as good as its honesty about what it does not cover. Current limitations:
 
-- **Evaluation at the root organizational unit.** When a setting is defined differently across several OUs, only the root OU policy is evaluated; the others are reported in the finding but do not change the status. A permissive setting on a child OU may therefore report `CONFORME`.
+- **Organizational unit inheritance.** Since version 5.2.0 every scope where a setting is explicitly defined is evaluated and the worst status wins — a permissive setting on a child OU makes the control `NON CONFORME`, and the OU is named in the finding. OUs absent from the Policy API response inherit from their parent, so an audit only ever "sees" explicitly configured settings.
 - **Policy API field mapping.** Field names are resolved through an alias list. If Google changes the schema, the control reports `À VÉRIFIER` rather than a wrong verdict — but the tool then needs updating.
 - **16 of the 87 controls remain manual**, as they are not exposed by Google APIs (alert rules, quarantines, etc.).
 - **Super Admin access is mandatory.** Since version 5.1.0 every exposed function enforces this server-side.

@@ -5,6 +5,26 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.2.0] - 2026-09-22
+
+### 🎯 Angle émotionnel : Angle mort
+> *Un tableau de bord au vert alors que l'UO « Production » partage encore vers l'extérieur : c'est exactement le scénario qu'un audit est censé empêcher. La version 5.2.0 évalue chaque unité organisationnelle, et nomme celles qui posent problème.*
+
+### Ajouté / Added
+- **Évaluation par unité organisationnelle.** Tous les périmètres où un réglage est explicitement défini sont désormais évalués, et le pire statut l'emporte : un réglage permissif sur une UO fille rend le contrôle `NON CONFORME`, même si la racine est conforme. Le constat nomme les UO en écart (`ÉCART sur 1/3 : /Production : {…}`), ce qui rend le plan d'actions directement exploitable.
+- **Nouvelle étape de collecte « Unités organisationnelles »**, qui construit la table de correspondance identifiant → chemin d'UO. Sans elle, les écarts seraient restitués sous forme d'identifiants opaques. L'UO racine n'étant jamais retournée par l'API, un identifiant absent de la table la désigne et s'affiche `/ (racine)`.
+- **`tests/perimetres.test.js`** : dix tests du moteur d'évaluation, sans dépendance externe (`node tests/perimetres.test.js`). Premier filet de sécurité contre les régressions de correspondance, qui sont le risque principal de l'outil.
+
+### Corrigé / Fixed
+- **Angle mort multi-UO (correctif majeur).** `lirePolitique_()` ne retenait qu'une seule politique — celle de l'UO racine si identifiable, la première sinon. Les autres étaient signalées d'un laconique « plusieurs OU — vérifier chaque OU » sans influer sur le statut. Sur un tenant à UO multiples, un réglage laxiste sur une UO fille remontait donc `CONFORME` : un faux négatif, le défaut le plus coûteux pour un outil de conformité.
+- Les contrôles `3.1.6.1`, `3.1.6.3` et `4.1.1.3`, qui lisaient la politique directement, bénéficient du même traitement. Le repli par groupe de `3.1.6.1` et `3.1.6.3` ne s'active plus que si **aucun** périmètre n'a pu être tranché.
+
+### Modifié / Changed
+- `lirePolitique_()` est remplacée par `lirePolitiques_()`, `evaluerParPerimetre_()`, `libellePerimetre_()` et `resumePerimetres_()`.
+- **Nouveau scope OAuth `admin.directory.orgunit.readonly`.** Une **réautorisation est nécessaire** à la première ouverture après déploiement.
+
+---
+
 ## [5.1.0] - 2026-09-22
 
 ### 🎯 Angle émotionnel : Confiance
