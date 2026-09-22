@@ -5,6 +5,25 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.3.0] - 2026-09-22
+
+### 🎯 Angle émotionnel : Maintenabilité
+> *Un fichier de 2 800 lignes ne se relit pas, il se subit. Et deux dictionnaires de traduction éloignés l'un de l'autre finissent toujours par diverger — c'est précisément ce qui avait laissé passer quatre procédures anglaises recopiées du mauvais chapitre. La version 5.3.0 range, puis installe les garde-fous.*
+
+### Corrigé / Fixed
+- **`4.3.1` et `4.3.2` : procédures anglaises erronées.** Les deux contrôles de revue périodique (*tableau de bord Sécurité* et *État de sécurité*) pointaient la protection anti-usurpation de Gmail, recopiée du chapitre `3.1.3.4.3`. Même famille de défaut que les contrôles `6.1` à `6.8` corrigés en 5.1.0 — cette fois débusquée par le nouveau test de cohérence bilingue, et non à l'œil.
+
+### Modifié / Changed
+- **Découpage de `Code.gs` en douze modules.** Le monolithe de 2 796 lignes devient `00_Config` → `11_Email`, chaque fichier portant une responsabilité. La numérotation fixe l'ordre de chargement : Apps Script partage une portée globale et remonte les déclarations de fonction, mais pas les constantes de premier niveau ; `clasp push` pousse par ordre alphabétique. Le découpage a été vérifié *lossless* — mêmes lignes de code, à l'ordre des blocs près.
+- **Référentiel des risques unifié.** `RISQUES` et `RISQUES_EN` fusionnent en un dictionnaire unique où les deux langues sont côte à côte (`{ fr, en }`). Les 87 entrées ont été vérifiées identiques avant/après dans les deux langues.
+- L'historique des versions ne figure plus en double dans l'en-tête du code : `CHANGELOG.md` est désormais la seule source de vérité. L'en-tête de `00_Config.gs` porte la carte des fichiers.
+
+### Ajouté / Added
+- **`tests/i18n.test.js`** — neuf tests de cohérence bilingue : complétude des titres, remédiations et risques dans les deux langues, absence de risque orphelin, structure identique des dictionnaires serveur et client (`Index.html`), libellés de statut, et **détection des remédiations anglaises dupliquées** hors d'une liste de cas légitimes recensés. C'est ce dernier test qui a trouvé `4.3.1` et `4.3.2` ; sa capacité à échouer a été vérifiée en réintroduisant le bug.
+- Documentation de l'organisation du code dans le README (FR/EN) et instructions d'installation par `clasp`.
+
+---
+
 ## [5.2.0] - 2026-09-22
 
 ### 🎯 Angle émotionnel : Angle mort

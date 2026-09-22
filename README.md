@@ -36,6 +36,29 @@ Outil d'audit automatisé et interactif qui vérifie la configuration d'un tenan
 
 ## 🏗️ Architecture
 
+### Organisation du code
+
+Apps Script partage une portée globale entre les fichiers et remonte les déclarations de fonction, mais pas les constantes de premier niveau. La numérotation fixe donc l'ordre de chargement, que `clasp push` respecte en poussant par ordre alphabétique.
+
+| Fichier | Rôle |
+|---|---|
+| `00_Config.gs` | `CONFIG`, `STATUT` |
+| `01_I18n.gs` | Traductions serveur et référentiel des risques (FR/EN côte à côte) |
+| `02_Securite.gs` | Contrôle d'accès super admin, verrou, journal d'audit |
+| `03_Cache.gs` | Persistance de session : contexte et résultats |
+| `04_Policy.gs` | Lecture et évaluation des politiques, périmètre par périmètre |
+| `05_Dns.gs` | SPF / DKIM / DMARC via DNS-over-HTTPS |
+| `06_Derogations.gs` | Registre d'acceptation formelle des écarts |
+| `07_Controles.gs` | Définition des 87 contrôles |
+| `08_Collecte.gs` | Collecte du contexte, par étapes |
+| `09_WebApp.gs` | Points d'entrée : application web progressive et mode batch |
+| `10_Rapport.gs` | Génération du classeur Google Sheets |
+| `11_Email.gs` | Envoi de la synthèse par e-mail |
+| `Index.html` | Interface de l'application web |
+| `tests/` | Harnais Node sans dépendance — `node tests/perimetres.test.js`, `node tests/i18n.test.js` |
+
+### Sources de données
+
 L'outil interroge **4 sources de données complémentaires** pour auditer le tenant :
 
 | Source | Usage |
@@ -68,8 +91,10 @@ L'outil interroge **4 sources de données complémentaires** pour auditer le ten
 ### 1. Créer le projet Apps Script
 1. Connectez-vous à [script.google.com](https://script.google.com) avec votre compte super administrateur.
 2. Créez un nouveau projet (ex: `Audit CIS Google Workspace`).
-3. Copiez le contenu de [`Code.gs`](Code.gs) dans le fichier `Code.gs` du projet.
+3. Copiez chacun des fichiers `.gs` du dépôt dans un fichier du même nom (sans l'extension) : `00_Config`, `01_I18n`, `02_Securite`, `03_Cache`, `04_Policy`, `05_Dns`, `06_Derogations`, `07_Controles`, `08_Collecte`, `09_WebApp`, `10_Rapport`, `11_Email`.
 4. Créez un fichier HTML nommé `Index.html` et collez-y le contenu de [`Index.html`](Index.html).
+
+> 💡 Plus simple avec [clasp](https://github.com/google/clasp) : `clasp clone <scriptId>` puis `clasp push` — la numérotation des fichiers fixe l'ordre de chargement, que clasp respecte en poussant par ordre alphabétique.
 
 ### 2. Associer le projet GCP
 1. Dans l'éditeur Apps Script, ouvrez les **Paramètres du projet** (⚙️).
@@ -112,7 +137,7 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 
 | Clé | Valeur par défaut | Description |
 |---|---|---|
-| `VERSION` | `5.2.0` | Version de l'application (affichée dans l'UI et le rapport). |
+| `VERSION` | `5.3.0` | Version de l'application (affichée dans l'UI et le rapport). |
 | `DOMAINES_DESTINATAIRES` | `[]` | Domaines autorisés **en plus** de ceux du tenant pour l'envoi du rapport par e-mail. Vide = diffusion interne uniquement. |
 | `PAGES_PAR_APPEL` | `4` | Pages d'API lues au maximum par appel serveur (écarte la limite des 6 minutes). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` pour les contrôles de base, `'L2'` pour les profils renforcés L1 + L2. |
@@ -204,6 +229,12 @@ Automated and interactive audit tool that checks your Google Workspace tenant co
 
 ## 🏗️ Architecture
 
+### Code layout
+
+Apps Script shares one global scope across files and hoists function declarations, but not top-level constants. The numeric prefixes therefore pin the load order, which `clasp push` honours by pushing alphabetically. See the French table above for the file-by-file breakdown; `tests/` holds a dependency-free Node harness (`node tests/perimetres.test.js`, `node tests/i18n.test.js`).
+
+### Data sources
+
 The tool queries **4 complementary data sources**:
 
 | Source | Purpose |
@@ -236,8 +267,10 @@ The tool queries **4 complementary data sources**:
 ### 1. Create Apps Script Project
 1. Log in to [script.google.com](https://script.google.com) with your Super Admin account.
 2. Create a new project (e.g., `CIS Google Workspace Audit`).
-3. Copy [`Code.gs`](Code.gs) into the project's `Code.gs`.
+3. Copy each `.gs` file from the repository into a file of the same name (without the extension): `00_Config`, `01_I18n`, `02_Securite`, `03_Cache`, `04_Policy`, `05_Dns`, `06_Derogations`, `07_Controles`, `08_Collecte`, `09_WebApp`, `10_Rapport`, `11_Email`.
 4. Create an HTML file named `Index.html` and paste the content from [`Index.html`](Index.html).
+
+> 💡 Easier with [clasp](https://github.com/google/clasp): `clasp clone <scriptId>` then `clasp push` — the numeric filename prefixes pin the load order, which clasp honours by pushing alphabetically.
 
 ### 2. Link GCP Project
 1. In the Apps Script editor, open **Project Settings** (⚙️).
@@ -280,7 +313,7 @@ Key settings can be updated in `CONFIG` in `Code.gs`:
 
 | Key | Default | Description |
 |---|---|---|
-| `VERSION` | `5.2.0` | Application version. |
+| `VERSION` | `5.3.0` | Application version. |
 | `DOMAINES_DESTINATAIRES` | `[]` | Domains allowed **in addition to** the tenant's own for emailing the report. Empty = internal distribution only. |
 | `PAGES_PAR_APPEL` | `4` | Maximum API pages read per server call (keeps each call clear of the 6-minute limit). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` for Level 1 only, `'L2'` for full Level 1 + Level 2 audit. |

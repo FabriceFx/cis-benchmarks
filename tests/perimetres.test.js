@@ -2,7 +2,12 @@
 // Exécution : node tests/perimetres.test.js — aucune dépendance externe.
 // Code.gs est évalué tel quel : aucune API Google n'est appelée au chargement.
 const fs = require('fs');
-const src = fs.readFileSync(require('path').join(__dirname, '..', 'Code.gs'), 'utf8');
+const path = require('path');
+const racine = path.join(__dirname, '..');
+// Apps Script partage une portée globale entre les fichiers : on reproduit le
+// chargement en les concaténant dans l'ordre alphabétique, celui de clasp.
+const src = fs.readdirSync(racine).filter(f => f.endsWith('.gs')).sort()
+  .map(f => fs.readFileSync(path.join(racine, f), 'utf8')).join('\n');
 const api = new Function(src + `
   return { STATUT, evaluerParPerimetre_, libellePerimetre_, indexerPolitiques_, resumePerimetres_ };
 `)();
