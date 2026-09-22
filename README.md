@@ -1,5 +1,10 @@
 # 🛡️ Audit CIS Google Workspace Foundations Benchmark
 
+[![CI](https://github.com/FabriceFx/CIS-benchmarks/actions/workflows/ci.yml/badge.svg)](https://github.com/FabriceFx/CIS-benchmarks/actions/workflows/ci.yml)
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+[![CIS Benchmark](https://img.shields.io/badge/CIS%20Google%20Workspace-v1.4-informational)](https://www.cisecurity.org/benchmark/google_workspace)
+[![Apps Script](https://img.shields.io/badge/Google%20Apps%20Script-V8-4285F4)](https://developers.google.com/apps-script)
+
 > **Tu passes tes soirées à cocher des cases dans un tableur, à ouvrir 15 onglets de la console admin pour vérifier un par un les 86 réglages du benchmark CIS ?**
 > Cet outil automatise l'évaluation en quelques minutes, pointe avec précision les failles de configuration et te fournit un plan de remédiation prêt à l'emploi.
 
@@ -55,7 +60,7 @@ Apps Script partage une portée globale entre les fichiers et remonte les décla
 | `10_Rapport.gs` | Génération du classeur Google Sheets |
 | `11_Email.gs` | Envoi de la synthèse par e-mail |
 | `Index.html` | Interface de l'application web |
-| `tests/` | Harnais Node sans dépendance — `node tests/perimetres.test.js`, `node tests/i18n.test.js` |
+| `tests/` | Harnais Node sans dépendance — `npm test` |
 
 ### Sources de données
 
@@ -137,7 +142,7 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 
 | Clé | Valeur par défaut | Description |
 |---|---|---|
-| `VERSION` | `5.3.0` | Version de l'application (affichée dans l'UI et le rapport). |
+| `VERSION` | `5.4.0` | Version de l'application (affichée dans l'UI et le rapport). |
 | `DOMAINES_DESTINATAIRES` | `[]` | Domaines autorisés **en plus** de ceux du tenant pour l'envoi du rapport par e-mail. Vide = diffusion interne uniquement. |
 | `PAGES_PAR_APPEL` | `4` | Pages d'API lues au maximum par appel serveur (écarte la limite des 6 minutes). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` pour les contrôles de base, `'L2'` pour les profils renforcés L1 + L2. |
@@ -160,6 +165,24 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 | ⚠️ | **ERREUR** | Incident technique lors de l'interrogation de l'API. |
 | ⏭️ | **HORS PROFIL** | Contrôle L2 ignoré lors d'un audit ciblé profil L1. |
 | 🤝 | **ÉCART ACCEPTÉ** | Dérogation validée et tracée dans le registre des dérogations. |
+
+---
+
+## 🧪 Développement
+
+```bash
+npm test        # 35 tests, aucune dépendance requise
+npm run lint    # ESLint (npm install au préalable)
+```
+
+| Fichier | Couvre |
+|---|---|
+| `tests/perimetres.test.js` | Moteur d'évaluation par unité organisationnelle |
+| `tests/i18n.test.js` | Cohérence bilingue FR/EN, détection des copier-collés de remédiation |
+| `tests/controles.test.js` | Exécution des 87 contrôles, référence figée des verdicts |
+| `tests/manifeste.test.js` | Scopes OAuth, services avancés, modèle de déploiement |
+
+Les tests chargent le code Apps Script dans Node en doublant les services Google : aucun appel réseau, aucune API Google sollicitée. Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour l'ajout d'un contrôle et la checklist de publication, et [SECURITY.md](SECURITY.md) pour le modèle de sécurité.
 
 ---
 
@@ -313,7 +336,7 @@ Key settings can be updated in `CONFIG` in `Code.gs`:
 
 | Key | Default | Description |
 |---|---|---|
-| `VERSION` | `5.3.0` | Application version. |
+| `VERSION` | `5.4.0` | Application version. |
 | `DOMAINES_DESTINATAIRES` | `[]` | Domains allowed **in addition to** the tenant's own for emailing the report. Empty = internal distribution only. |
 | `PAGES_PAR_APPEL` | `4` | Maximum API pages read per server call (keeps each call clear of the 6-minute limit). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` for Level 1 only, `'L2'` for full Level 1 + Level 2 audit. |

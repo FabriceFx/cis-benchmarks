@@ -1,0 +1,7 @@
+{
+  "_commentaire": "Copier en .clasp.json (ignoré par git) et renseigner scriptId.",
+  "_scriptId": "Paramètres du projet Apps Script > ID du script",
+  "scriptId": "REMPLACER_PAR_L_ID_DU_PROJET",
+  "rootDir": ".",
+  "_rootDir": "Les fichiers .gs sont à la racine : clasp les pousse par ordre alphabétique, ce que la numérotation rend explicite."
+}

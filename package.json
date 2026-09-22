@@ -1,0 +1,18 @@
+{
+  "name": "cis-google-workspace-audit",
+  "version": "5.4.0",
+  "description": "Audit automatisé d'un tenant Google Workspace contre le CIS Google Workspace Foundations Benchmark v1.4",
+  "private": true,
+  "license": "MIT",
+  "author": "Fabrice Faucheux (https://faucheux.bzh)",
+  "repository": { "type": "git", "url": "https://github.com/FabriceFx/CIS-benchmarks" },
+  "scripts": {
+    "test": "node tests/run.js",
+    "test:maj": "node tests/controles.test.js --maj",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0"
+  }
+}

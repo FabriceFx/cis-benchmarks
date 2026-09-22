@@ -5,6 +5,23 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.4.0] - 2026-09-22
+
+### 🎯 Angle émotionnel : Filet
+> *Le vrai risque d'un outil d'audit n'est pas de tomber en panne — ça se voit — mais de continuer à répondre « CONFORME » après que Google a renommé un champ. La version 5.4.0 installe le filet : 35 tests, une référence figée des 87 verdicts, et une CI qui refuse une régression avant qu'elle n'atteigne un tenant.*
+
+### Ajouté / Added
+- **`tests/controles.test.js`** : exécution des 87 contrôles sur trois contextes simulés — collecte en échec, schéma de Policy API non reconnu, unité organisationnelle fille permissive. Vérifie qu'aucun contrôle ne lève, que tout statut appartient au vocabulaire, et surtout qu'**aucun CONFORME n'est prononcé sur des valeurs que le code ne sait pas lire**. Les verdicts sont comparés à une référence figée (`tests/fixtures/etats.json`) : tout déplacement de statut apparaît dans le diff et doit être accepté sciemment (`npm run test:maj`).
+- **`tests/manifeste.test.js`** : relie chaque service Google réellement appelé au scope OAuth qu'il exige, refuse tout scope déclaré sans usage identifiable (moindre privilège), verrouille `executeAs: USER_ACCESSING` dont dépend tout le modèle de sécurité, et vérifie que `CONFIG.VERSION`, `package.json` et le `CHANGELOG` restent alignés. L'oubli du scope `orgunit` en 5.2.0 aurait été attrapé ici.
+- **`tests/run.js`** et `npm test` : 35 tests répartis sur quatre fichiers, **sans aucune dépendance** — `tests/aide.js` charge le code Apps Script dans Node en doublant les services Google.
+- **Intégration continue GitHub Actions** : tests sur chaque *push* et *pull request*, lint dans un job séparé.
+- **ESLint** (`eslint.config.js`) adapté à la portée globale partagée d'Apps Script, **`CONTRIBUTING.md`** (organisation du code, ajout d'un contrôle, checklist de publication), **`SECURITY.md`** (signalement et modèle de sécurité), **`.clasp.json.example`**.
+
+### Note
+La concaténation des fichiers dans l'ordre alphabétique, utilisée par le harnais de test, reproduit exactement le chargement d'Apps Script : c'est elle qui fait échouer les tests sur une référence croisée manquante, ce qu'ESLint ne peut pas voir en analysant fichier par fichier.
+
+---
+
 ## [5.3.0] - 2026-09-22
 
 ### 🎯 Angle émotionnel : Maintenabilité
