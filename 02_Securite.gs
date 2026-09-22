@@ -58,6 +58,20 @@ function avecVerrou_(operation) {
   }
 }
 
+/**
+ * Journal d'audit des mouvements du registre, du plus ancien au plus récent.
+ * Restitué dans un onglet dédié du rapport : un journal que personne ne peut
+ * consulter ne prouve rien.
+ */
+function lireJournalDerogations_() {
+  try {
+    const brut = PropertiesService.getScriptProperties().getProperty('cis_journal_derog');
+    return brut ? JSON.parse(brut) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
 /** Journal d'audit borné des mouvements du registre des dérogations. */
 function journaliserDerogation_(action, id, email, details) {
   try {

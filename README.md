@@ -142,7 +142,7 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 
 | Clé | Valeur par défaut | Description |
 |---|---|---|
-| `VERSION` | `5.5.0` | Version de l'application (affichée dans l'UI et le rapport). |
+| `VERSION` | `5.6.0` | Version de l'application (affichée dans l'UI et le rapport). |
 | `DOMAINES_DESTINATAIRES` | `[]` | Domaines autorisés **en plus** de ceux du tenant pour l'envoi du rapport par e-mail. Vide = diffusion interne uniquement. |
 | `PAGES_PAR_APPEL` | `4` | Pages d'API lues au maximum par appel serveur (écarte la limite des 6 minutes). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` pour les contrôles de base, `'L2'` pour les profils renforcés L1 + L2. |
@@ -171,7 +171,7 @@ Les paramètres d'exécution peuvent être ajustés dans l'objet `CONFIG` au dé
 ## 🧪 Développement
 
 ```bash
-npm test        # 51 tests, aucune dépendance requise
+npm test        # 62 tests, aucune dépendance requise
 npm run lint    # ESLint (npm install au préalable)
 ```
 
@@ -182,6 +182,7 @@ npm run lint    # ESLint (npm install au préalable)
 | `tests/controles.test.js` | Exécution des 87 contrôles, référence figée des verdicts |
 | `tests/manifeste.test.js` | Scopes OAuth, services avancés, modèle de déploiement |
 | `tests/contexte.test.js` | Persistance de session, recensement des super administrateurs |
+| `tests/rapport.test.js` | Restitution Sheets : mise en forme, couverture, journal |
 
 Les tests chargent le code Apps Script dans Node en doublant les services Google : aucun appel réseau, aucune API Google sollicitée. Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour l'ajout d'un contrôle et la checklist de publication, et [SECURITY.md](SECURITY.md) pour le modèle de sécurité.
 
@@ -337,7 +338,7 @@ Key settings can be updated in `CONFIG` in `Code.gs`:
 
 | Key | Default | Description |
 |---|---|---|
-| `VERSION` | `5.5.0` | Application version. |
+| `VERSION` | `5.6.0` | Application version. |
 | `DOMAINES_DESTINATAIRES` | `[]` | Domains allowed **in addition to** the tenant's own for emailing the report. Empty = internal distribution only. |
 | `PAGES_PAR_APPEL` | `4` | Maximum API pages read per server call (keeps each call clear of the 6-minute limit). |
 | `NIVEAU_PROFIL` | `'L2'` | `'L1'` for Level 1 only, `'L2'` for full Level 1 + Level 2 audit. |

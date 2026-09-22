@@ -91,7 +91,7 @@ function construireEmailHtml_(resultats, ctx, lang) {
 
   html += '<p style="font-size:11px;color:#9aa0a8;border-top:1px dashed #dcd9d0;margin-top:18px;padding-top:10px">' +
           t.email.piedGenere + ' v' + CONFIG.VERSION + t.email.piedExec +
-          echapHtml_(Session.getActiveUser().getEmail()) + t.email.piedRef +
+          echapHtml_(Session.getEffectiveUser().getEmail()) + t.email.piedRef +
           '<br>' + (lang === 'en' ? 'Developed by ' : 'Développé par ') +
           '<a href="https://faucheux.bzh" style="color:#1a73e8;text-decoration:none;font-weight:bold">Fabrice Faucheux (faucheux.bzh)</a></p>';
   html += '</div></div>';

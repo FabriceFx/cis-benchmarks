@@ -5,6 +5,29 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.6.0] - 2026-09-22
+
+### 🎯 Angle émotionnel : Dire ce qu'on sait, et ce qu'on ne sait pas
+> *Un rapport d'audit engage celui qui le signe. Le score brut d'un tenant à 100 % s'affichait sur fond rouge, un échantillon tronqué se présentait comme complet, et le journal des acceptations de risque n'était consultable nulle part. La 5.6.0 remet la restitution au niveau du moteur.*
+
+### Corrigé / Fixed
+- **Mise en forme désalignée de l'onglet Synthèse.** Les plages étaient codées en dur (`A9:B9`, `A11:B11`…) alors que des lignes de métadonnées avaient été insérées depuis. Résultat en production depuis la 5.0 : le score brut peint en rouge même à 100 %, une ligne de séparation surlignée, la ligne `CONFORME` en gris, et aucune couleur sur `NON CONFORME`, `ÉCART ACCEPTÉ`, `À VÉRIFIER` et les suivantes. Chaque ligne porte désormais sa propre mise en forme, appliquée depuis sa position réelle. Les couleurs de score suivent les mêmes seuils que l'e-mail de synthèse (vert ≥ 80 %, orange ≥ 50 %, rouge en deçà).
+- **Palette de statuts unifiée** entre la Synthèse et le Détail : un même statut porte la même couleur d'un onglet à l'autre.
+- **`Session.getActiveUser()` remplacé par `getEffectiveUser()`** dans le rapport et l'e-mail, pour une identité cohérente avec le contrôle d'accès de `02_Securite.gs`.
+
+### Ajouté / Added
+- **Section « Couverture de l'audit » dans la Synthèse.** Le rapport énonce désormais ses propres limites : nombre de super administrateurs et mode de recensement (exhaustif ou déduit), utilisateurs et groupes analysés avec signalement explicite si le plafond d'échantillonnage est atteint, unités organisationnelles recensées ou non collectées. Chaque limite est surlignée. Un échantillon tronqué présenté comme complet est trompeur ; il est maintenant impossible de le lire comme complet.
+- **Onglet « Journal des dérogations ».** Le journal était écrit dans les `ScriptProperties` sans qu'aucune fonction ni aucun écran ne permette de le relire — un journal d'audit inconsultable ne prouve rien. Il est restitué du plus récent au plus ancien, donc exportable et opposable.
+- **`tests/rapport.test.js`** : onze tests de la restitution. Le harnais fournit un classeur enregistreur où chaque cellule retient sa valeur et sa mise en forme, ce qui permet de vérifier le rendu sans appeler Google Sheets. Sa capacité à échouer a été vérifiée en réintroduisant les plages codées en dur : trois tests tombent, dont celui qui signale la ligne de séparation surlignée. La suite compte 62 tests.
+
+### Performance
+- **Écritures vectorisées.** Les mises en forme des onglets Synthèse, Détail, Plan d'actions et Registre étaient appliquées cellule par cellule dans des boucles. Elles passent par `setBackgrounds` / `setFontWeights` / `setFontColors` en un appel par plage.
+
+### Note
+Restent ouverts, issus de `REVUE_EXPERTE.md` : timeout du mode batch sur `recupererGroupesAvecReglages_`, fragilité du cache de session face à l'éviction LRU, pré-collecte DNS en phase 1, vérification du quota `MailApp`, et finitions Material Design 3 / accessibilité de l'interface.
+
+---
+
 ## [5.5.0] - 2026-09-22
 
 ### 🎯 Angle émotionnel : L'angle mort de l'angle mort

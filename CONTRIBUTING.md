@@ -35,6 +35,7 @@ référence manquante.
 | `tests/controles.test.js` | Exécution des 87 contrôles, référence figée des statuts |
 | `tests/manifeste.test.js` | Scopes OAuth, services avancés, modèle de déploiement |
 | `tests/contexte.test.js` | Persistance de session, recensement des super administrateurs |
+| `tests/rapport.test.js` | Restitution Sheets : mise en forme, couverture, journal |
 
 `tests/controles.test.js` compare les statuts obtenus sur trois contextes
 simulés à `tests/fixtures/etats.json`. Une modification volontaire du moteur

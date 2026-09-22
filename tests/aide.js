@@ -45,13 +45,86 @@ var CacheService = { getUserCache: function () { return {
     cles.forEach(function (k) { if (Object.prototype.hasOwnProperty.call(__cache, k)) r[k] = __cache[k]; });
     return r;
   } }; } };
+var __props = {};
 var PropertiesService = { getScriptProperties: function () { return {
-  getProperties: function () { return {}; }, getProperty: function () { return null; },
-  setProperty: function () {}, deleteProperty: function () {} }; } };
+  getProperties: function () { return __props; },
+  getProperty: function (k) { return Object.prototype.hasOwnProperty.call(__props, k) ? __props[k] : null; },
+  setProperty: function (k, v) { __props[k] = v; },
+  deleteProperty: function (k) { delete __props[k]; } }; } };
 var LockService = { getScriptLock: function () { return {
   tryLock: function () { return true; }, releaseLock: function () {} }; } };
 var ScriptApp = { getOAuthToken: function () { return 'jeton'; } };
-var SpreadsheetApp = null, MailApp = null, HtmlService = null;
+// Classeur enregistreur : chaque cellule retient sa valeur et sa mise en forme,
+// ce qui permet de vérifier la restitution sans appeler Google Sheets.
+var __classeurs = [];
+function __feuille(nom) {
+  var cellules = {};
+  var cle = function (l, c) { return l + ':' + c; };
+  var cel = function (l, c) {
+    var k = cle(l, c);
+    if (!cellules[k]) cellules[k] = { valeur: '', fond: null, graisse: null, couleur: null, taille: null, retour: null };
+    return cellules[k];
+  };
+  var plage = function (l, c, nl, nc) {
+    var appliquer = function (matrice, champ) {
+      for (var i = 0; i < nl; i++) for (var j = 0; j < nc; j++) {
+        var v = matrice[i] ? matrice[i][j] : undefined;
+        if (v !== undefined) cel(l + i, c + j)[champ] = v;
+      }
+      return r;
+    };
+    var uniforme = function (v, champ) {
+      for (var i = 0; i < nl; i++) for (var j = 0; j < nc; j++) cel(l + i, c + j)[champ] = v;
+      return r;
+    };
+    var r = {
+      setValues: function (m) { return appliquer(m, 'valeur'); },
+      setBackgrounds: function (m) { return appliquer(m, 'fond'); },
+      setFontWeights: function (m) { return appliquer(m, 'graisse'); },
+      setFontColors: function (m) { return appliquer(m, 'couleur'); },
+      setValue: function (v) { return uniforme(v, 'valeur'); },
+      setBackground: function (v) { return uniforme(v, 'fond'); },
+      setFontWeight: function (v) { return uniforme(v, 'graisse'); },
+      setFontColor: function (v) { return uniforme(v, 'couleur'); },
+      setFontSize: function (v) { return uniforme(v, 'taille'); },
+      setWrap: function (v) { return uniforme(v, 'retour'); }
+    };
+    return r;
+  };
+  var f = {
+    nom: nom, cellules: cellules,
+    setName: function (n) { f.nom = n; return f; },
+    getRange: function (l, c, nl, nc) { return plage(l, c, nl === undefined ? 1 : nl, nc === undefined ? 1 : nc); },
+    setFrozenRows: function () { return f; },
+    setColumnWidth: function () { return f; },
+    // lecture pratique pour les tests
+    ligne: function (l) {
+      var o = [];
+      for (var j = 1; j <= 12; j++) o.push(cellules[cle(l, j)] || null);
+      return o;
+    },
+    valeurs: function () {
+      var max = 0;
+      Object.keys(cellules).forEach(function (k) { max = Math.max(max, Number(k.split(':')[0])); });
+      var t = [];
+      for (var i = 1; i <= max; i++) t.push([(cellules[cle(i, 1)] || {}).valeur, (cellules[cle(i, 2)] || {}).valeur]);
+      return t;
+    }
+  };
+  return f;
+}
+var SpreadsheetApp = { create: function (nom) {
+  var feuilles = [__feuille('Feuille 1')];
+  var ss = {
+    nom: nom, feuilles: feuilles,
+    getSheets: function () { return feuilles; },
+    insertSheet: function (n) { var f = __feuille(n); feuilles.push(f); return f; },
+    getUrl: function () { return 'https://sheets.test/' + feuilles.length; }
+  };
+  __classeurs.push(ss);
+  return ss;
+} };
+var MailApp = null, HtmlService = null;
 var AdminDirectory = null, GroupsSettings = null;
 `;
 
@@ -59,7 +132,7 @@ function charger(exports) {
   const src = fs.readdirSync(RACINE).filter(f => f.endsWith('.gs')).sort()
     .map(f => fs.readFileSync(path.join(RACINE, f), 'utf8')).join('\n');
   return new Function(DOUBLURES + src +
-    '\n; return { ' + exports.concat(['__cache']).join(', ') + ' };')();
+    '\n; return { ' + exports.concat(['__cache', '__props', '__classeurs']).join(', ') + ' };')();
 }
 
 // Micro-harnais : pas de dépendance, sortie lisible, code de sortie exploitable en CI.
