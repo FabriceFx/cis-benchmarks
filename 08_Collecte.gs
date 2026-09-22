@@ -18,6 +18,49 @@
  * Une étape en échec est journalisée puis considérée terminée : l'audit
  * continue, les contrôles dépendants remonteront ERREUR avec la cause.
  */
+/**
+ * Transforme une réponse d'erreur d'API Google en message exploitable.
+ *
+ * Les erreurs SERVICE_DISABLED portent l'URL d'activation exacte dans
+ * error.details[].metadata.activationUrl. Tronquer le corps JSON brut coupait
+ * cette URL en plein milieu — l'administrateur recevait « …overview?project= »
+ * sans l'identifiant du projet, c'est-à-dire précisément le seul lien
+ * actionnable de la réponse, rendu inutilisable.
+ */
+function diagnostiquerReponse_(code, corps, service) {
+  let message = String(corps || '').slice(0, 400);
+  let activation = '';
+  let raison = '';
+  try {
+    const err = (JSON.parse(corps) || {}).error || {};
+    if (err.message) message = err.message;
+    (err.details || []).forEach(function (d) {
+      if (d.reason) raison = d.reason;
+      const meta = d.metadata || {};
+      if (meta.activationUrl) activation = meta.activationUrl;
+      if (!activation && meta.service && meta.consumer) {
+        activation = 'https://console.cloud.google.com/apis/library/' + meta.service +
+          '?project=' + String(meta.consumer).replace(/^projects\//, '');
+      }
+    });
+  } catch (e) { /* corps non JSON : l'extrait brut fait office de message */ }
+
+  let aide = '';
+  if (raison === 'SERVICE_DISABLED' || /has not been used in project|is disabled/i.test(message)) {
+    aide = ' >>> API NON ACTIVÉE sur le projet GCP. Activer : ' +
+      (activation || 'console Google Cloud > API et services > Bibliothèque' + (service ? ' > ' + service : '')) +
+      ' — puis relancer l\'audit (la propagation prend une à deux minutes). ' +
+      'Si le projet n\'est pas ouvrable dans la console, c\'est le projet par défaut d\'Apps Script : ' +
+      'associer un projet GCP standard (Paramètres du projet > Projet Google Cloud Platform).';
+  } else if (code === 403) {
+    aide = ' >>> Vérifier que le compte exécutant est SUPER ADMIN du tenant, ' +
+      'et qu\'un projet GCP standard est bien associé au script.';
+  } else if (code === 401) {
+    aide = ' >>> Autorisation expirée ou révoquée : rouvrir l\'application pour réautoriser.';
+  }
+  return 'HTTP ' + code + ' — ' + message + aide;
+}
+
 /** Reconnaît une erreur de quota ou de limitation de débit, quelle qu'en soit la forme. */
 function estErreurQuota_(e) {
   return /429|RESOURCE_EXHAUSTED|quota|rate ?limit/i.test(String((e && e.message) || e));
@@ -125,8 +168,7 @@ function collecterEtape(token, etape, curseur) {
                      info: 'quota de la Policy API atteint (' + existant.length + ' politique(s) déjà lue(s))' };
           }
           if (code !== 200) {
-            throw new Error('HTTP ' + code + ' — ' + rep.getContentText().slice(0, 250) +
-              (code === 403 ? ' (compte non super admin, ou Cloud Identity API non activée sur le projet GCP ?)' : ''));
+            throw new Error(diagnostiquerReponse_(code, rep.getContentText(), 'cloudidentity.googleapis.com'));
           }
           const data = JSON.parse(rep.getContentText());
           (data.policies || []).forEach(function (p) {
@@ -385,7 +427,7 @@ function recupererPolitiques_() {
     });
     const code = rep.getResponseCode();
     if (code !== 200) {
-      throw new Error('HTTP ' + code + ' — ' + rep.getContentText().slice(0, 300));
+      throw new Error(diagnostiquerReponse_(code, rep.getContentText(), 'cloudidentity.googleapis.com'));
     }
     const data = JSON.parse(rep.getContentText());
     (data.policies || []).forEach(function (p) { politiques.push(p); });

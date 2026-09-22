@@ -62,7 +62,7 @@ const CONFIG = {
   // Affichée dans le footer de la WebApp (injectée par doGet), dans le journal
   // et dans la synthèse du rapport : si le footer n'affiche pas la version
   // attendue après une mise à jour, le redéploiement n'a pas été fait.
-  VERSION: '5.8.0',
+  VERSION: '5.8.1',
   // 'L1' = contrôles de niveau 1 uniquement, 'L2' = niveaux 1 + 2
   NIVEAU_PROFIL: 'L2',
   // Langue par défaut du script

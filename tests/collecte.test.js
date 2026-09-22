@@ -5,7 +5,7 @@ const t = suite();
 
 const api = charger([
   'resoudreTXT_', 'resoudreDomaine_', 'verifierDns_', 'testerSpf_',
-  'recupererGroupesAvecReglages_', 'avecReessaiQuota_', 'estErreurQuota_',
+  'recupererGroupesAvecReglages_', 'avecReessaiQuota_', 'estErreurQuota_', 'diagnostiquerReponse_',
   'STATUT', 'CONFIG'
 ]);
 const { STATUT } = api;
@@ -138,6 +138,57 @@ t('estErreurQuota_ reconnaît les formes usuelles', () => {
   const non = ['403 forbidden', 'not found'];
   oui.forEach(m => { if (!api.estErreurQuota_(new Error(m))) throw new Error('manqué : ' + m); });
   non.forEach(m => { if (api.estErreurQuota_(new Error(m))) throw new Error('faux positif : ' + m); });
+});
+
+// ------------------------------------------------- diagnostic des erreurs API
+// Le corps d'une erreur SERVICE_DISABLED dépasse 250 caractères : l'ancienne
+// troncature coupait l'URL d'activation en plein milieu, juste après
+// « ?project= », privant l'administrateur du seul lien actionnable.
+const CORPS_SERVICE_DESACTIVE = JSON.stringify({
+  error: {
+    code: 403,
+    message: 'Cloud Identity API has not been used in project 504652170406 before or it is disabled. ' +
+      'Enable it by visiting https://console.developers.google.com/apis/api/cloudidentity.googleapis.com/' +
+      'overview?project=504652170406 then retry. If you enabled this API recently, wait a few minutes.',
+    status: 'PERMISSION_DENIED',
+    details: [{
+      '@type': 'type.googleapis.com/google.rpc.ErrorInfo',
+      reason: 'SERVICE_DISABLED',
+      domain: 'googleapis.com',
+      metadata: {
+        service: 'cloudidentity.googleapis.com',
+        consumer: 'projects/504652170406',
+        activationUrl: 'https://console.developers.google.com/apis/api/cloudidentity.googleapis.com/overview?project=504652170406'
+      }
+    }]
+  }
+});
+
+t('une API désactivée restitue son URL d\'activation complète', () => {
+  const m = api.diagnostiquerReponse_(403, CORPS_SERVICE_DESACTIVE, 'cloudidentity.googleapis.com');
+  if (!/overview\?project=504652170406/.test(m)) {
+    throw new Error('URL d\'activation tronquée ou absente : ' + m);
+  }
+  if (!/API NON ACTIVÉE/.test(m)) throw new Error('cause non identifiée : ' + m);
+  if (!/projet GCP standard/.test(m)) throw new Error('piste du projet par défaut absente');
+});
+
+t('l\'URL est reconstruite si activationUrl manque', () => {
+  const corps = JSON.stringify({ error: { code: 403, message: 'API is disabled.', details: [
+    { reason: 'SERVICE_DISABLED', metadata: { service: 'admin.googleapis.com', consumer: 'projects/42' } }] } });
+  const m = api.diagnostiquerReponse_(403, corps);
+  if (!/apis\/library\/admin\.googleapis\.com\?project=42/.test(m)) throw new Error(m);
+});
+
+t('un 403 ordinaire oriente vers le rôle super admin', () => {
+  const m = api.diagnostiquerReponse_(403, JSON.stringify({ error: { message: 'Not Authorized.' } }));
+  if (!/SUPER ADMIN/.test(m)) throw new Error(m);
+  if (/API NON ACTIVÉE/.test(m)) throw new Error('diagnostic erroné : ' + m);
+});
+
+t('un corps non JSON ne fait pas échouer le diagnostic', () => {
+  const m = api.diagnostiquerReponse_(500, '<html>Internal Error</html>');
+  if (!/HTTP 500/.test(m) || !/Internal Error/.test(m)) throw new Error(m);
 });
 
 t.bilan();

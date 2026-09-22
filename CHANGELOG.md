@@ -5,6 +5,16 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.8.1] - 2026-09-22
+
+### Corrigé / Fixed
+- **Le message d'erreur d'API amputait le lien de remédiation.** Les réponses d'erreur des API Google étaient tronquées à 250 caractères. Sur une erreur `SERVICE_DISABLED` — Cloud Identity API non activée sur le projet GCP — la coupure tombait exactement sur `…overview?project=`, supprimant l'identifiant du projet et rendant inutilisable **le seul lien actionnable de la réponse**. `diagnostiquerReponse_()` extrait désormais `error.details[].metadata.activationUrl`, la reconstruit depuis `service` et `consumer` si elle manque, et distingue trois causes : API non activée (avec l'URL d'activation et la piste du projet par défaut d'Apps Script, qui n'est pas ouvrable dans la console), 403 ordinaire (rôle super admin, projet GCP standard associé), et 401 (autorisation à renouveler).
+
+### Ajouté / Added
+- Quatre tests du diagnostic, construits sur un corps d'erreur `SERVICE_DISABLED` réel. La suite compte 83 tests.
+
+---
+
 ## [5.8.0] - 2026-09-22
 
 ### 🎯 Angle émotionnel : Le filet sous le filet
