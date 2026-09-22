@@ -68,6 +68,9 @@ const CONFIG = {
   MAX_GROUPES: 3000,
   // Taille des lots pour la lecture des réglages de groupes (WebApp, phase 1)
   GROUPES_PAR_APPEL: 40,
+  // Pages d'API lues au maximum par appel serveur, toutes étapes confondues :
+  // garantit un retour rapide au navigateur et écarte la limite des 6 minutes.
+  PAGES_PAR_APPEL: 4,
   // Réutiliser un relevé de politiques Cloud Identity plus récent que N minutes
   // (0 = toujours relire). Le quota de la Policy API est bas : des audits
   // rapprochés ne doivent pas le consommer inutilement.
@@ -484,6 +487,10 @@ function demarrerSession(niveauProfil) {
   if (niveauProfil === 'L1' || niveauProfil === 'L2') CONFIG.NIVEAU_PROFIL = niveauProfil;
   const token = Utilities.getUuid();
   sauvegarderPartie_(token, 'err', []);
+  // Chaque google.script.run est une exécution NEUVE : CONFIG.NIVEAU_PROFIL
+  // repart de sa valeur par défaut. Le niveau choisi doit donc vivre dans la
+  // session, sans quoi le rapport annonçait toujours "L1 + L2".
+  sauvegarderPartie_(token, 'cfg', { niveau: CONFIG.NIVEAU_PROFIL });
   return {
     token: token,
     niveau: CONFIG.NIVEAU_PROFIL,
@@ -513,6 +520,15 @@ function demarrerSession(niveauProfil) {
       { cle: 'reglages',     libelle: 'Réglages de confidentialité des groupes' }
     ]
   };
+}
+
+/** Niveau de profil de la session, faisant foi sur la valeur par défaut. */
+function niveauSession_(token) {
+  try {
+    const cfg = chargerPartie_(token, 'cfg');
+    if (cfg && (cfg.niveau === 'L1' || cfg.niveau === 'L2')) return cfg.niveau;
+  } catch (e) { /* session expirée : repli sur la valeur par défaut */ }
+  return CONFIG.NIVEAU_PROFIL;
 }
 
 /**
@@ -579,7 +595,7 @@ function collecterEtape(token, etape, curseur) {
           });
           pageToken = data.nextPageToken;
           pages++;
-        } while (pageToken && pages < 4); // 4 pages max par appel -> retour rapide au navigateur
+        } while (pageToken && pages < CONFIG.PAGES_PAR_APPEL); // retour rapide au navigateur
         sauvegarderPartie_(token, 'pol', existant);
         if (!pageToken) sauvegarderSnapshotPolitiques_(existant); // relevé complet -> réutilisable
         return { termine: !pageToken, curseur: pageToken || null,
@@ -610,7 +626,7 @@ function collecterEtape(token, etape, curseur) {
           (rep.users || []).forEach(function (u) { existant.push(u); });
           pageToken = rep.nextPageToken;
           pages++;
-        } while (pageToken && pages < 3 && existant.length < CONFIG.MAX_UTILISATEURS);
+        } while (pageToken && pages < CONFIG.PAGES_PAR_APPEL && existant.length < CONFIG.MAX_UTILISATEURS);
         sauvegarderPartie_(token, 'usr', existant);
         const termine = !pageToken || existant.length >= CONFIG.MAX_UTILISATEURS;
         return { termine: termine, curseur: pageToken || null,
@@ -619,46 +635,42 @@ function collecterEtape(token, etape, curseur) {
       }
 
       case 'groupes': {
-        const groupes = [];
-        let pageToken = null;
+        // Bornée à PAGES_PAR_APPEL comme les autres étapes : à 3 000 groupes,
+        // l'ancienne boucle non bornée enchaînait 15 appels Directory dans un
+        // seul appel serveur et pouvait approcher la limite des 6 minutes.
+        const existant = curseur ? (chargerPartie_(token, 'grp') || []) : [];
+        let pageToken = (curseur && curseur !== '@debut') ? curseur : null;
+        let pages = 0;
         do {
-          const rep = AdminDirectory.Groups.list({
-            customer: 'my_customer', maxResults: 200, pageToken: pageToken,
-            fields: 'nextPageToken,groups(email,name)'
-          });
-          (rep.groups || []).forEach(function (g) { groupes.push({ email: g.email, name: g.name }); });
+          let rep;
+          try {
+            rep = AdminDirectory.Groups.list({
+              customer: 'my_customer', maxResults: 200, pageToken: pageToken,
+              fields: 'nextPageToken,groups(email,name)'
+            });
+          } catch (e) {
+            if (/429|RESOURCE_EXHAUSTED|quota|rate ?limit/i.test(String(e.message))) {
+              sauvegarderPartie_(token, 'grp', existant);
+              return { termine: false, curseur: pageToken || '@debut', attente: 30,
+                       fait: existant.length, total: null,
+                       info: 'quota de la Directory API atteint (' + existant.length + ' groupe(s) déjà recensé(s))' };
+            }
+            throw e;
+          }
+          (rep.groups || []).forEach(function (g) { existant.push({ email: g.email, name: g.name }); });
           pageToken = rep.nextPageToken;
-        } while (pageToken && groupes.length < CONFIG.MAX_GROUPES);
-        sauvegarderPartie_(token, 'grp', groupes);
-        return { termine: true, fait: groupes.length, total: groupes.length,
-                 info: groupes.length + ' groupe(s) recensé(s)' };
+          pages++;
+        } while (pageToken && pages < CONFIG.PAGES_PAR_APPEL && existant.length < CONFIG.MAX_GROUPES);
+        sauvegarderPartie_(token, 'grp', existant);
+        const termine = !pageToken || existant.length >= CONFIG.MAX_GROUPES;
+        return { termine: termine, curseur: pageToken || null,
+                 fait: existant.length, total: termine ? existant.length : null,
+                 info: existant.length + ' groupe(s) recensé(s)' + (termine ? '' : ' — suite en cours') };
       }
 
-      case 'reglages': {
-        const groupes = chargerPartie_(token, 'grp');
-        const borne = Math.min(groupes.length, CONFIG.MAX_GROUPES);
-        const debutIdx = Number(curseur) || 0;
-        const finIdx = Math.min(debutIdx + CONFIG.GROUPES_PAR_APPEL, borne);
-        for (let i = debutIdx; i < finIdx; i++) {
-          try {
-            const s = GroupsSettings.Groups.get(groupes[i].email);
-            groupes[i].settings = {
-              whoCanViewGroup: s.whoCanViewGroup,
-              whoCanPostMessage: s.whoCanPostMessage,
-              whoCanViewTopics: s.whoCanViewTopics,
-              whoCanJoin: s.whoCanJoin
-            };
-          } catch (e) {
-            groupes[i].settings = null;
-            groupes[i].erreur = e.message;
-          }
-        }
-        sauvegarderPartie_(token, 'grp', groupes);
-        const termine = finIdx >= borne;
-        return { termine: termine, curseur: String(finIdx),
-                 fait: finIdx, total: borne,
-                 info: finIdx + ' / ' + borne + ' réglages de groupes lus' };
-      }
+      // L'étape 'reglages' n'est pas traitée ici : le client l'exécute par
+      // tranches indépendantes via collecterReglagesTranche(), qui seule
+      // supporte les lots parallèles sans écrasement concurrent.
 
       default:
         throw new Error('Étape inconnue : ' + etape);
@@ -757,7 +769,10 @@ function revoquerDerogation(id) {
 
 /** Exécute un ou plusieurs contrôles sur le contexte collecté. */
 function executerControles(token, ids, niveauProfil) {
-  if (niveauProfil === 'L1' || niveauProfil === 'L2') CONFIG.NIVEAU_PROFIL = niveauProfil;
+  // Le niveau enregistré à l'ouverture de la session fait foi : le paramètre
+  // client n'est qu'un repli si la session a expiré.
+  CONFIG.NIVEAU_PROFIL = niveauSession_(token) ||
+    ((niveauProfil === 'L1' || niveauProfil === 'L2') ? niveauProfil : CONFIG.NIVEAU_PROFIL);
   const ctx = chargerContexte_(token);
   const parId = {};
   DEFINITION_CONTROLES.forEach(function (c) { parId[c.id] = c; });
@@ -796,7 +811,8 @@ function genererRapportSheets(token, resultats, lang) {
   try {
     ctx = chargerContexte_(token);
   } catch (e) {
-    ctx = { domaines: [], policies: [], policyIndex: {}, erreurs: ['Contexte expiré — onglet Politiques (brut) non disponible.'] };
+    ctx = { domaines: [], policies: [], policyIndex: {}, niveau: niveauSession_(token),
+            erreurs: ['Contexte expiré — onglet Politiques (brut) non disponible.'] };
   }
   return ecrireRapport_(resultats, ctx, new Date(), lang);
 }
@@ -1014,7 +1030,8 @@ function chargerContexte_(token) {
     policies: pol || [],
     utilisateurs: usr,
     groupes: grp,
-    erreurs: err
+    erreurs: err,
+    niveau: niveauSession_(token)
   };
   // Assemblage des tranches de réglages de groupes (clés déterministes)
   if (ctx.groupes && ctx.groupes.length) {
@@ -1044,7 +1061,7 @@ function chargerContexte_(token) {
 // CONSTRUCTION DU CONTEXTE (collecte des données une seule fois)
 // ---------------------------------------------------------------------------
 function construireContexte_() {
-  const ctx = { erreurs: [] };
+  const ctx = { erreurs: [], niveau: CONFIG.NIVEAU_PROFIL };
 
   // --- Politiques Cloud Identity -------------------------------------------
   try {
@@ -1197,10 +1214,36 @@ function champ_(valeur, noms) {
   }
   return undefined;
 }
+// Libellés d'énumération de la Policy API. Le jeton discriminant est TOUJOURS
+// en fin de libellé : "SHARING_DISABLED" vaut désactivé, "NONE_ALLOWED" non.
+// L'ancienne implémentation testait en sous-chaîne et inversait donc le sens
+// de valeurs comme NONE_ALLOWED ou SHARING_OFF_DOMAIN.
+const MOTS_DESACTIVE = ['DISABLED', 'DISABLE', 'OFF', 'FALSE', 'NO', 'NONE',
+  'INACTIVE', 'DENIED', 'BLOCKED', 'DISALLOWED', 'NOT_ALLOWED'];
+const MOTS_ACTIVE = ['ENABLED', 'ENABLE', 'ON', 'TRUE', 'YES', 'ACTIVE', 'ALLOWED'];
+
+/** Vrai si `s` est exactement l'un des mots, ou se termine par "_<mot>". */
+function finitPar_(s, mots) {
+  for (let i = 0; i < mots.length; i++) {
+    if (s === mots[i] || s.slice(-(mots[i].length + 1)) === '_' + mots[i]) return true;
+  }
+  return false;
+}
+
+/**
+ * true = désactivé, false = activé, null = libellé non reconnu.
+ * Un libellé non reconnu remonte volontairement null (-> À VÉRIFIER) plutôt
+ * qu'un verdict potentiellement faux : dans un outil de conformité, un faux
+ * CONFORME coûte plus cher qu'une vérification manuelle.
+ */
 function estDesactive_(v) {
   if (v === undefined || v === null) return null;
   if (typeof v === 'boolean') return v === false;
-  if (typeof v === 'string') return /DISABLED|OFF|FALSE|NONE/i.test(v);
+  if (typeof v !== 'string') return null;
+  const t = v.trim().toUpperCase();
+  if (!t) return null;
+  if (finitPar_(t, MOTS_DESACTIVE)) return true;
+  if (finitPar_(t, MOTS_ACTIVE)) return false;
   return null;
 }
 function estActive_(v) {
@@ -1261,13 +1304,45 @@ function recupererGroupesAvecReglages_() {
 // ---------------------------------------------------------------------------
 // DNS (SPF / DKIM / DMARC) via DNS-over-HTTPS Google
 // ---------------------------------------------------------------------------
-function requeteTXT_(nom) {
-  const rep = UrlFetchApp.fetch(
-    'https://dns.google/resolve?name=' + encodeURIComponent(nom) + '&type=TXT',
-    { muteHttpExceptions: true });
-  if (rep.getResponseCode() !== 200) return [];
-  const data = JSON.parse(rep.getContentText());
-  return (data.Answer || []).map(function (a) { return String(a.data).replace(/"/g, ''); });
+/**
+ * Résout un enregistrement TXT via DNS-over-HTTPS, avec réessais.
+ * Retour : { resolu, enregistrements, cause }
+ *  - resolu = true  : la réponse fait foi (NOERROR ou NXDOMAIN). Une liste
+ *                     vide signifie alors une absence CERTAINE.
+ *  - resolu = false : résolution en échec (SERVFAIL, HTTP, réseau). L'absence
+ *                     n'est PAS démontrée : le contrôle doit remonter
+ *                     À VÉRIFIER et non NON CONFORME.
+ * Seules les réponses de type 16 (TXT) sont retenues : une cible DKIM est
+ * souvent un CNAME, et la chaîne de résolution contient alors aussi des
+ * réponses de type 5 qui ne sont pas des enregistrements TXT.
+ */
+function resoudreTXT_(nom) {
+  let cause = '';
+  for (let tentative = 0; tentative < 3; tentative++) {
+    if (tentative > 0) Utilities.sleep(500 * Math.pow(2, tentative - 1));
+    try {
+      const rep = UrlFetchApp.fetch(
+        'https://dns.google/resolve?name=' + encodeURIComponent(nom) + '&type=TXT',
+        { muteHttpExceptions: true });
+      const code = rep.getResponseCode();
+      if (code !== 200) { cause = 'HTTP ' + code; continue; }
+      const data = JSON.parse(rep.getContentText());
+      if (data.Status !== 0 && data.Status !== 3) {
+        cause = 'DNS Status ' + data.Status + (data.Comment ? ' — ' + data.Comment : '');
+        continue;
+      }
+      return {
+        resolu: true,
+        enregistrements: (data.Answer || [])
+          .filter(function (a) { return a.type === 16; })
+          .map(function (a) { return String(a.data).replace(/"/g, ''); }),
+        cause: ''
+      };
+    } catch (e) {
+      cause = e.message;
+    }
+  }
+  return { resolu: false, enregistrements: [], cause: cause || 'résolution impossible' };
 }
 
 function verifierDnsParDomaine_(ctx, testeur, libelle) {
@@ -1275,16 +1350,21 @@ function verifierDnsParDomaine_(ctx, testeur, libelle) {
     return { statut: STATUT.ERROR, detail: 'Liste des domaines indisponible.' };
   }
   const echecs = [];
+  const indetermines = [];
   const details = [];
   ctx.domaines.forEach(function (d) {
     const r = testeur(d);
-    details.push(d + ' : ' + (r.ok ? 'OK' : 'ABSENT') + (r.info ? ' (' + r.info + ')' : ''));
-    if (!r.ok) echecs.push(d);
+    let marque;
+    if (r.indetermine) { marque = 'INDÉTERMINÉ'; indetermines.push(d); }
+    else if (r.ok) { marque = 'OK'; }
+    else { marque = 'ABSENT'; echecs.push(d); }
+    details.push(d + ' : ' + marque + (r.info ? ' (' + r.info + ')' : ''));
   });
-  return {
-    statut: echecs.length === 0 ? STATUT.PASS : STATUT.FAIL,
-    detail: libelle + ' — ' + details.join(' ; ')
-  };
+  // Un domaine réellement en écart prime sur un domaine non résolu ; sans
+  // écart avéré mais avec une résolution en échec, le verdict reste suspendu.
+  const statut = echecs.length ? STATUT.FAIL
+    : (indetermines.length ? STATUT.REVIEW : STATUT.PASS);
+  return { statut: statut, detail: libelle + ' — ' + details.join(' ; ') };
 }
 
 // ---------------------------------------------------------------------------
@@ -1608,11 +1688,14 @@ const DEFINITION_CONTROLES = [
     remediation: 'Gmail > Authentification des e-mails : générer et publier la clé DKIM, puis activer la signature.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Authenticate email, select - Generate new record',
     check: function (ctx) {
       return verifierDnsParDomaine_(ctx, function (d) {
+        let echecResolution = '';
         for (let i = 0; i < CONFIG.SELECTEURS_DKIM.length; i++) {
-          const rr = requeteTXT_(CONFIG.SELECTEURS_DKIM[i] + '._domainkey.' + d);
-          const hit = rr.find(function (t) { return /v=DKIM1/i.test(t); });
+          const r = resoudreTXT_(CONFIG.SELECTEURS_DKIM[i] + '._domainkey.' + d);
+          if (!r.resolu) { echecResolution = r.cause; continue; }
+          const hit = r.enregistrements.find(function (t) { return /v=DKIM1/i.test(t); });
           if (hit) return { ok: true, info: 'sélecteur ' + CONFIG.SELECTEURS_DKIM[i] };
         }
+        if (echecResolution) return { indetermine: true, info: 'résolution DNS en échec : ' + echecResolution };
         return { ok: false, info: 'aucun enregistrement DKIM trouvé (sélecteurs testés : ' + CONFIG.SELECTEURS_DKIM.join(', ') + ')' };
       }, 'DKIM');
     }
@@ -1623,8 +1706,9 @@ const DEFINITION_CONTROLES = [
     remediation: 'Publier un TXT "v=spf1 include:_spf.google.com ~all" (adapter aux émetteurs légitimes).', remediationEn: 'Configure the DNS record for each domain. • If all email in your domain is sent from and received by Google Gmail, add the following TXT record for each domain: v=spf1 include:_spf.google.com ~all NOTE: This will likely need to be configured at your domain registrar (Godaddy, etc.).',
     check: function (ctx) {
       return verifierDnsParDomaine_(ctx, function (d) {
-        const rr = requeteTXT_(d);
-        const spf = rr.find(function (t) { return /^v=spf1/i.test(t); });
+        const r = resoudreTXT_(d);
+        if (!r.resolu) return { indetermine: true, info: 'résolution DNS en échec : ' + r.cause };
+        const spf = r.enregistrements.find(function (t) { return /^v=spf1/i.test(t); });
         return spf ? { ok: true, info: spf.slice(0, 80) } : { ok: false };
       }, 'SPF');
     }
@@ -1635,8 +1719,9 @@ const DEFINITION_CONTROLES = [
     remediation: 'Publier un TXT _dmarc.<domaine> "v=DMARC1; p=quarantine|reject; rua=..." (p=none insuffisant à terme).', remediationEn: 'Configure the DNS record for each domain. 1. If all email in your domain is sent from and received by Google Gmail, add the following TXT record for the domain: v=DMARC1; p=none; rua=mailto:<report@domain1.com> NOTE: This will likely need to be configured at your domain registrar (Godaddy, etc.).',
     check: function (ctx) {
       return verifierDnsParDomaine_(ctx, function (d) {
-        const rr = requeteTXT_('_dmarc.' + d);
-        const rec = rr.find(function (t) { return /^v=DMARC1/i.test(t); });
+        const r = resoudreTXT_('_dmarc.' + d);
+        if (!r.resolu) return { indetermine: true, info: 'résolution DNS en échec : ' + r.cause };
+        const rec = r.enregistrements.find(function (t) { return /^v=DMARC1/i.test(t); });
         if (!rec) return { ok: false };
         const pNone = /p=none/i.test(rec);
         return { ok: true, info: rec.slice(0, 100) + (pNone ? ' — ATTENTION p=none (protection faible)' : '') };
@@ -2233,13 +2318,13 @@ const DEFINITION_CONTROLES = [
   // ===== SECTION 6 — RÈGLES D'ALERTES ADMIN =================================
   { id: '6.1', level: 'L1',
     titre: 'Alerte "Mot de passe utilisateur modifié" configurée', titreEn: 'Ensure User\'s password changed is configured',
-    remediation: 'Sécurité > Règles > Mot de passe modifié : e-mail aux admins.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Spam, phishing, and malware', check: manuel_('Règles d\'alerte (Centre d\'alerte)', 'Les règles système ne sont pas listables par API — vérifier l\'activation de la notification.') },
+    remediation: 'Sécurité > Règles > Mot de passe modifié : e-mail aux admins.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to User\'s password changed and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane.', check: manuel_('Règles d\'alerte (Centre d\'alerte)', 'Les règles système ne sont pas listables par API — vérifier l\'activation de la notification.') },
   { id: '6.2', level: 'L1',
     titre: 'Alerte "Attaques soutenues par un État" configurée', titreEn: 'Ensure Government-backed attacks is configured',
-    remediation: 'Sécurité > Règles > Government-backed attacks.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Spam, phishing, and malware', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
+    remediation: 'Sécurité > Règles > Government-backed attacks.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Government-backed attacks and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
   { id: '6.3', level: 'L1',
     titre: 'Alerte "Utilisateur suspendu (activité suspecte)" configurée', titreEn: 'Ensure User suspended due to suspicious activity is configured',
-    remediation: 'Sécurité > Règles.', remediationEn: 'To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Sharing options', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
+    remediation: 'Sécurité > Règles.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to User suspended due to suspicious activity and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
   { id: '6.4', level: 'L1',
     titre: 'Alerte "Privilège admin accordé" configurée', titreEn: 'Ensure User granted Admin privilege is configured',
     remediation: 'Sécurité > Règles.', remediationEn: 'To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to User granted Admin privilege and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane.', check: manuel_('Règles d\'alerte', 'Vérifier notification e-mail activée.') },
@@ -2289,7 +2374,8 @@ function ecrireRapport_(resultats, ctx, debut, lang) {
   const scoreBrut = evaluablesBrut > 0 ? Math.round(100 * compte[STATUT.PASS] / evaluablesBrut) : 0;
 
   const sh1 = ss.getSheets()[0].setName(t.sheets.nomSynthese);
-  const profilLibelle = CONFIG.NIVEAU_PROFIL === 'L1' ? t.sheets.profilL1 : t.sheets.profilL2;
+  const niveau = (ctx && ctx.niveau) || CONFIG.NIVEAU_PROFIL;
+  const profilLibelle = niveau === 'L1' ? t.sheets.profilL1 : t.sheets.profilL2;
   const lignesSynthese = [
     [t.sheets.titreSynthese, ''],
     ['', ''],

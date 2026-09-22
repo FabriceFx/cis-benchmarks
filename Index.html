@@ -1375,8 +1375,13 @@
     const statutLabel = statutsDic[eff] || eff;
     tr.querySelector('.statut').innerHTML = '<span class="badge ' + CLASSE(eff) + '">' + statutLabel + '</span>';
     const cellule = tr.querySelector('.constat');
-    const court = echapper((r.detail || '').split(' | ')[0]).slice(0, 220);
-    let html = court + ((r.detail||'').length > court.length ? '…' : '');
+    // Tronquer AVANT d'échapper : découper la chaîne échappée pouvait couper
+    // une entité HTML en deux (« &am »), et comparer une longueur brute à une
+    // longueur échappée affichait « … » à tort.
+    const detail = r.detail || '';
+    const brefBrut = detail.split(' | ')[0].slice(0, 220);
+    const court = echapper(brefBrut);
+    let html = court + (detail.length > brefBrut.length ? '…' : '');
     const remedeAffiche = (langActuelle === 'en' && r.remediationEn) ? r.remediationEn : r.remediation;
     const risqueAffiche = (langActuelle === 'en' && r.risqueEn) ? r.risqueEn : r.risque;
     
